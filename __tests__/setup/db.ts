@@ -2,10 +2,12 @@ import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 
 let mongo: MongoMemoryServer | undefined;
+let mongoUri: string | undefined;
 
 beforeAll(async () => {
   mongo = await MongoMemoryServer.create();
-  await mongoose.connect(mongo.getUri());
+  mongoUri = mongo.getUri();
+  await mongoose.connect(mongoUri);
 });
 
 afterEach(async () => {
@@ -19,3 +21,10 @@ afterAll(async () => {
   await mongo?.stop();
 });
 
+export function getTestMongoUri(): string {
+  if (!mongoUri) {
+    throw new Error("Test MongoDB has not started");
+  }
+
+  return mongoUri;
+}

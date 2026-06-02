@@ -25,27 +25,39 @@ interface Line extends Route {
 }
 
 export function routesFor(matches: IMatch[]): Route[] {
+  const bracketByMatchId = new Map(
+    matches.map((match) => [idString(match._id), match.bracket]),
+  );
+
   return matches.flatMap((match) => {
     const sourceId = idString(match._id);
     const highlighted = match.status === "in_progress";
     const routes: Route[] = [];
 
     if (match.winnerNextMatchId) {
-      routes.push({
-        highlighted,
-        key: `${sourceId}-winner-${idString(match.winnerNextMatchId)}`,
-        sourceId,
-        targetId: idString(match.winnerNextMatchId),
-      });
+      const targetId = idString(match.winnerNextMatchId);
+
+      if (bracketByMatchId.get(targetId) === match.bracket) {
+        routes.push({
+          highlighted,
+          key: `${sourceId}-winner-${targetId}`,
+          sourceId,
+          targetId,
+        });
+      }
     }
 
     if (match.loserNextMatchId) {
-      routes.push({
-        highlighted,
-        key: `${sourceId}-loser-${idString(match.loserNextMatchId)}`,
-        sourceId,
-        targetId: idString(match.loserNextMatchId),
-      });
+      const targetId = idString(match.loserNextMatchId);
+
+      if (bracketByMatchId.get(targetId) === match.bracket) {
+        routes.push({
+          highlighted,
+          key: `${sourceId}-loser-${targetId}`,
+          sourceId,
+          targetId,
+        });
+      }
     }
 
     return routes;

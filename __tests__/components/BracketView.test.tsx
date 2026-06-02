@@ -21,14 +21,25 @@ describe("ConnectorLines", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverMock);
   });
 
-  it("draws highlighted winner and loser routes from a live match", async () => {
+  it("draws highlighted same-bracket routes and skips winner-to-loser routes", async () => {
     const winnerTarget = makeMatch();
     const loserTarget = makeMatch({ bracket: "loser" });
+    const loserNextTarget = makeMatch({
+      bracket: "loser",
+      round: 2,
+      label: "LB Round 2",
+    });
     const source = makeMatch({
       status: "in_progress",
       winnerNextMatchId: winnerTarget._id,
       loserNextMatchId: loserTarget._id,
     });
+    const loserSource = makeMatch({
+      bracket: "loser",
+      status: "in_progress",
+      winnerNextMatchId: loserNextTarget._id,
+    });
+    const matches = [source, winnerTarget, loserTarget, loserSource, loserNextTarget];
 
     function ConnectorHarness() {
       const containerRef = useRef<HTMLDivElement>(null);
@@ -38,10 +49,9 @@ describe("ConnectorLines", () => {
           <div id={`match-${source._id.toString()}`} />
           <div id={`match-${winnerTarget._id.toString()}`} />
           <div id={`match-${loserTarget._id.toString()}`} />
-          <ConnectorLines
-            containerRef={containerRef}
-            matches={[source, winnerTarget, loserTarget]}
-          />
+          <div id={`match-${loserSource._id.toString()}`} />
+          <div id={`match-${loserNextTarget._id.toString()}`} />
+          <ConnectorLines containerRef={containerRef} matches={matches} />
         </div>
       );
     }
@@ -49,12 +59,19 @@ describe("ConnectorLines", () => {
     render(<ConnectorHarness />);
 
     const sourceElement = document.getElementById(`match-${source._id.toString()}`);
+    const routePairs = routesFor(matches).map((route) => [
+      route.sourceId,
+      route.targetId,
+    ]);
 
-    expect(routesFor([source, winnerTarget, loserTarget])).toHaveLength(2);
+    expect(routePairs).toEqual([
+      [source._id.toString(), winnerTarget._id.toString()],
+      [loserSource._id.toString(), loserNextTarget._id.toString()],
+    ]);
     expect(
       calculateLines(
         sourceElement?.parentElement as HTMLElement,
-        routesFor([source, winnerTarget, loserTarget]),
+        routesFor(matches),
       ),
     ).toHaveLength(2);
     await waitFor(() => {

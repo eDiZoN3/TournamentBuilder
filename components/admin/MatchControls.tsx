@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CourtOverrideControls } from "@/components/admin/CourtOverrideControls";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
 import { useToast } from "@/components/ui/Toast";
@@ -10,6 +10,8 @@ interface MatchControlsProps {
   courtsAvailable: number;
   currentMatchIds: Array<string | { toString(): string }>;
   match: IMatch;
+  onScoreEntryClose?: () => void;
+  onScoreEntryOpen?: (matchId: string) => void;
   onUpdated: () => void | Promise<void>;
   teamAName: string;
   teamBName: string;
@@ -34,6 +36,8 @@ export function MatchControls({
   courtsAvailable,
   currentMatchIds,
   match,
+  onScoreEntryClose,
+  onScoreEntryOpen,
   onUpdated,
   teamAName,
   teamBName,
@@ -42,6 +46,23 @@ export function MatchControls({
   const { showToast } = useToast();
   const [showScores, setShowScores] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const scoreEntryOpenRef = useRef(false);
+  const onScoreEntryCloseRef = useRef(onScoreEntryClose);
+  const matchId = match._id.toString();
+
+  useEffect(() => {
+    onScoreEntryCloseRef.current = onScoreEntryClose;
+  }, [onScoreEntryClose]);
+
+  useEffect(
+    () => () => {
+      if (scoreEntryOpenRef.current) {
+        scoreEntryOpenRef.current = false;
+        onScoreEntryCloseRef.current?.();
+      }
+    },
+    [],
+  );
 
   if (
     match.isBye ||
@@ -51,6 +72,21 @@ export function MatchControls({
   }
 
   const courtsFull = currentMatchIds.length >= courtsAvailable;
+
+  function openScoreEntry() {
+    scoreEntryOpenRef.current = true;
+    setShowScores(true);
+    onScoreEntryOpen?.(matchId);
+  }
+
+  function closeScoreEntry() {
+    setShowScores(false);
+
+    if (scoreEntryOpenRef.current) {
+      scoreEntryOpenRef.current = false;
+      onScoreEntryClose?.();
+    }
+  }
 
   async function markInProgress() {
     setIsUpdating(true);
@@ -117,7 +153,7 @@ export function MatchControls({
       ) : (
         <button
           className="w-full rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white"
-          onClick={() => setShowScores(true)}
+          onClick={openScoreEntry}
           type="button"
         >
           Enter scores
@@ -132,7 +168,7 @@ export function MatchControls({
       {showScores ? (
         <ScoreEntry
           match={match}
-          onClose={() => setShowScores(false)}
+          onClose={closeScoreEntry}
           onUpdated={onUpdated}
           teamAName={teamAName}
           teamBName={teamBName}

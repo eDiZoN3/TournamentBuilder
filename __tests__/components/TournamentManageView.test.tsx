@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams, makeTournament } from "@/__tests__/helpers/factories";
 import type { ITournament } from "@/lib/models/Tournament";
@@ -54,6 +54,42 @@ describe("TournamentManageView", () => {
     expect(screen.getByRole("heading", { name: "Manage Cup" })).toBeInTheDocument();
     expect(screen.getByText("1/2 courts in use")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Enter scores" })).toBeInTheDocument();
+  });
+
+  it("pins the active match card while score entry is open and unpins on dismiss", () => {
+    const teams = makeTeams(2);
+    const liveMatch = makeMatch({
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const initialTournament = {
+      ...makeTournament({
+        name: "Pinned Cup",
+        status: "active",
+        courtsAvailable: 1,
+        currentMatchIds: [liveMatch._id],
+        teams,
+        matches: [liveMatch],
+      }),
+      updatedAt: new Date(),
+    } as ITournament;
+
+    render(<TournamentManageView initialTournament={initialTournament} />);
+
+    const card = screen.getByTestId("match-card");
+
+    expect(card).not.toHaveClass("z-40");
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter scores" }));
+
+    expect(card).toHaveClass("z-40", "opacity-100");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(card).not.toHaveClass("z-40");
   });
 
   it("stops polling and shows standings for a completed tournament", () => {

@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
 import { MatchCard } from "@/components/bracket/MatchCard";
 import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface LoserBracketProps {
   matches: IMatch[];
+  pinnedMatchId?: string | null;
   renderMatchControls?: (
     match: IMatch,
     teamAName: string,
@@ -14,6 +16,7 @@ interface LoserBracketProps {
 
 export function LoserBracket({
   matches,
+  pinnedMatchId = null,
   renderMatchControls,
   teams,
 }: LoserBracketProps) {
@@ -56,6 +59,7 @@ export function LoserBracket({
 
                 return (
                   <MatchCard
+                    isPinned={pinnedMatchId === match._id.toString()}
                     key={match._id.toString()}
                     match={match}
                     teamAName={teamAName}
@@ -72,4 +76,3 @@ export function LoserBracket({
     </section>
   );
 }
-import type { ReactNode } from "react";

@@ -28,6 +28,7 @@ export function TournamentManageView({
   initialTournament,
 }: TournamentManageViewProps) {
   const refreshFailures = useRef(0);
+  const [pinnedMatchId, setPinnedMatchId] = useState<string | null>(null);
   const [unableToRefresh, setUnableToRefresh] = useState(false);
   const { data, isLoading, mutate } = useSWR<ITournament>(
     `/api/tournaments/${initialTournament._id.toString()}`,
@@ -83,12 +84,15 @@ export function TournamentManageView({
       ) : (
         <BracketView
           matches={tournament.matches}
+          pinnedMatchId={pinnedMatchId}
           renderMatchControls={(match, teamAName, teamBName) => (
             <MatchControls
               courtsAvailable={tournament.courtsAvailable}
               currentMatchIds={tournament.currentMatchIds}
               key={match._id.toString()}
               match={match}
+              onScoreEntryClose={() => setPinnedMatchId(null)}
+              onScoreEntryOpen={setPinnedMatchId}
               onUpdated={async () => {
                 await mutate();
               }}

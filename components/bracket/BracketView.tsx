@@ -9,6 +9,7 @@ import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface BracketViewProps {
   matches: IMatch[];
+  pinnedMatchId?: string | null;
   renderMatchControls?: (
     match: IMatch,
     teamAName: string,
@@ -19,6 +20,7 @@ interface BracketViewProps {
 
 export function BracketView({
   matches,
+  pinnedMatchId = null,
   renderMatchControls,
   teams,
 }: BracketViewProps) {
@@ -65,6 +67,7 @@ export function BracketView({
           >
             <WinnerBracket
               matches={matches}
+              pinnedMatchId={pinnedMatchId}
               renderMatchControls={renderMatchControls}
               teams={teams}
             />
@@ -79,6 +82,7 @@ export function BracketView({
             >
               <LoserBracket
                 matches={matches}
+                pinnedMatchId={pinnedMatchId}
                 renderMatchControls={renderMatchControls}
                 teams={teams}
               />

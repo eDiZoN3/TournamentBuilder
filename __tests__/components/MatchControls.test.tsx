@@ -7,7 +7,14 @@ import { MatchControls } from "@/components/admin/MatchControls";
 import { ToastProvider } from "@/components/ui/Toast";
 
 vi.mock("@/components/admin/ScoreEntry", () => ({
-  ScoreEntry: () => <div data-testid="score-entry">Score modal</div>,
+  ScoreEntry: ({ onClose }: { onClose: () => void }) => (
+    <div data-testid="score-entry">
+      Score modal
+      <button onClick={onClose} type="button">
+        Close score modal
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/admin/CourtOverrideControls", () => ({
@@ -145,6 +152,39 @@ describe("MatchControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter scores" }));
 
     expect(screen.getByTestId("score-entry")).toBeInTheDocument();
+  });
+
+  it("notifies the parent while score entry is pinned and when it closes", () => {
+    const teams = makeTeams(2);
+    const match = makeMatch({
+      status: "in_progress",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const onScoreEntryClose = vi.fn();
+    const onScoreEntryOpen = vi.fn();
+
+    render(
+      <MatchControls
+        courtsAvailable={1}
+        currentMatchIds={[]}
+        match={match}
+        onScoreEntryClose={onScoreEntryClose}
+        onScoreEntryOpen={onScoreEntryOpen}
+        onUpdated={vi.fn()}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter scores" }));
+
+    expect(onScoreEntryOpen).toHaveBeenCalledWith(match._id.toString());
+
+    fireEvent.click(screen.getByRole("button", { name: "Close score modal" }));
+
+    expect(onScoreEntryClose).toHaveBeenCalled();
   });
 
   it("shows API conflicts as toast notifications", async () => {

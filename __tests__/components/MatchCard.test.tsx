@@ -140,4 +140,26 @@ describe("MatchCard", () => {
       "md:group-hover:block",
     );
   });
+
+  it("keeps pinned admin controls visible and the card in the foreground", () => {
+    render(
+      <MatchCard
+        isPinned
+        match={makeMatch({
+          status: "in_progress",
+          courtNumber: 1,
+        })}
+      >
+        <button type="button">Admin action</button>
+      </MatchCard>,
+    );
+
+    const card = screen.getByTestId("match-card");
+    const controlsLayer = screen.getByText("Admin action").parentElement;
+
+    expect(card).toHaveClass("z-40", "opacity-100");
+    expect(card).not.toHaveClass("opacity-60");
+    expect(controlsLayer).toHaveClass("md:absolute", "md:block");
+    expect(controlsLayer).not.toHaveClass("md:hidden");
+  });
 });

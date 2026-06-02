@@ -3,6 +3,7 @@ import type { IMatch, ITeamSlot } from "@/lib/models/Tournament";
 
 interface MatchCardProps {
   children?: ReactNode;
+  isPinned?: boolean;
   match: IMatch;
   teamAName?: string;
   teamBName?: string;
@@ -66,6 +67,7 @@ function MatchRow({
 
 export function MatchCard({
   children,
+  isPinned = false,
   match,
   teamAName = "TBD",
   teamBName = "TBD",
@@ -90,14 +92,21 @@ export function MatchCard({
         { name: match.teamB ? teamBName : "TBD", slot: match.teamB },
       ];
   const cardClasses = [
-    "group relative z-10 w-64 overflow-hidden rounded-lg border bg-white shadow-sm",
-    match.status === "pending" && !match.isBye
+    "group relative w-64 overflow-hidden rounded-lg border bg-white shadow-sm",
+    isPinned ? "z-40 opacity-100 shadow-xl" : "z-10",
+    match.status === "pending" && !match.isBye && !isPinned
       ? "border-slate-200 opacity-60"
       : "border-slate-300",
     isLive ? "animate-pulse border-amber-400 ring-2 ring-amber-200" : "",
   ]
     .filter(Boolean)
     .join(" ");
+  const controlsLayerClasses = [
+    "md:absolute md:inset-x-0 md:bottom-0",
+    isPinned
+      ? "md:block"
+      : "md:hidden md:group-hover:block md:group-focus-within:block",
+  ].join(" ");
 
   return (
     <article
@@ -145,7 +154,7 @@ export function MatchCard({
               : "Pending"}
       </footer>
       {children ? (
-        <div className="md:absolute md:inset-x-0 md:bottom-0 md:hidden md:group-hover:block md:group-focus-within:block">
+        <div className={controlsLayerClasses}>
           {children}
         </div>
       ) : null}

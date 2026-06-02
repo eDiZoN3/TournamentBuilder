@@ -424,3 +424,270 @@ T09 → T39 → T40 → T41 → T42
 | 6 — Score Entry (TDD) | 6 | API + UI for running matches |
 | 7 — Polish | 4 | Error states, skeletons, deploy |
 | **Total** | **42** | |
+
+---
+
+## Phase 8 - Testing Feedback, Usability, and Stats
+
+This phase resolves the issues captured in `issues.md`. It extends the completed Phase 0-7 baseline without changing the historical task list above.
+
+### Issue Resolution Plan
+
+| Issue | Resolution Tasks | Notes |
+|---|---|---|
+| 1. Active match selection should be automatic but overridable | T43, T44, T45 | Add backend scheduling first, then expose manual court overrides in admin UI. |
+| 2. Score entry card should stay foreground and not depend on hover | T46 | Pin the active match card/control layer while score entry is open. |
+| 3. Winner-to-loser bracket connector lines reduce readability | T47 | Keep connector lines only inside the same bracket. |
+| 4. Admin needs tournament deletion | T48 | Extend deletion beyond draft tournaments with safer confirmation for active/completed tournaments. |
+| 5. Completed match result must be overridable | T49, T50, T51 | Implement rollback/replay logic before adding API and UI. |
+| 6. Public team/player stats per tournament and across seasons | T52, T53, T54 | Stats are system-calculated from stored tournaments and matches. |
+| 7-9. Bracket layout/readability on larger and mobile brackets | T55, T56 | Stack brackets below 1400px and add round-level mobile navigation. |
+
+### T43 - Auto Match Scheduler Logic (TDD First)
+**Files**: `lib/bracket/scheduler.ts`, `__tests__/lib/bracket/scheduler.test.ts`
+**Depends on**: T24, T30
+**TDD**: Write tests before implementation
+**Description**: Implement automatic match selection for free courts. The scheduler:
+- Finds ready, non-bye matches using the same priority as the Up Next banner: winner bracket before loser bracket, then earlier round and position.
+- Assigns the lowest available court numbers.
+- Fills up to `courtsAvailable` without exceeding court capacity.
+- Ignores pending, completed, bye, and already in-progress matches.
+- Returns `{ autoStartedMatches, assignedCourts }` for API responses and UI refreshes.
+
+Tests: empty ready list, one free court, multiple free courts, already occupied courts, no over-assignment, WB-before-LB priority, byes ignored.
+
+---
+
+### T44 - Auto Scheduling API Integration (TDD First)
+**Files**: `app/api/tournaments/[id]/start/route.ts`, `app/api/tournaments/[id]/matches/[matchId]/status/route.ts`, `__tests__/api/start.test.ts`, `__tests__/api/status.test.ts`
+**Depends on**: T43
+**TDD**: Write tests before implementation
+**Description**: Wire automatic scheduling into tournament lifecycle:
+- After starting a tournament, automatically assign initial ready matches to available courts.
+- After confirming a completed match, automatically fill newly freed courts with the next ready matches.
+- Include `autoStartedMatches` in start/status responses.
+- Keep existing manual "mark as in progress" behavior available for admins.
+
+Tests: tournament start auto-fills courts, completion auto-starts next ready match, no auto-start when tournament is completed, no auto-start when all courts occupied, response shape includes auto-start details.
+
+---
+
+### T45 - Manual Court Override API and Controls (TDD First)
+**Files**: `app/api/tournaments/[id]/matches/[matchId]/court/route.ts`, `components/admin/CourtOverrideControls.tsx`, `components/admin/MatchControls.tsx`, `__tests__/api/court.test.ts`, `__tests__/components/CourtOverrideControls.test.tsx`
+**Depends on**: T44
+**TDD**: Write tests before implementation
+**Description**: Allow admins to override automatic active-match selection:
+- Admin can assign a ready match to a selected court.
+- If the selected court is already occupied, the currently occupying match is returned to `ready`, its `courtNumber` is cleared, and the selected match becomes `in_progress`.
+- Admin can move an in-progress match to a different free court.
+- All overrides respect `courtsAvailable` and are admin-only.
+- UI shows a court selector and confirmation text when replacing an occupied court.
+
+Tests: assign ready match to free court, replace occupied court, move in-progress match, reject invalid court number, reject pending/completed/bye match, auth guard, UI confirmation flow.
+
+---
+
+### T46 - Pinned Score Entry Card State
+**Files**: `components/bracket/MatchCard.tsx`, `components/admin/MatchControls.tsx`, `components/admin/ScoreEntry.tsx`, `components/admin/TournamentManageView.tsx`, `__tests__/components/MatchCard.test.tsx`, `__tests__/components/MatchControls.test.tsx`
+**Depends on**: T35, T36, T37
+**TDD**: Write tests before implementation
+**Description**: Keep the active match card and controls visible while score entry is open:
+- Opening score entry marks the card as pinned/active.
+- Pinned cards stay in the foreground with a stable z-index.
+- Pinned controls remain visible even when the mouse is not hovering the card.
+- Closing or confirming score entry unpins the card.
+- No extra fading/opacity is applied to the active card while editing.
+
+Tests: controls visible without hover while modal open, card has foreground z-index class, card unpins on close, card unpins after confirm, other match cards are unaffected.
+
+---
+
+### T47 - Same-Bracket Connector Lines Only
+**Files**: `components/bracket/ConnectorLines.tsx`, `components/bracket/BracketView.tsx`, `__tests__/components/BracketView.test.tsx`
+**Depends on**: T29, T30
+**TDD**: Write tests before implementation
+**Description**: Improve bracket readability by removing connector lines between winner bracket and loser bracket:
+- Draw winner-to-winner routes.
+- Draw loser-to-loser routes.
+- Do not draw winner-to-loser routes.
+- Keep in-progress highlighting for same-bracket routes.
+
+Tests: WB-to-WB route renders, LB-to-LB route renders, WB-to-LB route is ignored, highlighted live routes still work inside a bracket.
+
+---
+
+### T48 - Delete Any Tournament with Safe Confirmation (TDD First)
+**Files**: `app/api/tournaments/[id]/route.ts`, `components/admin/AdminDashboard.tsx`, `components/admin/TournamentManageView.tsx`, `__tests__/api/tournaments.test.ts`, `__tests__/components/AdminDashboard.test.tsx`, `__tests__/components/TournamentManageView.test.tsx`
+**Depends on**: T15, T38, T39
+**TDD**: Write tests before implementation
+**Description**: Let admins delete tournaments in any status:
+- Draft tournaments keep the existing two-click inline confirmation.
+- Active and completed tournaments require an explicit typed confirmation using the tournament name.
+- API rejects active/completed deletes unless the confirmation name matches exactly.
+- Successful deletion redirects admins back to `/admin/dashboard` when deleting from a manage page.
+- Toast success/error feedback is shown.
+
+Tests: delete draft, reject active without confirmation, reject active with wrong name, delete active with correct name, delete completed with correct name, dashboard UI confirmation, manage-page delete redirect, auth guard.
+
+---
+
+### T49 - Completed Match Rollback Logic (TDD First)
+**Files**: `lib/bracket/rollback.ts`, `__tests__/lib/bracket/rollback.test.ts`
+**Depends on**: T24
+**TDD**: Write tests before implementation
+**Description**: Implement safe rollback for correcting a completed match result:
+- Starting from a completed match, find all downstream matches that received the old winner or loser.
+- Clear affected downstream slots, scores, winner/loser IDs, court assignments, and statuses.
+- Keep unaffected bracket branches intact.
+- Remove affected matches from `currentMatchIds`.
+- Set tournament status back to `active` if it was `completed`.
+- Return the list of affected match IDs for API responses and UI warnings.
+
+Tests: rollback WB match clears winner and loser destinations, rollback LB match clears loser-bracket path, unaffected sibling path stays intact, current courts are cleaned, completed tournament reopens to active, bye matches are not made playable by rollback.
+
+---
+
+### T50 - Match Result Override API (TDD First)
+**Files**: `app/api/tournaments/[id]/matches/[matchId]/override/route.ts`, `__tests__/api/override.test.ts`
+**Depends on**: T49, T33, T34
+**TDD**: Write tests before implementation
+**Description**: Add an admin-only endpoint for correcting completed match results:
+- `POST /api/tournaments/[id]/matches/[matchId]/override`
+- Request: `{ sets: SetScore[], reason?: string }`
+- Validates scores using existing scoring rules.
+- Determines the corrected winner.
+- If the corrected winner changes, uses rollback logic, reapplies corrected scores, and advances the corrected winner/loser.
+- If the winner does not change, updates only the score display.
+- Returns `{ matchId, winnerChanged, affectedMatchIds, tournamentStatus }`.
+
+Tests: auth guard, invalid scores rejected, completed-only guard, update scores with same winner, change winner and clear downstream path, reopen completed tournament, response includes affected match IDs.
+
+---
+
+### T51 - Completed Match Override UI
+**Files**: `components/admin/CompletedMatchControls.tsx`, `components/admin/ScoreEntry.tsx`, `components/admin/MatchControls.tsx`, `components/admin/TournamentManageView.tsx`, `__tests__/components/CompletedMatchControls.test.tsx`, `__tests__/components/ScoreEntry.test.tsx`
+**Depends on**: T50
+**TDD**: Write tests before implementation
+**Description**: Expose correction workflow to admins:
+- Completed non-bye matches show an "Override result" action.
+- The override form reuses score-entry validation.
+- UI warns that downstream matches may be reset.
+- Admin must confirm before submitting if the winner changes.
+- Toasts show success/error and the bracket refreshes after override.
+
+Tests: completed match shows override action, bye match hides override action, invalid override score stays inline, winner-change warning appears, successful override calls endpoint and refreshes, modal closes on success.
+
+---
+
+### T52 - Tournament Stats Calculation (TDD First)
+**Files**: `lib/stats.ts`, `__tests__/lib/stats.test.ts`
+**Depends on**: T13, T24, T41
+**TDD**: Write tests before implementation
+**Description**: Calculate team and player statistics from tournament data:
+- Per team: matchesPlayed, matchesWon, matchesLost, setsWon, setsLost, pointsFor, pointsAgainst, pointDiff, winRate.
+- Per player: same stats inherited from the player's team in each match.
+- Exclude bye matches from point and match totals.
+- Include only completed non-bye matches.
+- Support aggregation across many tournaments by normalized team/player name.
+
+Tests: BO1 stats, BO3 stats, points for/against, win rate, player stats inherited from team, byes excluded, multiple tournaments aggregate by normalized names.
+
+---
+
+### T53 - Public Stats API Endpoints (TDD First)
+**Files**: `app/api/tournaments/[id]/stats/route.ts`, `app/api/stats/route.ts`, `__tests__/api/stats.test.ts`
+**Depends on**: T52
+**TDD**: Write tests before implementation
+**Description**: Add public stats endpoints:
+- `GET /api/tournaments/[id]/stats` returns team and player stats for one tournament.
+- `GET /api/stats` returns cross-season team and player stats across all stored tournaments.
+- Responses are sorted by matchesWon, winRate, pointDiff, then name.
+- Endpoints are public read-only and use no admin auth.
+- Invalid tournament IDs return 404 using the existing error envelope.
+
+Tests: per-tournament response shape, global response shape, sorting, public access without auth, invalid ID, empty database returns empty arrays.
+
+---
+
+### T54 - Public Stats UI
+**Files**: `components/stats/StatsTable.tsx`, `components/stats/TournamentStats.tsx`, `app/(public)/stats/page.tsx`, `components/ui/Navbar.tsx`, `components/bracket/PublicTournamentView.tsx`, `__tests__/components/StatsTable.test.tsx`, `__tests__/components/PublicTournamentView.test.tsx`, `__tests__/components/Navbar.test.tsx`
+**Depends on**: T53
+**TDD**: Write tests before implementation
+**Description**: Display calculated stats publicly:
+- Tournament bracket page includes a "Stats" section for the current tournament.
+- New `/stats` page shows cross-season team and player stats.
+- Navbar links to global stats.
+- Stats tables support empty states and loading skeletons.
+- Columns include games/matches played, wins, losses, points for, points against, point difference, and win rate.
+
+Tests: tournament page shows stats section, global stats page renders, team/player tabs or sections render, empty state, sortable display order, navbar link.
+
+---
+
+### T55 - Wider and Stacked Bracket Layout
+**Files**: `components/bracket/BracketView.tsx`, `components/bracket/WinnerBracket.tsx`, `components/bracket/LoserBracket.tsx`, `components/bracket/PublicTournamentView.tsx`, `components/admin/TournamentManageView.tsx`, `app/(public)/layout.tsx`, `app/admin/layout.tsx`, `__tests__/components/BracketView.test.tsx`, `__tests__/components/PublicTournamentView.test.tsx`, `__tests__/components/TournamentManageView.test.tsx`
+**Depends on**: T30, T37
+**TDD**: Write tests before implementation
+**Description**: Improve desktop/tablet readability for larger tournaments:
+- Public bracket view uses the same wide content behavior as admin manage view.
+- At widths below roughly 1400px, loser bracket stacks below winner bracket instead of sitting beside it.
+- For tournaments with more than 8 teams, default desktop layout stacks loser bracket below winner bracket unless there is enough horizontal room.
+- Horizontal scroll stays available inside each bracket section.
+
+Tests: wide layout class present in public view, admin/public use same bracket container behavior, stacked layout class below 1400px, large tournament applies stacked mode, two-team tournament still hides loser bracket.
+
+---
+
+### T56 - Mobile Round Navigation
+**Files**: `components/bracket/BracketView.tsx`, `components/bracket/WinnerBracket.tsx`, `components/bracket/LoserBracket.tsx`, `components/bracket/RoundTabs.tsx`, `__tests__/components/BracketView.test.tsx`, `__tests__/components/BracketSections.test.tsx`
+**Depends on**: T55
+**TDD**: Write tests before implementation
+**Description**: Refine mobile bracket visibility:
+- Keep Winner/Loser bracket tabs on mobile.
+- Add round tabs inside the active bracket, e.g. "Round 1", "Round 2", "Final".
+- On mobile, show only the selected round or a compact selected-round view.
+- Hide or simplify connector lines in mobile round mode.
+- Preserve Up Next banner and match card controls.
+
+Tests: mobile round tabs render, selecting a round hides other rounds, bracket tab change resets/keeps sane round selection, connector lines hidden in mobile round mode, admin controls still render for visible matches.
+
+---
+
+### T57 - Feedback Regression Suite
+**Files**: `__tests__/feedback/issues-regression.test.tsx`, `__tests__/api/feedback-regression.test.ts`
+**Depends on**: T43-T56
+**TDD**: Write tests throughout implementation; finalize after all feedback tasks
+**Description**: Add high-level regression coverage for the exact `issues.md` scenarios:
+- Auto scheduling starts matches without admin clicks.
+- Admin can manually override a scheduled court.
+- Score entry remains pinned while editing.
+- WB-to-LB connector lines are absent.
+- Admin can delete active/completed tournaments with confirmation.
+- Admin can override a completed match and downstream bracket state resets correctly.
+- Public tournament and global stats are visible.
+- Public/admin bracket layouts stay readable for 8+ teams and mobile round navigation.
+
+This task is complete when every issue in `issues.md` has at least one regression test tied to the user-visible behavior.
+
+---
+
+## Phase 8 Dependency Summary
+
+```
+T24, T30 -> T43 -> T44 -> T45
+T35, T36, T37 -> T46
+T29, T30 -> T47
+T15, T38, T39 -> T48
+T24 -> T49 -> T50 -> T51
+T13, T24, T41 -> T52 -> T53 -> T54
+T30, T37 -> T55 -> T56
+T43-T56 -> T57
+```
+
+---
+
+## Additional Estimated Task Count
+
+| Phase | Tasks | Notes |
+|---|---|---|
+| 8 - Testing Feedback, Usability, and Stats | 15 | Resolves `issues.md`; includes scheduler, overrides, stats, delete flow, and responsive bracket changes |

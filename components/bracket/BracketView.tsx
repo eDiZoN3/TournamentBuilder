@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { ConnectorLines } from "@/components/bracket/ConnectorLines";
 import { LoserBracket } from "@/components/bracket/LoserBracket";
 import { UpNextBanner } from "@/components/bracket/UpNextBanner";
@@ -9,10 +9,19 @@ import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface BracketViewProps {
   matches: IMatch[];
+  renderMatchControls?: (
+    match: IMatch,
+    teamAName: string,
+    teamBName: string,
+  ) => ReactNode;
   teams: ITeam[];
 }
 
-export function BracketView({ matches, teams }: BracketViewProps) {
+export function BracketView({
+  matches,
+  renderMatchControls,
+  teams,
+}: BracketViewProps) {
   const [activeBracket, setActiveBracket] = useState<"winner" | "loser">(
     "winner",
   );
@@ -54,7 +63,11 @@ export function BracketView({ matches, teams }: BracketViewProps) {
             data-active={activeBracket === "winner"}
             data-testid="winner-bracket-panel"
           >
-            <WinnerBracket matches={matches} teams={teams} />
+            <WinnerBracket
+              matches={matches}
+              renderMatchControls={renderMatchControls}
+              teams={teams}
+            />
           </div>
           {hasLoserBracket ? (
             <div
@@ -64,7 +77,11 @@ export function BracketView({ matches, teams }: BracketViewProps) {
               data-active={activeBracket === "loser"}
               data-testid="loser-bracket-panel"
             >
-              <LoserBracket matches={matches} teams={teams} />
+              <LoserBracket
+                matches={matches}
+                renderMatchControls={renderMatchControls}
+                teams={teams}
+              />
             </div>
           ) : null}
         </div>

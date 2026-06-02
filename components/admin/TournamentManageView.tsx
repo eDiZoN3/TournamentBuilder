@@ -1,0 +1,77 @@
+"use client";
+
+import useSWR from "swr";
+import { MatchControls } from "@/components/admin/MatchControls";
+import { BracketView } from "@/components/bracket/BracketView";
+import { FinalStandings } from "@/components/bracket/PublicTournamentView";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import type { ITournament } from "@/lib/models/Tournament";
+
+interface TournamentManageViewProps {
+  initialTournament: ITournament;
+}
+
+async function fetchTournament(url: string): Promise<ITournament> {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Unable to refresh tournament");
+  }
+
+  return response.json() as Promise<ITournament>;
+}
+
+export function TournamentManageView({
+  initialTournament,
+}: TournamentManageViewProps) {
+  const { data: tournament = initialTournament, mutate } = useSWR<ITournament>(
+    `/api/tournaments/${initialTournament._id.toString()}`,
+    fetchTournament,
+    {
+      fallbackData: initialTournament,
+      refreshInterval: (latestTournament) =>
+        latestTournament?.status === "completed" ? 0 : 5000,
+    },
+  );
+
+  return (
+    <section className="space-y-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Tournament management
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">
+            {tournament.name}
+          </h1>
+          <p className="mt-2 text-sm font-medium text-slate-600">
+            {tournament.currentMatchIds.length}/{tournament.courtsAvailable} courts
+            in use
+          </p>
+        </div>
+        <StatusBadge status={tournament.status} />
+      </header>
+      {tournament.status === "completed" ? (
+        <FinalStandings tournament={tournament} />
+      ) : null}
+      <BracketView
+        matches={tournament.matches}
+        renderMatchControls={(match, teamAName, teamBName) => (
+          <MatchControls
+            courtsAvailable={tournament.courtsAvailable}
+            currentMatchIds={tournament.currentMatchIds}
+            key={match._id.toString()}
+            match={match}
+            onUpdated={async () => {
+              await mutate();
+            }}
+            teamAName={teamAName}
+            teamBName={teamBName}
+            tournamentId={tournament._id.toString()}
+          />
+        )}
+        teams={tournament.teams}
+      />
+    </section>
+  );
+}

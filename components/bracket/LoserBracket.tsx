@@ -4,10 +4,19 @@ import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface LoserBracketProps {
   matches: IMatch[];
+  renderMatchControls?: (
+    match: IMatch,
+    teamAName: string,
+    teamBName: string,
+  ) => ReactNode;
   teams: ITeam[];
 }
 
-export function LoserBracket({ matches, teams }: LoserBracketProps) {
+export function LoserBracket({
+  matches,
+  renderMatchControls,
+  teams,
+}: LoserBracketProps) {
   const rounds = roundsFor(matches, "loser");
 
   if (rounds.length === 0) {
@@ -39,14 +48,23 @@ export function LoserBracket({ matches, teams }: LoserBracketProps) {
               {roundMatches[0]?.label ?? `LB Round ${round}`}
             </h3>
             <div className="flex flex-col gap-6">
-              {roundMatches.map((match) => (
-                <MatchCard
-                  key={match._id.toString()}
-                  match={match}
-                  teamAName={resolveTeamName(teams, match.teamA?.teamId ?? null)}
-                  teamBName={resolveTeamName(teams, match.teamB?.teamId ?? null)}
-                />
-              ))}
+              {roundMatches.map((match) => {
+                const teamAName =
+                  resolveTeamName(teams, match.teamA?.teamId ?? null) ?? "TBD";
+                const teamBName =
+                  resolveTeamName(teams, match.teamB?.teamId ?? null) ?? "TBD";
+
+                return (
+                  <MatchCard
+                    key={match._id.toString()}
+                    match={match}
+                    teamAName={teamAName}
+                    teamBName={teamBName}
+                  >
+                    {renderMatchControls?.(match, teamAName, teamBName)}
+                  </MatchCard>
+                );
+              })}
             </div>
           </section>
         ))}
@@ -54,3 +72,4 @@ export function LoserBracket({ matches, teams }: LoserBracketProps) {
     </section>
   );
 }
+import type { ReactNode } from "react";

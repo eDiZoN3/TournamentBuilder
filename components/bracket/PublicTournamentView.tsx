@@ -21,7 +21,7 @@ async function fetchTournament(url: string): Promise<ITournament> {
   return response.json() as Promise<ITournament>;
 }
 
-function FinalStandings({ tournament }: { tournament: ITournament }) {
+export function FinalStandings({ tournament }: { tournament: ITournament }) {
   const wbFinal = tournament.matches.find((match) => match.isWBFinal);
   const lbFinal = tournament.matches.find((match) => match.isLBFinal);
   const placements: Array<{

@@ -4,10 +4,19 @@ import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface WinnerBracketProps {
   matches: IMatch[];
+  renderMatchControls?: (
+    match: IMatch,
+    teamAName: string,
+    teamBName: string,
+  ) => ReactNode;
   teams: ITeam[];
 }
 
-export function WinnerBracket({ matches, teams }: WinnerBracketProps) {
+export function WinnerBracket({
+  matches,
+  renderMatchControls,
+  teams,
+}: WinnerBracketProps) {
   const rounds = roundsFor(matches, "winner");
 
   return (
@@ -35,14 +44,23 @@ export function WinnerBracket({ matches, teams }: WinnerBracketProps) {
                 paddingTop: `${roundIndex * 1.5}rem`,
               }}
             >
-              {roundMatches.map((match) => (
-                <MatchCard
-                  key={match._id.toString()}
-                  match={match}
-                  teamAName={resolveTeamName(teams, match.teamA?.teamId ?? null)}
-                  teamBName={resolveTeamName(teams, match.teamB?.teamId ?? null)}
-                />
-              ))}
+              {roundMatches.map((match) => {
+                const teamAName =
+                  resolveTeamName(teams, match.teamA?.teamId ?? null) ?? "TBD";
+                const teamBName =
+                  resolveTeamName(teams, match.teamB?.teamId ?? null) ?? "TBD";
+
+                return (
+                  <MatchCard
+                    key={match._id.toString()}
+                    match={match}
+                    teamAName={teamAName}
+                    teamBName={teamBName}
+                  >
+                    {renderMatchControls?.(match, teamAName, teamBName)}
+                  </MatchCard>
+                );
+              })}
             </div>
           </section>
         ))}
@@ -50,3 +68,4 @@ export function WinnerBracket({ matches, teams }: WinnerBracketProps) {
     </section>
   );
 }
+import type { ReactNode } from "react";

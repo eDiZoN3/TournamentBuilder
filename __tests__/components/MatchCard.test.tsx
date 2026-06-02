@@ -126,4 +126,18 @@ describe("MatchCard", () => {
 
     expect(screen.queryByText("Court 3")).not.toBeInTheDocument();
   });
+
+  it("places optional admin controls below the card on mobile and in a desktop overlay", () => {
+    render(
+      <MatchCard match={makeMatch()}>
+        <button type="button">Admin action</button>
+      </MatchCard>,
+    );
+
+    expect(screen.getByText("Admin action").parentElement).toHaveClass(
+      "md:absolute",
+      "md:hidden",
+      "md:group-hover:block",
+    );
+  });
 });

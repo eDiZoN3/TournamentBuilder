@@ -1,6 +1,8 @@
+import type { ReactNode } from "react";
 import type { IMatch, ITeamSlot } from "@/lib/models/Tournament";
 
 interface MatchCardProps {
+  children?: ReactNode;
   match: IMatch;
   teamAName?: string;
   teamBName?: string;
@@ -63,6 +65,7 @@ function MatchRow({
 }
 
 export function MatchCard({
+  children,
   match,
   teamAName = "TBD",
   teamBName = "TBD",
@@ -87,7 +90,7 @@ export function MatchCard({
         { name: match.teamB ? teamBName : "TBD", slot: match.teamB },
       ];
   const cardClasses = [
-    "relative z-10 w-64 overflow-hidden rounded-lg border bg-white shadow-sm",
+    "group relative z-10 w-64 overflow-hidden rounded-lg border bg-white shadow-sm",
     match.status === "pending" && !match.isBye
       ? "border-slate-200 opacity-60"
       : "border-slate-300",
@@ -141,6 +144,11 @@ export function MatchCard({
               ? "Ready"
               : "Pending"}
       </footer>
+      {children ? (
+        <div className="md:absolute md:inset-x-0 md:bottom-0 md:hidden md:group-hover:block md:group-focus-within:block">
+          {children}
+        </div>
+      ) : null}
     </article>
   );
 }

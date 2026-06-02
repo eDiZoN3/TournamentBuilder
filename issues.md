@@ -1,4 +1,4 @@
-1. selection of acive match should be automatic, but can be manually overriden
+1. [implemented] selection of acive match should be automatic, but can be manually overriden
 2. when entering scores the card should not fade if not hovering over it and stay in vordergrund the whole time until entered or dismissed
 3. for visibility the lines from winner bracket to the lower bracket should not be here, just inside the winnerbracket and the looserbracket but not connecting the 2, this creates hard readability
 4. as a admin i need the option to delete tournaments

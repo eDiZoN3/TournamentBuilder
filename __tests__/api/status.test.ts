@@ -88,6 +88,7 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/status", () => {
       loserId: null,
       tournamentCompleted: false,
       nextMatchesReady: [],
+      autoStartedMatches: [],
     });
     expect(savedMatch).toMatchObject({
       status: "in_progress",
@@ -159,7 +160,7 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/status", () => {
     await expect(response.json()).resolves.toMatchObject({ code: "CONFLICT" });
   });
 
-  it("confirms a match, frees its court, and routes winner and loser", async () => {
+  it("confirms a match, frees its court, routes teams, and auto-starts the next ready match", async () => {
     const teams = makeTeams(4);
     const winnerTarget = makeMatch({
       round: 2,
@@ -220,8 +221,19 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/status", () => {
         loserTarget._id.toString(),
       ]),
     );
-    expect(saved?.currentMatchIds).toHaveLength(0);
-    expect(savedWinnerTarget).toMatchObject({ status: "ready" });
+    expect(body.autoStartedMatches).toEqual([
+      {
+        matchId: winnerTarget._id.toString(),
+        courtNumber: 1,
+      },
+    ]);
+    expect(saved?.currentMatchIds.map((id) => id.toString())).toEqual([
+      winnerTarget._id.toString(),
+    ]);
+    expect(savedWinnerTarget).toMatchObject({
+      status: "in_progress",
+      courtNumber: 1,
+    });
     expect(savedLoserTarget).toMatchObject({ status: "ready" });
   });
 
@@ -297,6 +309,7 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/status", () => {
 
     expect(response.status).toBe(200);
     expect(body.tournamentCompleted).toBe(true);
+    expect(body.autoStartedMatches).toEqual([]);
     expect(saved?.status).toBe("completed");
   });
 

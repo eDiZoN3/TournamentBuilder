@@ -10,6 +10,12 @@ vi.mock("@/components/admin/ScoreEntry", () => ({
   ScoreEntry: () => <div data-testid="score-entry">Score modal</div>,
 }));
 
+vi.mock("@/components/admin/CourtOverrideControls", () => ({
+  CourtOverrideControls: () => (
+    <div data-testid="court-override">Court override</div>
+  ),
+}));
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -76,6 +82,7 @@ describe("MatchControls", () => {
     expect(
       screen.getByRole("button", { name: "Mark as in progress" }),
     ).toHaveAttribute("title", "All courts occupied");
+    expect(screen.getByTestId("court-override")).toBeInTheDocument();
   });
 
   it("marks a ready match in progress", async () => {

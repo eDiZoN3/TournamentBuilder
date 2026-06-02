@@ -53,16 +53,18 @@ describe("POST /api/tournaments/[id]/start", () => {
     const savedTournament = await Tournament.findById(tournament._id);
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       tournamentId: tournament._id.toString(),
       matchesGenerated,
       byeCount: 0,
     });
+    expect(body.autoStartedMatches).toHaveLength(2);
     expect(savedTournament).toMatchObject({
       status: "active",
       matches: expect.any(Array),
     });
     expect(savedTournament?.matches).toHaveLength(matchesGenerated);
+    expect(savedTournament?.currentMatchIds).toHaveLength(2);
   });
 
   it("persists byes for a padded 3-team bracket", async () => {
@@ -85,6 +87,7 @@ describe("POST /api/tournaments/[id]/start", () => {
       matchesGenerated: 4,
       byeCount: 2,
     });
+    expect(body.autoStartedMatches).toHaveLength(1);
   });
 
   it("rejects an already-active tournament", async () => {
@@ -169,4 +172,3 @@ describe("POST /api/tournaments/[id]/start", () => {
     });
   });
 });
-

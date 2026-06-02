@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { jsonError } from "@/lib/api";
 import { assignCourt, onMatchComplete } from "@/lib/bracket/advance";
+import { autoAssignReadyMatches } from "@/lib/bracket/scheduler";
 import { connectDB } from "@/lib/db";
 import { Tournament } from "@/lib/models/Tournament";
 
@@ -68,6 +69,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     let tournamentCompleted = false;
     let nextMatchesReady: string[] = [];
+    let autoStartedMatches: Array<{
+      courtNumber: number;
+      matchId: string;
+    }> = [];
 
     if (requestedStatus === "in_progress") {
       try {
@@ -101,6 +106,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
         tournamentCompleted = completion.tournamentCompleted;
         nextMatchesReady = completion.nextMatchesReady;
+
+        if (!tournamentCompleted) {
+          autoStartedMatches =
+            autoAssignReadyMatches(tournament).autoStartedMatches;
+        }
       } catch (error) {
         if (
           error instanceof Error &&
@@ -123,6 +133,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       loserId: match.loserId?.toString() ?? null,
       tournamentCompleted,
       nextMatchesReady,
+      autoStartedMatches,
     });
   } catch {
     return jsonError("Unable to update match status", "INTERNAL_ERROR", 500);

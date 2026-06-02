@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { jsonError } from "@/lib/api";
 import { generateBracket } from "@/lib/bracket/generate";
+import { autoAssignReadyMatches } from "@/lib/bracket/scheduler";
 import { connectDB } from "@/lib/db";
 import { Tournament, type IMatch, type ITeam } from "@/lib/models/Tournament";
 
@@ -62,6 +63,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
     tournament.matches = matches as IMatch[];
     tournament.status = "active";
+    const scheduling = autoAssignReadyMatches(tournament);
 
     await tournament.save();
 
@@ -69,6 +71,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       tournamentId: tournament._id.toString(),
       matchesGenerated: matches.length,
       byeCount: matches.filter((match) => match.isBye).length,
+      autoStartedMatches: scheduling.autoStartedMatches,
     });
   } catch {
     return jsonError("Unable to start tournament", "INTERNAL_ERROR", 500);

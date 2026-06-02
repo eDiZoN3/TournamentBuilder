@@ -42,3 +42,20 @@ A web application for organizing and running volleyball tournaments with friends
    ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+6. Open [http://localhost:3000/admin](http://localhost:3000/admin) or `/admin` to manage tournaments, matches, scores, and court assignments.
+
+## Verification
+
+Run the automated checks before deployment:
+
+```bash
+npm run test:coverage
+npm run build
+```
+
+## Deployment Notes
+
+- Use MongoDB Atlas or another reachable MongoDB instance for `MONGODB_URI`.
+- Set `NEXTAUTH_URL` to the deployed application URL.
+- Keep `NEXTAUTH_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` configured through environment variables.

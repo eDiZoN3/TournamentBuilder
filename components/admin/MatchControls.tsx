@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CourtOverrideControls } from "@/components/admin/CourtOverrideControls";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
 import { useToast } from "@/components/ui/Toast";
 import type { IMatch } from "@/lib/models/Tournament";
@@ -122,6 +123,12 @@ export function MatchControls({
           Enter scores
         </button>
       )}
+      <CourtOverrideControls
+        courtsAvailable={courtsAvailable}
+        match={match}
+        onUpdated={onUpdated}
+        tournamentId={tournamentId}
+      />
       {showScores ? (
         <ScoreEntry
           match={match}

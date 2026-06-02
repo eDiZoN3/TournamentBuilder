@@ -1,0 +1,336 @@
+import { NextRequest } from "next/server";
+import { Types } from "mongoose";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
+import { Tournament } from "@/lib/models/Tournament";
+
+const { requireAdmin } = vi.hoisted(() => ({
+  requireAdmin: vi.fn(),
+}));
+
+vi.mock("@/lib/adminAuth", () => ({
+  requireAdmin,
+}));
+
+import { GET as listTournaments, POST as createTournament } from "@/app/api/tournaments/route";
+import {
+  DELETE as deleteTournament,
+  GET as getTournament,
+  PUT as updateTournament,
+} from "@/app/api/tournaments/[id]/route";
+
+function request(
+  url: string,
+  method = "GET",
+  body?: Record<string, unknown>,
+) {
+  return new NextRequest(url, {
+    method,
+    body: body ? JSON.stringify(body) : undefined,
+    headers: body
+      ? {
+          "content-type": "application/json",
+        }
+      : undefined,
+  });
+}
+
+function context(id: string) {
+  return {
+    params: Promise.resolve({ id }),
+  };
+}
+
+describe("/api/tournaments", () => {
+  beforeEach(() => {
+    requireAdmin.mockReset();
+    requireAdmin.mockResolvedValue(true);
+  });
+
+  it("lists no tournaments when the database is empty", async () => {
+    const response = await listTournaments();
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ tournaments: [] });
+  });
+
+  it("lists summary fields and excludes bye matches from the match count", async () => {
+    await Tournament.create({
+      name: "First Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams: makeTeams(2),
+      matches: [makeMatch(), makeMatch({ isBye: true })],
+    });
+    await Tournament.create({
+      name: "Second Cup",
+      teamSize: 4,
+      courtsAvailable: 2,
+      inputMode: "players",
+    });
+
+    const response = await listTournaments();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.tournaments).toHaveLength(2);
+    expect(body.tournaments).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "First Cup",
+          status: "draft",
+          teamCount: 2,
+          matchCount: 1,
+        }),
+        expect.objectContaining({
+          name: "Second Cup",
+          status: "draft",
+          teamCount: 0,
+          matchCount: 0,
+        }),
+      ]),
+    );
+    expect(body.tournaments[0].createdAt).toEqual(expect.any(String));
+  });
+
+  it("creates a valid tournament", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Summer Cup",
+        teamSize: 3,
+        courtsAvailable: 2,
+        inputMode: "players",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      _id: expect.any(String),
+      name: "Summer Cup",
+      status: "draft",
+      teamSize: 3,
+      courtsAvailable: 2,
+    });
+    await expect(Tournament.countDocuments()).resolves.toBe(1);
+  });
+
+  it.each([
+    [{ name: "Summer Cup", teamSize: 5, courtsAvailable: 1, inputMode: "teams" }],
+    [{ name: "Summer Cup", teamSize: 2, courtsAvailable: 0, inputMode: "teams" }],
+    [{ name: "", teamSize: 2, courtsAvailable: 1, inputMode: "teams" }],
+    [{ name: "Summer Cup", teamSize: 2, courtsAvailable: 1, inputMode: "manual" }],
+  ])("rejects invalid create requests", async (body) => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", body),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+    });
+  });
+
+  it("requires an authenticated admin to create tournaments", async () => {
+    requireAdmin.mockResolvedValue(false);
+
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Summer Cup",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({
+      error: "Authentication required",
+      code: "UNAUTHORIZED",
+    });
+  });
+});
+
+describe("/api/tournaments/[id]", () => {
+  beforeEach(() => {
+    requireAdmin.mockReset();
+    requireAdmin.mockResolvedValue(true);
+  });
+
+  it("returns 404 for an unknown tournament", async () => {
+    const response = await getTournament(
+      request("http://localhost:3000/api/tournaments/missing"),
+      context(new Types.ObjectId().toString()),
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("returns 404 for an invalid tournament ID", async () => {
+    const response = await getTournament(
+      request("http://localhost:3000/api/tournaments/not-an-object-id"),
+      context("not-an-object-id"),
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("returns the full tournament including matches", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams: makeTeams(2),
+      matches: [makeMatch({ label: "WB Final", isWBFinal: true })],
+    });
+
+    const response = await getTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      _id: tournament._id.toString(),
+      inputMode: "teams",
+      teams: expect.any(Array),
+      matches: [expect.objectContaining({ label: "WB Final" })],
+    });
+  });
+
+  it("updates a draft tournament name and setup teams", async () => {
+    const tournament = await Tournament.create({
+      name: "Old Name",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        name: "New Name",
+        teams: [
+          { name: "Alpha", players: [], seed: 0 },
+          { name: "Beta", players: [], seed: 0 },
+        ],
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(Tournament.findById(tournament._id).lean()).resolves.toMatchObject({
+      name: "New Name",
+      teams: [{ name: "Alpha" }, { name: "Beta" }],
+    });
+  });
+
+  it("rejects status changes through the update endpoint", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        status: "active",
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+    });
+  });
+
+  it("requires an authenticated admin to update tournaments", async () => {
+    requireAdmin.mockResolvedValue(false);
+
+    const response = await updateTournament(
+      request("http://localhost:3000/api/tournaments/id", "PUT", {
+        name: "New Name",
+      }),
+      context(new Types.ObjectId().toString()),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+
+  it("rejects team edits after a tournament has started", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        teams: [{ name: "Alpha", players: [], seed: 0 }],
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("deletes a draft tournament", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await deleteTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "DELETE"),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(204);
+    await expect(Tournament.findById(tournament._id)).resolves.toBeNull();
+  });
+
+  it("rejects deletion after a tournament has started", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await deleteTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "DELETE"),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("requires an authenticated admin to delete tournaments", async () => {
+    requireAdmin.mockResolvedValue(false);
+
+    const response = await deleteTournament(
+      request("http://localhost:3000/api/tournaments/id", "DELETE"),
+      context(new Types.ObjectId().toString()),
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+});

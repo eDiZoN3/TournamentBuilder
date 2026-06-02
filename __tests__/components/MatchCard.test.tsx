@@ -1,0 +1,129 @@
+// @vitest-environment jsdom
+
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { makeMatch, makeSet, makeTeams } from "@/__tests__/helpers/factories";
+import { MatchCard } from "@/components/bracket/MatchCard";
+
+describe("MatchCard", () => {
+  it("renders unresolved pending slots as TBD", () => {
+    render(<MatchCard match={makeMatch()} />);
+
+    expect(screen.getAllByText("TBD")).toHaveLength(2);
+    expect(screen.getByText("Pending")).toBeInTheDocument();
+    expect(screen.queryByText(/Court/)).not.toBeInTheDocument();
+  });
+
+  it("renders a ready match without a court badge", () => {
+    const [teamA, teamB] = makeTeams(2);
+
+    render(
+      <MatchCard
+        match={makeMatch({
+          status: "ready",
+          teamA: { teamId: teamA._id, sets: [] },
+          teamB: { teamId: teamB._id, sets: [] },
+        })}
+        teamAName="Alpha"
+        teamBName="Beta"
+      />,
+    );
+
+    expect(screen.getByText("Alpha")).toBeInTheDocument();
+    expect(screen.getByText("Beta")).toBeInTheDocument();
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.queryByText("LIVE")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Court/)).not.toBeInTheDocument();
+  });
+
+  it("highlights a live match and shows its assigned court", () => {
+    const [teamA, teamB] = makeTeams(2);
+
+    render(
+      <MatchCard
+        match={makeMatch({
+          status: "in_progress",
+          courtNumber: 2,
+          teamA: { teamId: teamA._id, sets: [] },
+          teamB: { teamId: teamB._id, sets: [] },
+        })}
+        teamAName="Alpha"
+        teamBName="Beta"
+      />,
+    );
+
+    expect(screen.getByText("LIVE")).toBeInTheDocument();
+    expect(screen.getByText("Court 2")).toBeInTheDocument();
+    expect(screen.getByTestId("match-card")).toHaveClass("animate-pulse");
+  });
+
+  it("shows played BO3 sets and emphasizes the completed winner", () => {
+    const [teamA, teamB] = makeTeams(2);
+    const sets = [makeSet(11, 8), makeSet(9, 11), makeSet(15, 13)];
+
+    render(
+      <MatchCard
+        match={makeMatch({
+          format: "bo3",
+          status: "completed",
+          winnerId: teamA._id,
+          loserId: teamB._id,
+          teamA: { teamId: teamA._id, sets },
+          teamB: { teamId: teamB._id, sets: [] },
+        })}
+        teamAName="Alpha"
+        teamBName="Beta"
+      />,
+    );
+
+    expect(screen.getByTestId("team-a-row")).toHaveClass("text-emerald-700");
+    expect(screen.getByTestId("team-b-row")).toHaveClass("text-slate-400");
+    expect(
+      Array.from(screen.getByTestId("team-a-scores").children).map(
+        (score) => score.textContent,
+      ),
+    ).toEqual(["11", "9", "15"]);
+    expect(
+      Array.from(screen.getByTestId("team-b-scores").children).map(
+        (score) => score.textContent,
+      ),
+    ).toEqual(["8", "11", "13"]);
+    expect(screen.getByText("Completed")).toBeInTheDocument();
+  });
+
+  it("renders byes as completed with the real team first and no scores", () => {
+    const [team] = makeTeams(1);
+
+    render(
+      <MatchCard
+        match={makeMatch({
+          status: "completed",
+          isBye: true,
+          winnerId: team._id,
+          teamB: { teamId: team._id, sets: [makeSet(11, 8)] },
+        })}
+        teamBName="Lucky Team"
+      />,
+    );
+
+    expect(screen.getByTestId("team-a-row")).toHaveTextContent("Lucky Team");
+    expect(screen.getByTestId("team-b-row")).toHaveTextContent("—");
+    expect(screen.queryByTestId("team-a-scores")).not.toBeInTheDocument();
+    expect(screen.queryByText("LIVE")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Court/)).not.toBeInTheDocument();
+    expect(screen.getByText("Completed")).toBeInTheDocument();
+  });
+
+  it("hides a stale court number when a match is not live", () => {
+    render(
+      <MatchCard
+        match={makeMatch({
+          status: "completed",
+          courtNumber: 3,
+        })}
+      />,
+    );
+
+    expect(screen.queryByText("Court 3")).not.toBeInTheDocument();
+  });
+});

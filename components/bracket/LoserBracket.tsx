@@ -1,0 +1,56 @@
+import { MatchCard } from "@/components/bracket/MatchCard";
+import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
+import type { IMatch, ITeam } from "@/lib/models/Tournament";
+
+interface LoserBracketProps {
+  matches: IMatch[];
+  teams: ITeam[];
+}
+
+export function LoserBracket({ matches, teams }: LoserBracketProps) {
+  const rounds = roundsFor(matches, "loser");
+
+  if (rounds.length === 0) {
+    return null;
+  }
+
+  return (
+    <section aria-labelledby="loser-bracket-title">
+      <h2
+        className="mb-4 text-lg font-bold tracking-tight text-slate-900"
+        id="loser-bracket-title"
+      >
+        Loser bracket
+      </h2>
+      <div className="flex min-w-max gap-8">
+        {rounds.map(([round, roundMatches]) => (
+          <section
+            className="w-64 shrink-0"
+            data-testid="loser-round"
+            key={round}
+          >
+            <h3
+              className={`mb-3 text-sm font-semibold ${
+                roundMatches.some((match) => match.isLBFinal)
+                  ? "text-amber-700"
+                  : "text-slate-600"
+              }`}
+            >
+              {roundMatches[0]?.label ?? `LB Round ${round}`}
+            </h3>
+            <div className="flex flex-col gap-6">
+              {roundMatches.map((match) => (
+                <MatchCard
+                  key={match._id.toString()}
+                  match={match}
+                  teamAName={resolveTeamName(teams, match.teamA?.teamId ?? null)}
+                  teamBName={resolveTeamName(teams, match.teamB?.teamId ?? null)}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}

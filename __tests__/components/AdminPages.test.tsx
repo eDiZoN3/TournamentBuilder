@@ -14,6 +14,10 @@ const { notFound } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   notFound,
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
 }));
 
 describe("admin dashboard page", () => {

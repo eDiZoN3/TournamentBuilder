@@ -22,6 +22,10 @@ interface UpdateBody {
   teams?: TeamInput[];
 }
 
+interface DeleteBody {
+  confirmationName?: string;
+}
+
 function isValidId(id: string): boolean {
   return Types.ObjectId.isValid(id);
 }
@@ -105,6 +109,22 @@ function parseUpdateBody(body: unknown): UpdateBody | null {
   return update;
 }
 
+async function parseDeleteBody(request: NextRequest): Promise<DeleteBody> {
+  try {
+    const body = (await request.json()) as unknown;
+
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return {};
+    }
+
+    const { confirmationName } = body as Record<string, unknown>;
+
+    return typeof confirmationName === "string" ? { confirmationName } : {};
+  } catch {
+    return {};
+  }
+}
+
 async function findTournament(id: string) {
   if (!isValidId(id)) {
     return null;
@@ -183,7 +203,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   if (!(await requireAdmin())) {
     return jsonError("Authentication required", "UNAUTHORIZED", 401);
   }
@@ -198,8 +218,28 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     }
 
     if (tournament.status !== "draft") {
+      const { confirmationName } = await parseDeleteBody(request);
+
+      if (confirmationName !== tournament.name) {
+        return jsonError(
+          "Type the tournament name to delete it",
+          "CONFLICT",
+          409,
+        );
+      }
+    }
+
+    if (tournament.status === "draft") {
+      await tournament.deleteOne();
+
+      return new NextResponse(null, {
+        status: 204,
+      });
+    }
+
+    if (tournament.status !== "active" && tournament.status !== "completed") {
       return jsonError(
-        "Only draft tournaments can be deleted",
+        "Tournament cannot be deleted",
         "CONFLICT",
         409,
       );
@@ -214,4 +254,3 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     return jsonError("Unable to delete tournament", "INTERNAL_ERROR", 500);
   }
 }
-

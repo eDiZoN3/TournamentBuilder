@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { MatchControls } from "@/components/admin/MatchControls";
+import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
 import { BracketView } from "@/components/bracket/BracketView";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { FinalStandings } from "@/components/bracket/PublicTournamentView";
@@ -27,6 +29,7 @@ async function fetchTournament(url: string): Promise<ITournament> {
 export function TournamentManageView({
   initialTournament,
 }: TournamentManageViewProps) {
+  const router = useRouter();
   const refreshFailures = useRef(0);
   const [pinnedMatchId, setPinnedMatchId] = useState<string | null>(null);
   const [unableToRefresh, setUnableToRefresh] = useState(false);
@@ -68,7 +71,13 @@ export function TournamentManageView({
             in use
           </p>
         </div>
-        <StatusBadge status={tournament.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={tournament.status} />
+          <TournamentDeleteControl
+            onDeleted={() => router.push("/admin/dashboard")}
+            tournament={tournament}
+          />
+        </div>
       </header>
       {unableToRefresh ? (
         <ErrorBanner

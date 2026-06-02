@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useRouter } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams, makeTournament } from "@/__tests__/helpers/factories";
 import type { ITournament } from "@/lib/models/Tournament";
@@ -13,10 +14,21 @@ vi.mock("swr", () => ({
   default: useSWR,
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: vi.fn(),
+}));
+
+const mockedUseRouter = vi.mocked(useRouter);
+const push = vi.fn();
+const refresh = vi.fn();
+
 import { TournamentManageView } from "@/components/admin/TournamentManageView";
 
 describe("TournamentManageView", () => {
   beforeEach(() => {
+    push.mockReset();
+    refresh.mockReset();
+    mockedUseRouter.mockReturnValue({ push, refresh } as never);
     useSWR.mockReset();
     useSWR.mockImplementation(
       (_key: string, _fetcher: unknown, options: { fallbackData: ITournament }) => ({
@@ -90,6 +102,58 @@ describe("TournamentManageView", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     expect(card).not.toHaveClass("z-40");
+  });
+
+  it("deletes the tournament after typed confirmation and redirects to the dashboard", async () => {
+    const teams = makeTeams(2);
+    const liveMatch = makeMatch({
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+    const initialTournament = {
+      ...makeTournament({
+        name: "Delete Me Cup",
+        status: "active",
+        courtsAvailable: 1,
+        currentMatchIds: [liveMatch._id],
+        teams,
+        matches: [liveMatch],
+      }),
+      updatedAt: new Date(),
+    } as ITournament;
+
+    render(<TournamentManageView initialTournament={initialTournament} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Delete Me Cup" }));
+    fireEvent.change(
+      screen.getByLabelText("Type Delete Me Cup to confirm deletion"),
+      {
+        target: { value: "Delete Me Cup" },
+      },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirm Delete Delete Me Cup" }),
+    );
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/admin/dashboard");
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/api\/tournaments\/.+$/),
+      {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          confirmationName: "Delete Me Cup",
+        }),
+      },
+    );
   });
 
   it("stops polling and shows standings for a completed tournament", () => {

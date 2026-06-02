@@ -22,6 +22,14 @@ const tournaments: TournamentSummary[] = [
     teamCount: 8,
     matchCount: 14,
   },
+  {
+    _id: "completed-id",
+    name: "Completed Cup",
+    status: "completed",
+    createdAt: "2026-06-03T12:00:00.000Z",
+    teamCount: 8,
+    matchCount: 14,
+  },
 ];
 
 describe("AdminDashboard", () => {
@@ -48,7 +56,8 @@ describe("AdminDashboard", () => {
       "href",
       "/tournament/active-id",
     );
-    expect(screen.queryByRole("button", { name: "Delete Active Cup" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete Active Cup" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete Completed Cup" })).toBeInTheDocument();
   });
 
   it("requires a second click before deleting a draft", async () => {
@@ -68,6 +77,41 @@ describe("AdminDashboard", () => {
     });
     expect(fetchMock).toHaveBeenCalledWith("/api/tournaments/draft-id", {
       method: "DELETE",
+    });
+  });
+
+  it("requires the exact tournament name before deleting an active tournament", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AdminDashboard initialTournaments={tournaments} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Active Cup" }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Type Active Cup to confirm deletion."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Confirm Delete Active Cup" }),
+    ).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Type Active Cup to confirm deletion"), {
+      target: { value: "Active Cup" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Delete Active Cup" }));
+
+    await waitFor(() => {
+      expect(screen.queryByText("Active Cup")).not.toBeInTheDocument();
+    });
+    expect(fetchMock).toHaveBeenCalledWith("/api/tournaments/active-id", {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        confirmationName: "Active Cup",
+      }),
     });
   });
 

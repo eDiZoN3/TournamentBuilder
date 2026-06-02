@@ -302,7 +302,7 @@ describe("/api/tournaments/[id]", () => {
     await expect(Tournament.findById(tournament._id)).resolves.toBeNull();
   });
 
-  it("rejects deletion after a tournament has started", async () => {
+  it("rejects active deletion without a confirmation name", async () => {
     const tournament = await Tournament.create({
       name: "Summer Cup",
       status: "active",
@@ -318,6 +318,68 @@ describe("/api/tournaments/[id]", () => {
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toMatchObject({ code: "CONFLICT" });
+    await expect(Tournament.findById(tournament._id)).resolves.not.toBeNull();
+  });
+
+  it("rejects active deletion with the wrong confirmation name", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await deleteTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "DELETE", {
+        confirmationName: "Wrong Cup",
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({ code: "CONFLICT" });
+    await expect(Tournament.findById(tournament._id)).resolves.not.toBeNull();
+  });
+
+  it("deletes an active tournament with an exact confirmation name", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await deleteTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "DELETE", {
+        confirmationName: "Summer Cup",
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(204);
+    await expect(Tournament.findById(tournament._id)).resolves.toBeNull();
+  });
+
+  it("deletes a completed tournament with an exact confirmation name", async () => {
+    const tournament = await Tournament.create({
+      name: "Finished Cup",
+      status: "completed",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await deleteTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "DELETE", {
+        confirmationName: "Finished Cup",
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(204);
+    await expect(Tournament.findById(tournament._id)).resolves.toBeNull();
   });
 
   it("requires an authenticated admin to delete tournaments", async () => {

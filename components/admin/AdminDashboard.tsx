@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { useToast } from "@/components/ui/Toast";
 import type { ITournament } from "@/lib/models/Tournament";
 
 export interface TournamentSummary {
@@ -21,47 +21,7 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
-  const { showToast } = useToast();
   const [tournaments, setTournaments] = useState(initialTournaments);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  async function deleteTournament(tournament: TournamentSummary) {
-    if (confirmDeleteId !== tournament._id) {
-      setConfirmDeleteId(tournament._id);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/tournaments/${tournament._id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        showToast({
-          message: "Unable to delete tournament.",
-          title: "Delete failed",
-          type: "error",
-        });
-        return;
-      }
-
-      setTournaments((current) =>
-        current.filter((entry) => entry._id !== tournament._id),
-      );
-      setConfirmDeleteId(null);
-      showToast({
-        message: `${tournament.name} was deleted.`,
-        title: "Tournament deleted",
-        type: "success",
-      });
-    } catch {
-      showToast({
-        message: "Unable to delete tournament.",
-        title: "Delete failed",
-        type: "error",
-      });
-    }
-  }
 
   return (
     <section>
@@ -136,18 +96,14 @@ export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
                 >
                   View
                 </Link>
-                {tournament.status === "draft" ? (
-                  <button
-                    aria-label={`${
-                      confirmDeleteId === tournament._id ? "Confirm Delete" : "Delete"
-                    } ${tournament.name}`}
-                    className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-700"
-                    onClick={() => void deleteTournament(tournament)}
-                    type="button"
-                  >
-                    {confirmDeleteId === tournament._id ? "Confirm Delete" : "Delete"}
-                  </button>
-                ) : null}
+                <TournamentDeleteControl
+                  onDeleted={() =>
+                    setTournaments((current) =>
+                      current.filter((entry) => entry._id !== tournament._id),
+                    )
+                  }
+                  tournament={tournament}
+                />
               </div>
             </article>
           ))}

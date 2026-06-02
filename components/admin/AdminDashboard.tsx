@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { useToast } from "@/components/ui/Toast";
 import type { ITournament } from "@/lib/models/Tournament";
 
 export interface TournamentSummary {
@@ -19,9 +21,9 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
+  const { showToast } = useToast();
   const [tournaments, setTournaments] = useState(initialTournaments);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   async function deleteTournament(tournament: TournamentSummary) {
     if (confirmDeleteId !== tournament._id) {
@@ -29,15 +31,17 @@ export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
       return;
     }
 
-    setError(null);
-
     try {
       const response = await fetch(`/api/tournaments/${tournament._id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        setError("Unable to delete tournament.");
+        showToast({
+          message: "Unable to delete tournament.",
+          title: "Delete failed",
+          type: "error",
+        });
         return;
       }
 
@@ -45,8 +49,17 @@ export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
         current.filter((entry) => entry._id !== tournament._id),
       );
       setConfirmDeleteId(null);
+      showToast({
+        message: `${tournament.name} was deleted.`,
+        title: "Tournament deleted",
+        type: "success",
+      });
     } catch {
-      setError("Unable to delete tournament.");
+      showToast({
+        message: "Unable to delete tournament.",
+        title: "Delete failed",
+        type: "error",
+      });
     }
   }
 
@@ -64,15 +77,21 @@ export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
           Create New Tournament
         </Link>
       </header>
-      {error ? (
-        <p className="mt-4 text-sm font-medium text-red-600" role="alert">
-          {error}
-        </p>
-      ) : null}
       {tournaments.length === 0 ? (
-        <p className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-          No tournaments yet.
-        </p>
+        <div className="mt-8">
+          <EmptyState
+            action={
+              <Link
+                className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+                href="/admin/tournament/new"
+              >
+                Create New Tournament
+              </Link>
+            }
+            description="Create one to start scheduling matches."
+            title="No tournaments yet."
+          />
+        </div>
       ) : (
         <div className="mt-8 grid gap-4">
           {tournaments.map((tournament) => (

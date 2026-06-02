@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams, makeTournament } from "@/__tests__/helpers/factories";
 import type { ITournament } from "@/lib/models/Tournament";
@@ -71,5 +71,44 @@ describe("TournamentManageView", () => {
 
     expect(options.refreshInterval(initialTournament)).toBe(0);
     expect(screen.getByTestId("tournament-complete")).toBeInTheDocument();
+  });
+
+  it("shows a refresh error banner after repeated polling failures", () => {
+    const initialTournament = {
+      ...makeTournament({ status: "active" }),
+      updatedAt: new Date(),
+    } as ITournament;
+
+    render(<TournamentManageView initialTournament={initialTournament} />);
+
+    const [, , options] = useSWR.mock.calls[0];
+
+    act(() => {
+      options.onError();
+      options.onError();
+      options.onError();
+    });
+
+    expect(screen.getByText("Unable to refresh")).toBeInTheDocument();
+  });
+
+  it("shows bracket skeletons during an initial SWR load with no data", () => {
+    const initialTournament = {
+      ...makeTournament({
+        name: "Loading Admin Cup",
+        status: "active",
+      }),
+      updatedAt: new Date(),
+    } as ITournament;
+    useSWR.mockImplementationOnce(() => ({
+      data: undefined,
+      isLoading: true,
+      mutate: vi.fn(),
+    }));
+
+    render(<TournamentManageView initialTournament={initialTournament} />);
+
+    expect(screen.getByText("Loading bracket")).toBeInTheDocument();
+    expect(screen.getAllByTestId("match-card-skeleton")).toHaveLength(4);
   });
 });

@@ -1,9 +1,12 @@
 "use client";
 
+import { useRef, useState } from "react";
 import useSWR from "swr";
 import { MatchControls } from "@/components/admin/MatchControls";
 import { BracketView } from "@/components/bracket/BracketView";
+import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { FinalStandings } from "@/components/bracket/PublicTournamentView";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
 
@@ -24,15 +27,30 @@ async function fetchTournament(url: string): Promise<ITournament> {
 export function TournamentManageView({
   initialTournament,
 }: TournamentManageViewProps) {
-  const { data: tournament = initialTournament, mutate } = useSWR<ITournament>(
+  const refreshFailures = useRef(0);
+  const [unableToRefresh, setUnableToRefresh] = useState(false);
+  const { data, isLoading, mutate } = useSWR<ITournament>(
     `/api/tournaments/${initialTournament._id.toString()}`,
     fetchTournament,
     {
       fallbackData: initialTournament,
       refreshInterval: (latestTournament) =>
         latestTournament?.status === "completed" ? 0 : 5000,
+      onError: () => {
+        refreshFailures.current += 1;
+
+        if (refreshFailures.current >= 3) {
+          setUnableToRefresh(true);
+        }
+      },
+      onSuccess: () => {
+        refreshFailures.current = 0;
+        setUnableToRefresh(false);
+      },
     },
   );
+  const tournament = data ?? initialTournament;
+  const showSkeleton = isLoading && !data;
 
   return (
     <section className="space-y-6">
@@ -51,27 +69,37 @@ export function TournamentManageView({
         </div>
         <StatusBadge status={tournament.status} />
       </header>
+      {unableToRefresh ? (
+        <ErrorBanner
+          message="Unable to refresh"
+          onDismiss={() => setUnableToRefresh(false)}
+        />
+      ) : null}
       {tournament.status === "completed" ? (
         <FinalStandings tournament={tournament} />
       ) : null}
-      <BracketView
-        matches={tournament.matches}
-        renderMatchControls={(match, teamAName, teamBName) => (
-          <MatchControls
-            courtsAvailable={tournament.courtsAvailable}
-            currentMatchIds={tournament.currentMatchIds}
-            key={match._id.toString()}
-            match={match}
-            onUpdated={async () => {
-              await mutate();
-            }}
-            teamAName={teamAName}
-            teamBName={teamBName}
-            tournamentId={tournament._id.toString()}
-          />
-        )}
-        teams={tournament.teams}
-      />
+      {showSkeleton ? (
+        <BracketSkeleton />
+      ) : (
+        <BracketView
+          matches={tournament.matches}
+          renderMatchControls={(match, teamAName, teamBName) => (
+            <MatchControls
+              courtsAvailable={tournament.courtsAvailable}
+              currentMatchIds={tournament.currentMatchIds}
+              key={match._id.toString()}
+              match={match}
+              onUpdated={async () => {
+                await mutate();
+              }}
+              teamAName={teamAName}
+              teamBName={teamBName}
+              tournamentId={tournament._id.toString()}
+            />
+          )}
+          teams={tournament.teams}
+        />
+      )}
     </section>
   );
 }

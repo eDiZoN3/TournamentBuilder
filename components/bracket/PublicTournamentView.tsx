@@ -3,9 +3,11 @@
 import { useRef, useState } from "react";
 import useSWR from "swr";
 import { BracketView } from "@/components/bracket/BracketView";
-import { resolveTeamName } from "@/components/bracket/utils";
+import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
+import { StandingsTable } from "@/components/bracket/StandingsTable";
+import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import type { IMatch, ITournament } from "@/lib/models/Tournament";
+import type { ITournament } from "@/lib/models/Tournament";
 
 interface PublicTournamentViewProps {
   initialTournament: ITournament;
@@ -22,23 +24,6 @@ async function fetchTournament(url: string): Promise<ITournament> {
 }
 
 export function FinalStandings({ tournament }: { tournament: ITournament }) {
-  const wbFinal = tournament.matches.find((match) => match.isWBFinal);
-  const lbFinal = tournament.matches.find((match) => match.isLBFinal);
-  const placements: Array<{
-    place: string;
-    teamId: IMatch["winnerId"] | undefined;
-  }> = [
-    { place: "1st", teamId: wbFinal?.winnerId },
-    { place: "2nd", teamId: wbFinal?.loserId },
-    { place: "3rd", teamId: lbFinal?.winnerId },
-    { place: "4th", teamId: lbFinal?.loserId },
-  ];
-  const namedPlacements = placements.flatMap(({ place, teamId }) => {
-    const teamName = resolveTeamName(tournament.teams, teamId ?? null);
-
-    return teamName ? [{ place, teamName }] : [];
-  });
-
   return (
     <section
       className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"
@@ -47,22 +32,9 @@ export function FinalStandings({ tournament }: { tournament: ITournament }) {
       <h2 className="text-xl font-bold text-emerald-900">
         Tournament complete
       </h2>
-      <p className="mt-1 text-sm text-emerald-800">Final standings</p>
-      {namedPlacements.length > 0 ? (
-        <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {namedPlacements.map(({ place, teamName }) => (
-            <li
-              className="rounded-lg border border-emerald-100 bg-white px-3 py-2"
-              key={place}
-            >
-              <span className="block text-xs font-bold uppercase tracking-wide text-emerald-700">
-                {place}
-              </span>
-              <span className="font-semibold text-slate-900">{teamName}</span>
-            </li>
-          ))}
-        </ol>
-      ) : null}
+      <div className="mt-4">
+        <StandingsTable tournament={tournament} />
+      </div>
     </section>
   );
 }
@@ -72,7 +44,7 @@ export function PublicTournamentView({
 }: PublicTournamentViewProps) {
   const refreshFailures = useRef(0);
   const [unableToRefresh, setUnableToRefresh] = useState(false);
-  const { data: tournament = initialTournament } = useSWR<ITournament>(
+  const { data, isLoading } = useSWR<ITournament>(
     `/api/tournaments/${initialTournament._id.toString()}`,
     fetchTournament,
     {
@@ -92,6 +64,8 @@ export function PublicTournamentView({
       },
     },
   );
+  const tournament = data ?? initialTournament;
+  const showSkeleton = isLoading && !data;
 
   return (
     <section className="space-y-6">
@@ -107,17 +81,19 @@ export function PublicTournamentView({
         <StatusBadge status={tournament.status} />
       </header>
       {unableToRefresh ? (
-        <p
-          className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900"
-          role="status"
-        >
-          Unable to refresh
-        </p>
+        <ErrorBanner
+          message="Unable to refresh"
+          onDismiss={() => setUnableToRefresh(false)}
+        />
       ) : null}
       {tournament.status === "completed" ? (
         <FinalStandings tournament={tournament} />
       ) : null}
-      <BracketView matches={tournament.matches} teams={tournament.teams} />
+      {showSkeleton ? (
+        <BracketSkeleton />
+      ) : (
+        <BracketView matches={tournament.matches} teams={tournament.teams} />
+      )}
     </section>
   );
 }

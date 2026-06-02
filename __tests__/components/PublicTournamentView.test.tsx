@@ -136,4 +136,21 @@ describe("PublicTournamentView", () => {
 
     expect(screen.queryByText("Unable to refresh")).not.toBeInTheDocument();
   });
+
+  it("shows bracket skeletons during an initial SWR load with no data", () => {
+    const initialTournament = tournament({
+      name: "Loading Cup",
+      status: "active",
+    });
+    useSWR.mockImplementationOnce(() => ({
+      data: undefined,
+      isLoading: true,
+    }));
+
+    render(<PublicTournamentView initialTournament={initialTournament} />);
+
+    expect(screen.getByText("Loading bracket")).toBeInTheDocument();
+    expect(screen.getAllByTestId("match-card-skeleton")).toHaveLength(4);
+    expect(screen.queryByText("Up next")).not.toBeInTheDocument();
+  });
 });

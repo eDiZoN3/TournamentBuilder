@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
 import { MatchControls } from "@/components/admin/MatchControls";
+import { ToastProvider } from "@/components/ui/Toast";
 
 vi.mock("@/components/admin/ScoreEntry", () => ({
   ScoreEntry: () => <div data-testid="score-entry">Score modal</div>,
@@ -137,5 +138,38 @@ describe("MatchControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter scores" }));
 
     expect(screen.getByTestId("score-entry")).toBeInTheDocument();
+  });
+
+  it("shows API conflicts as toast notifications", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      jsonResponse(
+        {
+          code: "CONFLICT",
+          error: "No courts available",
+        },
+        409,
+      ),
+    );
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <ToastProvider>
+        <MatchControls
+          courtsAvailable={2}
+          currentMatchIds={[]}
+          match={makeMatch({ status: "ready" })}
+          onUpdated={vi.fn()}
+          teamAName="Alpha"
+          teamBName="Beta"
+          tournamentId="tournament-id"
+        />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark as in progress" }),
+    );
+
+    expect(await screen.findByText("No courts available")).toBeInTheDocument();
   });
 });

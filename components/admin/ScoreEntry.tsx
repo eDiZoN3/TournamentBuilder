@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/components/ui/Toast";
 import type { IMatch, ISetScore } from "@/lib/models/Tournament";
 import { determineMatchWinner, validateSet, type TeamSide } from "@/lib/scoring";
 
@@ -58,6 +59,7 @@ export function ScoreEntry({
   teamBName,
   tournamentId,
 }: ScoreEntryProps) {
+  const { showToast } = useToast();
   const setCount = match.format === "bo1" ? 1 : 3;
   const initialSets = recordedSets(match);
   const [sets, setSets] = useState<ISetScore[]>(initialSets);
@@ -114,7 +116,13 @@ export function ScoreEntry({
       );
 
       if (!response.ok) {
-        setError(await apiError(response, "Unable to save score."));
+        const message = await apiError(response, "Unable to save score.");
+
+        showToast({
+          message,
+          title: "Unable to save score",
+          type: "error",
+        });
         return;
       }
 
@@ -124,8 +132,19 @@ export function ScoreEntry({
       setDrafts(draftsFor(result.sets, setCount));
       setMatchWinner(result.matchWinner);
       await onUpdated();
+      showToast({
+        message: `Set ${index + 1} was saved.`,
+        title: "Score saved",
+        type: "success",
+      });
     } catch {
-      setError("Unable to save score.");
+      const message = "Unable to save score.";
+
+      showToast({
+        message,
+        title: "Unable to save score",
+        type: "error",
+      });
     } finally {
       setSavingSet(null);
     }
@@ -150,14 +169,31 @@ export function ScoreEntry({
       );
 
       if (!response.ok) {
-        setError(await apiError(response, "Unable to confirm match."));
+        const message = await apiError(response, "Unable to confirm match.");
+
+        showToast({
+          message,
+          title: "Unable to confirm match",
+          type: "error",
+        });
         return;
       }
 
       await onUpdated();
+      showToast({
+        message: `${match.label} was completed.`,
+        title: "Match confirmed",
+        type: "success",
+      });
       onClose();
     } catch {
-      setError("Unable to confirm match.");
+      const message = "Unable to confirm match.";
+
+      showToast({
+        message,
+        title: "Unable to confirm match",
+        type: "error",
+      });
     } finally {
       setIsConfirming(false);
     }

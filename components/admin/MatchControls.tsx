@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
+import { useToast } from "@/components/ui/Toast";
 import type { IMatch } from "@/lib/models/Tournament";
 
 interface MatchControlsProps {
@@ -37,8 +38,8 @@ export function MatchControls({
   teamBName,
   tournamentId,
 }: MatchControlsProps) {
+  const { showToast } = useToast();
   const [showScores, setShowScores] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
   if (
@@ -51,7 +52,6 @@ export function MatchControls({
   const courtsFull = currentMatchIds.length >= courtsAvailable;
 
   async function markInProgress() {
-    setError(null);
     setIsUpdating(true);
 
     try {
@@ -69,13 +69,30 @@ export function MatchControls({
       );
 
       if (!response.ok) {
-        setError(await apiError(response, "Unable to update match."));
+        const message = await apiError(response, "Unable to update match.");
+
+        showToast({
+          message,
+          title: "Unable to update match",
+          type: "error",
+        });
         return;
       }
 
       await onUpdated();
+      showToast({
+        message: `${match.label} is now in progress.`,
+        title: "Match updated",
+        type: "success",
+      });
     } catch {
-      setError("Unable to update match.");
+      const message = "Unable to update match.";
+
+      showToast({
+        message,
+        title: "Unable to update match",
+        type: "error",
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -105,11 +122,6 @@ export function MatchControls({
           Enter scores
         </button>
       )}
-      {error ? (
-        <p className="mt-2 text-xs font-medium text-red-600" role="alert">
-          {error}
-        </p>
-      ) : null}
       {showScores ? (
         <ScoreEntry
           match={match}

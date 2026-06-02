@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeSet, makeTeams } from "@/__tests__/helpers/factories";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
+import { ToastProvider } from "@/components/ui/Toast";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -220,5 +221,38 @@ describe("ScoreEntry", () => {
       expect(onUpdated).toHaveBeenCalled();
       expect(onClose).toHaveBeenCalled();
     });
+  });
+
+  it("shows score API failures as toast notifications", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            code: "CONFLICT",
+            error: "Match is already completed",
+          },
+          409,
+        ),
+      ),
+    );
+
+    render(
+      <ToastProvider>
+        <ScoreEntry
+          match={liveMatch()}
+          onClose={vi.fn()}
+          onUpdated={vi.fn()}
+          teamAName="Alpha"
+          teamBName="Beta"
+          tournamentId="tournament-id"
+        />
+      </ToastProvider>,
+    );
+
+    enterSet(1, "11", "9");
+    fireEvent.click(screen.getByRole("button", { name: "Save set 1" }));
+
+    expect(await screen.findByText("Match is already completed")).toBeInTheDocument();
   });
 });

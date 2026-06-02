@@ -3,6 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminDashboard, type TournamentSummary } from "@/components/admin/AdminDashboard";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const tournaments: TournamentSummary[] = [
   {
@@ -73,6 +74,24 @@ describe("AdminDashboard", () => {
   it("shows an empty state", () => {
     render(<AdminDashboard initialTournaments={[]} />);
 
-    expect(screen.getByText("No tournaments yet.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "No tournaments yet." }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows delete failures as toast notifications", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <ToastProvider>
+        <AdminDashboard initialTournaments={tournaments} />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Draft Cup" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm Delete Draft Cup" }));
+
+    expect(await screen.findByText("Unable to delete tournament.")).toBeInTheDocument();
   });
 });

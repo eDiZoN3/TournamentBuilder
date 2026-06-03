@@ -691,3 +691,195 @@ T43-T56 -> T57
 | Phase | Tasks | Notes |
 |---|---|---|
 | 8 - Testing Feedback, Usability, and Stats | 15 | Resolves `issues.md`; includes scheduler, overrides, stats, delete flow, and responsive bracket changes |
+---
+
+## Phase 9 - Roadmap Features
+
+This phase turns the future roadmap items from `roadmap.md` into implementation tasks after the feedback, usability, and stats work in Phase 8.
+
+### T58 - Multi-Admin Account Model and API (TDD First)
+**Files**: `lib/models/User.ts`, `app/api/admin/users/route.ts`, `__tests__/api/admin-users.test.ts`
+**Depends on**: T06, T38, T39
+**TDD**: Write tests before implementation
+**Description**: Extend admin user management so existing admins can create additional admin accounts:
+- Allow more than one admin user while keeping unique email/username constraints.
+- Add an admin-only API to list and create admin accounts.
+- Generate a random 10-character temporary password for new admin accounts.
+- Store only the bcrypt hash of the generated password.
+- Mark new admin accounts as requiring a password change on first login.
+- Return the temporary password only once in the create response.
+
+Tests: auth guard, non-admin rejection, create admin with generated 10-character password, duplicate email rejected, password hash stored instead of plaintext, created user has `mustChangePassword: true`, list admins hides password hashes.
+
+---
+
+### T59 - Forced First-Login Password Change (TDD First)
+**Files**: `lib/auth.ts`, `app/admin/change-password/page.tsx`, `app/api/admin/change-password/route.ts`, `middleware.ts`, `__tests__/api/change-password.test.ts`, `__tests__/components/ChangePasswordPage.test.tsx`, `__tests__/middleware.test.ts`
+**Depends on**: T58
+**TDD**: Write tests before implementation
+**Description**: Require newly created admins to set their own password before using the admin area:
+- Include `mustChangePassword` in the auth session/JWT.
+- Redirect admins with `mustChangePassword: true` to `/admin/change-password`.
+- Allow access to logout and password-change routes while locked.
+- Validate current temporary password and new password confirmation.
+- Hash and save the new password, then clear the first-login flag.
+- Redirect back to the admin dashboard after success.
+
+Tests: login with temporary password redirects to change-password page, protected admin routes are blocked while password change is required, wrong current password rejected, mismatched confirmation rejected, successful password change clears flag, old temporary password no longer works.
+
+---
+
+### T60 - Admin Account Management UI
+**Files**: `components/admin/AdminUsersPanel.tsx`, `app/admin/dashboard/page.tsx`, `__tests__/components/AdminDashboard.test.tsx`, `__tests__/components/AdminUsersPanel.test.tsx`
+**Depends on**: T58, T59
+**TDD**: Write tests alongside implementation
+**Description**: Add admin account management to the dashboard:
+- Show registered admins with email/username, role, and created date.
+- Provide a form to create a new admin account.
+- Display the generated temporary password once after creation.
+- Show clear empty, loading, success, and error states.
+- Keep password values out of persistent UI after dismissal or refresh.
+
+Tests: dashboard renders admin users panel, create form validates email, successful create shows temporary password once, duplicate error shown inline, generated password disappears after dismiss, non-admin users cannot access panel.
+
+---
+
+### T61 - Player Account Model and Authentication (TDD First)
+**Files**: `lib/models/User.ts`, `lib/models/PlayerProfile.ts`, `lib/auth.ts`, `app/api/auth/signup/route.ts`, `__tests__/lib/models/PlayerProfile.test.ts`, `__tests__/api/signup.test.ts`, `__tests__/lib/auth.test.ts`
+**Depends on**: T06, T52
+**TDD**: Write tests before implementation
+**Description**: Add player accounts for long-term stat tracking and tournament self-service:
+- Support player-role users alongside admin users.
+- Store player profile data: first name, optional surname, display name, username/email, and user reference.
+- Hash player passwords with the same security standard as admins.
+- Add public sign-up with duplicate email/username validation.
+- Ensure player identity can be linked to teams and historical stats by normalized profile fields.
+
+Tests: player profile validation, unique username/email, password hash stored, signup creates user plus profile, duplicate signup rejected, player login succeeds, player session includes player profile identity, admin-only routes remain admin-only.
+
+---
+
+### T62 - Public Player Registration and Account Pages
+**Files**: `app/(public)/signup/page.tsx`, `app/(public)/account/page.tsx`, `components/player/SignupForm.tsx`, `components/player/PlayerAccountView.tsx`, `components/ui/Navbar.tsx`, `__tests__/components/SignupForm.test.tsx`, `__tests__/components/PlayerAccountView.test.tsx`, `__tests__/components/Navbar.test.tsx`
+**Depends on**: T61, T54
+**TDD**: Write tests alongside implementation
+**Description**: Let players create and view their own accounts:
+- Public signup form for name, optional surname, username/email, and password.
+- Account page shows profile data and the player's tournament/stat summary.
+- Navbar shows signup/login/account actions based on session state.
+- Player account stats reuse calculated stats instead of manual values.
+- Show empty state when a player has not joined or completed tournaments yet.
+
+Tests: signup form validation, successful signup redirects or signs in, account page requires player auth, profile fields render, empty stats state, existing stats render, navbar changes for anonymous/player/admin sessions.
+
+---
+
+### T63 - Joinable Tournament Settings and Join Phase (TDD First)
+**Files**: `lib/models/Tournament.ts`, `app/api/tournaments/route.ts`, `app/api/tournaments/[id]/route.ts`, `app/admin/tournament/new/page.tsx`, `app/admin/tournament/[id]/setup/page.tsx`, `__tests__/api/tournaments.test.ts`, `__tests__/components/NewTournamentPage.test.tsx`, `__tests__/components/TournamentSetupPage.test.tsx`
+**Depends on**: T18, T61
+**TDD**: Write tests before implementation
+**Description**: Add admin-controlled self-join settings to tournament creation and setup:
+- Add a tournament setting for whether player accounts can join themselves.
+- Add a join phase/state before the tournament is started.
+- Allow admins to choose between manual player entry, team entry, and account-based self-join where appropriate.
+- Prevent joining after the tournament becomes active or completed.
+- Keep existing draft/setup flows working for manually entered players and teams.
+
+Tests: create tournament with self-join enabled, create tournament with self-join disabled, invalid self-join/input-mode combinations rejected, setup page shows join settings, active tournaments cannot be joined, existing manual setup tests still pass.
+
+---
+
+### T64 - Player Tournament Self-Join Flow and Highlighting (TDD First)
+**Files**: `app/api/tournaments/[id]/join/route.ts`, `components/player/JoinTournamentButton.tsx`, `components/bracket/MatchCard.tsx`, `components/bracket/PublicTournamentView.tsx`, `__tests__/api/join.test.ts`, `__tests__/components/JoinTournamentButton.test.tsx`, `__tests__/components/PublicTournamentView.test.tsx`, `__tests__/components/MatchCard.test.tsx`
+**Depends on**: T63
+**TDD**: Write tests before implementation
+**Description**: Let authenticated players join available tournaments and make their own participation easy to see:
+- Public tournament view shows a join action during the join phase.
+- Joining links the player account/profile to the tournament roster.
+- Prevent duplicate joins and joins after start.
+- Admin-entered players and self-joined players can coexist according to tournament settings.
+- Highlight the current player's team/matches in the public bracket once teams are generated.
+
+Tests: unauthenticated join rejected or redirects, player can join joinable tournament, duplicate join rejected, active tournament join rejected, joined player appears in setup/roster data, current player's team is highlighted, unrelated teams are not highlighted.
+
+---
+
+### T65 - Switchable Dark Mode
+**Files**: `app/layout.tsx`, `components/ui/ThemeProvider.tsx`, `components/ui/ThemeToggle.tsx`, `components/ui/Navbar.tsx`, `tailwind.config.ts`, `__tests__/components/ThemeToggle.test.tsx`, `__tests__/components/Navbar.test.tsx`
+**Depends on**: T09, T39
+**TDD**: Write tests alongside implementation
+**Description**: Add a persistent dark-mode option:
+- Support light, dark, and system theme modes.
+- Persist the user's theme choice locally.
+- Avoid flash of incorrect theme during initial render where practical.
+- Expose a compact theme toggle in public and admin navigation.
+- Update shared UI components so text, backgrounds, borders, badges, tables, and bracket cards remain readable in dark mode.
+
+Tests: toggle cycles or selects themes, selected theme persists, root class/data attribute updates, navbar includes toggle, bracket and table components keep readable dark-mode classes, system/default mode has a stable fallback.
+
+---
+
+### T66 - Admin Dashboard Metrics API (TDD First)
+**Files**: `app/api/admin/dashboard/route.ts`, `lib/admin/dashboardMetrics.ts`, `__tests__/api/admin-dashboard.test.ts`, `__tests__/lib/admin/dashboardMetrics.test.ts`
+**Depends on**: T14, T52, T53, T58, T61
+**TDD**: Write tests before implementation
+**Description**: Provide aggregated dashboard metrics for admins:
+- Count registered players, registered admins, and tournaments by status.
+- Count total played matches across completed non-bye matches.
+- Include recent tournament summaries and top player/team stat snippets where useful.
+- Keep the endpoint admin-only.
+- Return stable zero values for an empty database.
+
+Tests: auth guard, empty database metrics, counts admins, counts players, counts tournaments by status, counts played matches excluding byes, aggregation across multiple tournaments, response shape remains stable.
+
+---
+
+### T67 - Admin Dashboard Management Panels
+**Files**: `components/admin/AdminDashboard.tsx`, `components/admin/DashboardMetrics.tsx`, `components/admin/PlayerUsersPanel.tsx`, `app/admin/dashboard/page.tsx`, `__tests__/components/AdminDashboard.test.tsx`, `__tests__/components/DashboardMetrics.test.tsx`, `__tests__/components/PlayerUsersPanel.test.tsx`
+**Depends on**: T60, T66
+**TDD**: Write tests alongside implementation
+**Description**: Expand the admin dashboard with the roadmap management overview:
+- Display registered player count, registered admin count, registered tournament count, and total played matches.
+- Show registered players and admins in separate dashboard sections.
+- Preserve existing tournament list and actions.
+- Add empty/loading/error states for every panel.
+- Keep the dashboard scannable on desktop and mobile.
+
+Tests: metrics cards render correct values, players panel renders registered players, admins panel renders registered admins, empty states render, API errors show error state, existing tournament actions still work, responsive layout classes are present.
+
+---
+
+### T68 - Admin Player Registration and Password Reset (TDD First)
+**Files**: `app/api/admin/players/route.ts`, `app/api/admin/players/[id]/reset-password/route.ts`, `components/admin/PlayerUsersPanel.tsx`, `__tests__/api/admin-players.test.ts`, `__tests__/components/PlayerUsersPanel.test.tsx`
+**Depends on**: T61, T67
+**TDD**: Write tests before implementation
+**Description**: Let admins create player accounts and reset player passwords:
+- Admin can register a player account from the dashboard.
+- Admin-created players receive a generated temporary password.
+- Admin can reset an existing player's password to a new generated temporary password.
+- Reset player accounts are forced to change password on next login.
+- Temporary passwords are shown once and never stored plaintext.
+
+Tests: auth guard, admin creates player with generated password, duplicate player rejected, reset password updates hash, reset sets `mustChangePassword: true`, old password fails after reset, temporary password shown once in UI, player can complete forced password change.
+
+---
+
+## Phase 9 Dependency Summary
+
+```
+T06, T38, T39 -> T58 -> T59 -> T60
+T06, T52 -> T61 -> T62
+T18, T61 -> T63 -> T64
+T09, T39 -> T65
+T14, T52, T53, T58, T61 -> T66
+T60, T66 -> T67
+T61, T67 -> T68
+```
+
+---
+
+## Additional Roadmap Task Count
+
+| Phase | Tasks | Notes |
+|---|---|---|
+| 9 - Roadmap Features | 11 | Admin accounts, player accounts/self-join, dark mode, dashboard metrics, and player password reset |

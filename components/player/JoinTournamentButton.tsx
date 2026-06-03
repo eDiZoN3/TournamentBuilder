@@ -21,7 +21,7 @@ export function JoinTournamentButton({
   if (!currentPlayerName) {
     return (
       <Link
-        className="inline-flex rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
+        className="inline-flex rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-950"
         href="/signup"
       >
         Sign up to join
@@ -31,7 +31,7 @@ export function JoinTournamentButton({
 
   if (isJoined) {
     return (
-      <p className="text-sm font-semibold text-emerald-700">
+      <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
         Joined as {currentPlayerName}
       </p>
     );
@@ -63,7 +63,7 @@ export function JoinTournamentButton({
   return (
     <div>
       <button
-        className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+        className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 dark:bg-white dark:text-slate-950"
         disabled={isSubmitting}
         onClick={joinTournament}
         type="button"

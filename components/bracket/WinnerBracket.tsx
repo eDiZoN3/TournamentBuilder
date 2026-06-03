@@ -56,7 +56,7 @@ export function WinnerBracket({
   return (
     <section aria-labelledby="winner-bracket-title">
       <h2
-        className="mb-4 text-lg font-bold tracking-tight text-slate-900"
+        className="mb-4 text-lg font-bold tracking-tight text-slate-900 dark:text-white"
         id="winner-bracket-title"
       >
         Winner bracket
@@ -77,7 +77,7 @@ export function WinnerBracket({
             data-testid="winner-round"
             key={round}
           >
-            <h3 className="mb-3 text-sm font-semibold text-slate-600">
+            <h3 className="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
               {roundMatches[0]?.label ?? `WB Round ${round}`}
             </h3>
             <div

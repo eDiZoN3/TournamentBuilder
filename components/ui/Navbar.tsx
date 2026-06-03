@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface NavbarProps {
   isAuthenticated: boolean;
@@ -10,29 +11,39 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
   const accountLabel = role === "player" ? "Account" : "Dashboard";
 
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <Link className="font-semibold text-slate-900" href="/">
+    <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
+        <Link className="font-semibold text-slate-900 dark:text-white" href="/">
           Raro Volleyball
         </Link>
-        <div className="flex items-center gap-4 text-sm font-medium">
-          <Link className="text-slate-600 hover:text-slate-900" href="/">
+        <div className="flex flex-wrap items-center justify-end gap-3 text-sm font-medium">
+          <Link
+            className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            href="/"
+          >
             Tournaments
           </Link>
-          <Link className="text-slate-600 hover:text-slate-900" href="/stats">
+          <Link
+            className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+            href="/stats"
+          >
             Stats
           </Link>
           {!isAuthenticated ? (
-            <Link className="text-slate-600 hover:text-slate-900" href="/signup">
+            <Link
+              className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+              href="/signup"
+            >
               Sign up
             </Link>
           ) : null}
           <Link
-            className="rounded-md bg-slate-900 px-3 py-2 text-white hover:bg-slate-700"
+            className="rounded-md bg-slate-900 px-3 py-2 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
             href={isAuthenticated ? accountHref : "/admin/login"}
           >
             {isAuthenticated ? accountLabel : "Admin login"}
           </Link>
+          <ThemeToggle />
         </div>
       </nav>
     </header>

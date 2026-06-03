@@ -11,6 +11,7 @@ describe("Navbar", () => {
     expect(markup).toContain("Sign up");
     expect(markup).toContain('href="/stats"');
     expect(markup).toContain("Stats");
+    expect(markup).toContain("Switch to dark mode");
   });
 
   it("links authenticated users to the dashboard", () => {

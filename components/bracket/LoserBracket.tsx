@@ -60,7 +60,7 @@ export function LoserBracket({
   return (
     <section aria-labelledby="loser-bracket-title">
       <h2
-        className="mb-4 text-lg font-bold tracking-tight text-slate-900"
+        className="mb-4 text-lg font-bold tracking-tight text-slate-900 dark:text-white"
         id="loser-bracket-title"
       >
         Loser bracket
@@ -84,8 +84,8 @@ export function LoserBracket({
             <h3
               className={`mb-3 text-sm font-semibold ${
                 roundMatches.some((match) => match.isLBFinal)
-                  ? "text-amber-700"
-                  : "text-slate-600"
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-slate-600 dark:text-slate-300"
               }`}
             >
               {roundMatches[0]?.label ?? `LB Round ${round}`}

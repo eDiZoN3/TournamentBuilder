@@ -97,11 +97,11 @@ export function CourtOverrideControls({
 
   return (
     <div className="mt-2 flex gap-2" data-testid="court-override">
-      <label className="flex-1 text-xs font-medium text-slate-600">
+      <label className="flex-1 text-xs font-medium text-slate-600 dark:text-slate-300">
         <span className="sr-only">Court override</span>
         <select
           aria-label="Court override"
-          className="w-full rounded-md border border-slate-300 bg-white px-2 py-2"
+          className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 dark:border-slate-600 dark:bg-slate-900"
           onChange={(event) => setCourtNumber(Number(event.target.value))}
           value={courtNumber}
         >
@@ -115,7 +115,7 @@ export function CourtOverrideControls({
         </select>
       </label>
       <button
-        className="rounded-md border border-slate-300 px-2 py-2 text-xs font-semibold"
+        className="rounded-md border border-slate-300 px-2 py-2 text-xs font-semibold dark:border-slate-600 dark:text-slate-200"
         disabled={isAssigning}
         onClick={() => void assignSelectedCourt()}
         type="button"

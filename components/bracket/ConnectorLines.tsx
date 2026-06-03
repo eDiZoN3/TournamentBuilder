@@ -148,7 +148,7 @@ export function ConnectorLines({ containerRef, matches }: ConnectorLinesProps) {
           className={
             line.highlighted
               ? "fill-none stroke-amber-400"
-              : "fill-none stroke-slate-300"
+              : "fill-none stroke-slate-300 dark:stroke-slate-600"
           }
           d={line.path}
           data-testid="connector-line"

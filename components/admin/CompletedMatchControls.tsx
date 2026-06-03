@@ -63,11 +63,11 @@ export function CompletedMatchControls({
 
   return (
     <div
-      className="border-t border-slate-200 bg-slate-50 px-3 py-2"
+      className="border-t border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
       data-testid="completed-match-controls"
     >
       <button
-        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
         onClick={openOverride}
         type="button"
       >

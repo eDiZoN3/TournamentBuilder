@@ -131,26 +131,26 @@ export function StandingsTable({ tournament }: { tournament: ITournament }) {
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-emerald-900">Final standings</h2>
+      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">Final standings</h2>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-emerald-200 text-xs uppercase tracking-wide text-emerald-800">
+            <tr className="border-b border-emerald-200 text-xs uppercase tracking-wide text-emerald-800 dark:border-emerald-800 dark:text-emerald-200">
               <th className="py-2 pr-4 font-semibold">Place</th>
               <th className="px-4 py-2 font-semibold">Team</th>
               <th className="py-2 pl-4 font-semibold">Players</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-emerald-100">
+          <tbody className="divide-y divide-emerald-100 dark:divide-emerald-900">
             {standings.map(({ place, team }) => (
               <tr key={idString(team._id)}>
-                <td className="py-3 pr-4 font-bold text-emerald-800">
+                <td className="py-3 pr-4 font-bold text-emerald-800 dark:text-emerald-200">
                   {ordinal(place)}
                 </td>
-                <td className="px-4 py-3 font-semibold text-slate-900">
+                <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
                   {team.name}
                 </td>
-                <td className="py-3 pl-4 text-slate-600">
+                <td className="py-3 pl-4 text-slate-600 dark:text-slate-300">
                   {team.players.length > 0
                     ? team.players.join(", ")
                     : "No players listed"}

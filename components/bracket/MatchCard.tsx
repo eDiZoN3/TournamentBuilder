@@ -22,12 +22,12 @@ function rowClasses(
   completed: boolean,
 ): string {
   if (!completed || !slot || !winnerId) {
-    return "text-slate-700";
+    return "text-slate-700 dark:text-slate-200";
   }
 
   return slot.teamId.toString() === winnerId.toString()
-    ? "font-semibold text-emerald-700"
-    : "text-slate-400";
+    ? "font-semibold text-emerald-700 dark:text-emerald-300"
+    : "text-slate-400 dark:text-slate-500";
 }
 
 function MatchRow({
@@ -49,7 +49,7 @@ function MatchRow({
     <div
       className={`flex min-h-8 items-center justify-between gap-3 px-3 py-1.5 ${
         isCurrentPlayerTeam
-          ? "bg-sky-50 text-sky-900 ring-1 ring-inset ring-sky-200"
+          ? "bg-sky-50 text-sky-900 ring-1 ring-inset ring-sky-200 dark:bg-sky-950 dark:text-sky-100 dark:ring-sky-700"
           : rowClasses(team.slot, winnerId, completed)
       }`}
       data-current-player-team={isCurrentPlayerTeam}
@@ -99,12 +99,14 @@ export function MatchCard({
         { name: match.teamB ? teamBName : "TBD", slot: match.teamB },
       ];
   const cardClasses = [
-    "group relative w-64 overflow-hidden rounded-lg border bg-white shadow-sm",
+    "group relative w-64 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-slate-900",
     isPinned ? "z-40 opacity-100 shadow-xl" : "z-10",
     match.status === "pending" && !match.isBye && !isPinned
       ? "border-slate-200 opacity-60"
       : "border-slate-300",
-    isLive ? "animate-pulse border-amber-400 ring-2 ring-amber-200" : "",
+    isLive
+      ? "animate-pulse border-amber-400 ring-2 ring-amber-200 dark:border-amber-500 dark:ring-amber-700"
+      : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -122,7 +124,7 @@ export function MatchCard({
       data-testid="match-card"
       id={`match-${match._id.toString()}`}
     >
-      <header className="border-b border-slate-200 bg-slate-50 px-3 py-2 pr-16">
+      <header className="border-b border-slate-200 bg-slate-50 px-3 py-2 pr-16 dark:border-slate-700 dark:bg-slate-800">
         <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600">
           {match.label}
         </p>
@@ -131,11 +133,11 @@ export function MatchCard({
         ) : null}
       </header>
       {isLive && match.courtNumber !== null ? (
-        <span className="absolute right-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+        <span className="absolute right-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-900 dark:text-amber-100">
           Court {match.courtNumber}
         </span>
       ) : null}
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 dark:divide-slate-800">
         <MatchRow
           completed={isCompleted}
           isCurrentPlayerTeam={teamAIsCurrentPlayerTeam}
@@ -153,7 +155,7 @@ export function MatchCard({
           winnerId={match.winnerId}
         />
       </div>
-      <footer className="border-t border-slate-100 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+      <footer className="border-t border-slate-100 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-slate-800">
         {isLive
           ? "LIVE"
           : isCompleted

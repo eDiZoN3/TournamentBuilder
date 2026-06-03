@@ -71,17 +71,17 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
   return (
     <section
       aria-labelledby="admin-accounts-title"
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2
-            className="text-lg font-semibold text-slate-900"
+            className="text-lg font-semibold text-slate-900 dark:text-white"
             id="admin-accounts-title"
           >
             Admin accounts
           </h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Create admins with a one-time temporary password.
           </p>
         </div>
@@ -90,14 +90,14 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
       <form className="mt-5 flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
         <div className="min-w-0 flex-1">
           <label
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-admin-email"
           >
             New admin email
           </label>
           <input
             autoComplete="email"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:focus:ring-slate-700"
             id="new-admin-email"
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -123,7 +123,7 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
       ) : null}
 
       {createdAdmin ? (
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">Temporary password</p>
@@ -136,7 +136,7 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
             </div>
             <button
               aria-label="Dismiss temporary password"
-              className="rounded-md border border-amber-300 px-3 py-2 text-sm font-semibold"
+              className="rounded-md border border-amber-300 px-3 py-2 text-sm font-semibold dark:border-amber-600"
               onClick={() => setCreatedAdmin(null)}
               type="button"
             >
@@ -148,28 +148,28 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
 
       <div className="mt-5 overflow-x-auto">
         {admins.length === 0 ? (
-          <p className="text-sm text-slate-500">No admin accounts yet.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">No admin accounts yet.</p>
         ) : (
           <table className="min-w-full text-left text-sm">
-            <thead className="text-xs uppercase text-slate-500">
+            <thead className="text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-2 pr-4 font-semibold">Email</th>
                 <th className="py-2 pr-4 font-semibold">Status</th>
                 <th className="py-2 font-semibold">Created</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {admins.map((admin) => (
                 <tr key={admin._id}>
-                  <td className="py-3 pr-4 font-medium text-slate-900">
+                  <td className="py-3 pr-4 font-medium text-slate-900 dark:text-white">
                     {admin.email}
                   </td>
-                  <td className="py-3 pr-4 text-slate-600">
+                  <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
                     {admin.mustChangePassword
                       ? "Password change required"
                       : "Active"}
                   </td>
-                  <td className="py-3 text-slate-500">
+                  <td className="py-3 text-slate-500 dark:text-slate-400">
                     {new Date(admin.createdAt).toLocaleDateString()}
                   </td>
                 </tr>

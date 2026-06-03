@@ -204,7 +204,7 @@ export function TournamentSetupForm({
       <h1 className="text-3xl font-bold tracking-tight">
         Set up {tournament.name}
       </h1>
-      <p className="mt-2 text-slate-600">
+      <p className="mt-2 text-slate-600 dark:text-slate-300">
         Add participants and confirm the teams before starting the tournament.
       </p>
 
@@ -216,7 +216,7 @@ export function TournamentSetupForm({
                 <span className="sr-only">Team {index + 1} name</span>
                 <input
                   aria-label={`Team ${index + 1} name`}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                   maxLength={50}
                   onChange={(event) => updateTeamName(index, event.target.value)}
                   placeholder={`Team ${index + 1}`}
@@ -224,7 +224,7 @@ export function TournamentSetupForm({
                 />
               </label>
               <button
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
                 disabled={teamNames.length <= 2}
                 onClick={() =>
                   setTeamNames((current) =>
@@ -238,7 +238,7 @@ export function TournamentSetupForm({
             </div>
           ))}
           <button
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
             onClick={() => setTeamNames((current) => [...current, ""])}
             type="button"
           >
@@ -248,11 +248,11 @@ export function TournamentSetupForm({
       ) : (
         <div className="mt-8">
           {tournament.allowSelfJoin && (tournament.joinedPlayers ?? []).length > 0 ? (
-            <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-              <h2 className="text-lg font-semibold text-slate-900">
+            <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 Joined players
               </h2>
-              <ul className="mt-3 space-y-1 text-sm text-slate-600">
+              <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-300">
                 {(tournament.joinedPlayers ?? []).map((player) => (
                   <li key={player.userId}>{player.displayName}</li>
                 ))}
@@ -266,7 +266,7 @@ export function TournamentSetupForm({
                   <span className="sr-only">Player {index + 1} name</span>
                   <input
                     aria-label={`Player ${index + 1} name`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                     onChange={(event) =>
                       updatePlayerName(index, event.target.value)
                     }
@@ -275,7 +275,7 @@ export function TournamentSetupForm({
                   />
                 </label>
                 <button
-                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
                   disabled={playerNames.length <= 1}
                   onClick={() =>
                     setPlayerNames((current) =>
@@ -293,7 +293,7 @@ export function TournamentSetupForm({
           </div>
           <div className="mt-3 flex gap-3">
             <button
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
               onClick={() => setPlayerNames((current) => [...current, ""])}
               type="button"
             >
@@ -309,7 +309,7 @@ export function TournamentSetupForm({
           </div>
 
           {hasPlayerRemainder ? (
-            <p className="mt-3 text-sm text-amber-700">
+            <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
               Some players will be added to the last team.
             </p>
           ) : null}
@@ -319,7 +319,7 @@ export function TournamentSetupForm({
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Team preview</h2>
                 <button
-                  className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
                   onClick={generateTeams}
                   type="button"
                 >
@@ -328,19 +328,19 @@ export function TournamentSetupForm({
               </div>
               {previewTeams.map((team, index) => (
                 <div
-                  className="rounded-md border border-slate-200 bg-white p-4"
+                  className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
                   key={index}
                 >
                   <input
                     aria-label={`Preview team ${index + 1} name`}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 font-medium"
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 font-medium dark:border-slate-600"
                     maxLength={50}
                     onChange={(event) =>
                       updatePreviewName(index, event.target.value)
                     }
                     value={team.name}
                   />
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                     {team.players.join(", ")}
                   </p>
                 </div>

@@ -307,21 +307,21 @@ export function ScoreEntry({
     <div
       aria-labelledby="score-entry-title"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 dark:bg-black/60"
       role="dialog"
     >
-      <section className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+      <section className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl dark:bg-slate-900">
         <header className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold" id="score-entry-title">
               {isOverride ? "Override result" : "Enter scores"}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {match.label} / {match.format === "bo1" ? "Best of 1" : "Best of 3"}
             </p>
           </div>
           <button
-            className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+            className="rounded-md border border-slate-300 px-2 py-1 text-sm dark:border-slate-600"
             onClick={onClose}
             type="button"
           >
@@ -334,7 +334,7 @@ export function ScoreEntry({
 
             return (
               <fieldset
-                className="rounded-lg border border-slate-200 p-3"
+                className="rounded-lg border border-slate-200 p-3 dark:border-slate-700"
                 disabled={isLocked}
                 key={index}
               >
@@ -343,10 +343,10 @@ export function ScoreEntry({
                 </legend>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="text-sm">
-                    <span className="mb-1 block text-slate-600">{teamAName}</span>
+                    <span className="mb-1 block text-slate-600 dark:text-slate-300">{teamAName}</span>
                     <input
                       aria-label={`Set ${index + 1} Team A`}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2"
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                       disabled={isLocked}
                       min="0"
                       onChange={(event) =>
@@ -357,10 +357,10 @@ export function ScoreEntry({
                     />
                   </label>
                   <label className="text-sm">
-                    <span className="mb-1 block text-slate-600">{teamBName}</span>
+                    <span className="mb-1 block text-slate-600 dark:text-slate-300">{teamBName}</span>
                     <input
                       aria-label={`Set ${index + 1} Team B`}
-                      className="w-full rounded-md border border-slate-300 px-3 py-2"
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                       disabled={isLocked}
                       min="0"
                       onChange={(event) =>
@@ -392,14 +392,14 @@ export function ScoreEntry({
           <>
             {requiresOverrideConfirmation ? (
               <p
-                className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900"
+                className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
                 role="alert"
               >
                 Changing the winner will reset downstream matches.
               </p>
             ) : null}
-            <div className="mt-5 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-              <p className="text-sm font-semibold text-emerald-700">
+            <div className="mt-5 flex items-center justify-between gap-4 border-t border-slate-200 pt-4 dark:border-slate-700">
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                 Winner: {matchWinner === "A" ? teamAName : teamBName}
               </p>
               <button

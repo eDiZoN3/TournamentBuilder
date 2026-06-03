@@ -63,18 +63,18 @@ export function SignupForm() {
   }
 
   return (
-    <section className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <section className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <h1 className="text-2xl font-bold tracking-tight">Player sign up</h1>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         Create an account to join open tournaments and track your stats.
       </p>
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="firstName">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="firstName">
             First name
           </label>
           <input
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="firstName"
             maxLength={50}
             onChange={(event) => setFirstName(event.target.value)}
@@ -83,11 +83,11 @@ export function SignupForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="surname">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="surname">
             Surname
           </label>
           <input
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="surname"
             maxLength={50}
             onChange={(event) => setSurname(event.target.value)}
@@ -95,12 +95,12 @@ export function SignupForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="email">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
             Email
           </label>
           <input
             autoComplete="email"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="email"
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -109,12 +109,12 @@ export function SignupForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-700" htmlFor="password">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
             Password
           </label>
           <input
             autoComplete="new-password"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="password"
             minLength={8}
             onChange={(event) => setPassword(event.target.value)}

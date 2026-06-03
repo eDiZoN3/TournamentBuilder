@@ -51,9 +51,8 @@ export default function TournamentSetupPage() {
   }
 
   if (!tournament) {
-    return <p className="text-slate-600">Loading tournament...</p>;
+    return <p className="text-slate-600 dark:text-slate-300">Loading tournament...</p>;
   }
 
   return <TournamentSetupForm tournament={tournament} />;
 }
-

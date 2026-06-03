@@ -55,19 +55,19 @@ export default function NewTournamentPage() {
   return (
     <section className="max-w-2xl">
       <h1 className="text-3xl font-bold tracking-tight">New tournament</h1>
-      <p className="mt-2 text-slate-600">
+      <p className="mt-2 text-slate-600 dark:text-slate-300">
         Configure the tournament before entering teams or players.
       </p>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div>
           <label
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="name"
           >
             Tournament name
           </label>
           <input
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="name"
             maxLength={100}
             onChange={(event) => setName(event.target.value)}
@@ -77,7 +77,7 @@ export default function NewTournamentPage() {
         </div>
 
         <fieldset>
-          <legend className="text-sm font-medium text-slate-700">
+          <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Team size
           </legend>
           <div className="mt-2 flex gap-4">
@@ -97,13 +97,13 @@ export default function NewTournamentPage() {
 
         <div>
           <label
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="courtsAvailable"
           >
             Courts available
           </label>
           <input
-            className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2"
+            className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="courtsAvailable"
             max={10}
             min={1}
@@ -117,7 +117,7 @@ export default function NewTournamentPage() {
         </div>
 
         <fieldset>
-          <legend className="text-sm font-medium text-slate-700">
+          <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Team entry
           </legend>
           <div className="mt-2 space-y-2">

@@ -36,7 +36,7 @@ export function AdminDashboard({
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="mt-2 text-slate-600">Manage volleyball tournaments.</p>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">Manage volleyball tournaments.</p>
         </div>
         <Link
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
@@ -67,15 +67,15 @@ export function AdminDashboard({
         <div className="mt-8 grid gap-4">
           {tournaments.map((tournament) => (
             <article
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
               key={tournament._id}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold text-slate-900">
+                  <h2 className="font-semibold text-slate-900 dark:text-white">
                     {tournament.name}
                   </h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                     {tournament.teamCount} teams / {tournament.matchCount} matches
                   </p>
                 </div>

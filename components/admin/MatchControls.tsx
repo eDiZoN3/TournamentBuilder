@@ -152,7 +152,7 @@ export function MatchControls({
 
   return (
     <div
-      className="border-t border-slate-200 bg-slate-50 px-3 py-2"
+      className="border-t border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
       data-testid="match-controls"
     >
       {match.status === "ready" ? (

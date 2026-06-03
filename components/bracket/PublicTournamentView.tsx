@@ -29,10 +29,10 @@ async function fetchTournament(url: string): Promise<ITournament> {
 export function FinalStandings({ tournament }: { tournament: ITournament }) {
   return (
     <section
-      className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"
+      className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950"
       data-testid="tournament-complete"
     >
-      <h2 className="text-xl font-bold text-emerald-900">
+      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
         Tournament complete
       </h2>
       <div className="mt-4">
@@ -84,7 +84,7 @@ export function PublicTournamentView({
     <section className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Tournament bracket
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">
@@ -105,11 +105,11 @@ export function PublicTournamentView({
       {tournament.status === "draft" &&
       tournament.allowSelfJoin &&
       tournament.inputMode === "players" ? (
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Join phase</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Join phase</h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                 {joinedPlayers.length} player{joinedPlayers.length === 1 ? "" : "s"} joined
               </p>
             </div>
@@ -123,7 +123,7 @@ export function PublicTournamentView({
             <ul className="mt-4 flex flex-wrap gap-2 text-sm">
               {joinedPlayers.map((player) => (
                 <li
-                  className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700"
+                  className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200"
                   key={player.userId.toString()}
                 >
                   {player.displayName}

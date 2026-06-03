@@ -21,7 +21,7 @@ export function TournamentStats({
   return (
     <section className="space-y-5">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
           Stats
         </h2>
       </div>

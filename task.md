@@ -805,17 +805,17 @@ Tests: unauthenticated join rejected or redirects, player can join joinable tour
 ---
 
 ### T65 - Switchable Dark Mode
-**Files**: `app/layout.tsx`, `components/ui/ThemeProvider.tsx`, `components/ui/ThemeToggle.tsx`, `components/ui/Navbar.tsx`, `tailwind.config.ts`, `__tests__/components/ThemeToggle.test.tsx`, `__tests__/components/Navbar.test.tsx`
+**Files**: `app/layout.tsx`, `components/ui/ThemeProvider.tsx`, `components/ui/ThemeToggle.tsx`, `components/ui/Navbar.tsx`, `components/ui/AdminSidebar.tsx`, `tailwind.config.ts`, `__tests__/components/ThemeToggle.test.tsx`, `__tests__/components/Navbar.test.tsx`, `__tests__/components/AdminSidebar.test.tsx`
 **Depends on**: T09, T39
 **TDD**: Write tests alongside implementation
 **Description**: Add a persistent dark-mode option:
-- Support light, dark, and system theme modes.
+- Support switchable light and dark theme modes.
 - Persist the user's theme choice locally.
 - Avoid flash of incorrect theme during initial render where practical.
 - Expose a compact theme toggle in public and admin navigation.
 - Update shared UI components so text, backgrounds, borders, badges, tables, and bracket cards remain readable in dark mode.
 
-Tests: toggle cycles or selects themes, selected theme persists, root class/data attribute updates, navbar includes toggle, bracket and table components keep readable dark-mode classes, system/default mode has a stable fallback.
+Tests: toggle switches light and dark themes, selected theme persists, root class/data attribute updates, public and admin navigation include the toggle, bracket and table components keep readable dark-mode classes, default mode has a stable light fallback.
 
 ---
 

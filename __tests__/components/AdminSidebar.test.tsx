@@ -13,6 +13,6 @@ describe("AdminSidebar", () => {
     expect(markup).toContain('href="/admin/dashboard"');
     expect(markup).toContain("Dashboard");
     expect(markup).toContain("Log out");
+    expect(markup).toContain("Switch to dark mode");
   });
 });
-

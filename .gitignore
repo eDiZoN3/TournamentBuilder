@@ -25,4 +25,4 @@ yarn-error.log*
 *.tsbuildinfo
 
 ecosystem.config.js
-!ecosystem.config.js
+!ecosystem.config.js.template

@@ -24,17 +24,24 @@ export default async function TournamentPage({ params }: TournamentPageProps) {
 
   await connectDB();
 
-  const session = await getServerSession(authOptions);
-  const [tournament, profile] = await Promise.all([
-    Tournament.findById(id).lean(),
-    session?.user.role === "player"
-      ? PlayerProfile.findOne({ userId: session.user.id }).lean()
-      : null,
-  ]);
+  const tournament = await Tournament.findById(id).lean();
 
   if (!tournament) {
     notFound();
   }
+
+  let session = null;
+
+  try {
+    session = await getServerSession(authOptions);
+  } catch {
+    session = null;
+  }
+
+  const profile =
+    session?.user.role === "player"
+      ? await PlayerProfile.findOne({ userId: session.user.id }).lean()
+      : null;
 
   const initialTournament = JSON.parse(
     JSON.stringify(tournament),

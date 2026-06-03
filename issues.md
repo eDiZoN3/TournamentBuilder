@@ -7,3 +7,14 @@
 7. [implemented] when in the admin view the desktop version is good and everything is visible, when there are more teams than probably 8 it will be nescessary to drop the looser bracket below the winnersbracket
 8. [implemented] when just viewing the matchs with no admin the view is to narrow, it can expand the same way as in admin view
 9. [implemented] already at 1400px width it should be that the lower bracket is below the winner bracket and in mobile view it really is very badly visible, the 2 tabs are a good solution but the graph needs to be refined to be better visible, i dont know maybe also with tabs that show round 1, round 2 etc and then this displays only those rounds
+10. stats table are not mobile (responsive design) compatible. that must be fixed, also admin view create accounts cards are to wide
+11. in mobile view the round tabs are all labeld final which is wrong. it should be round 1, round 2. etc.
+12. need burger menu navbar in mobile view
+13. super admin (created with runtime script) needs to be able to remove other admins, call admin not admin anymore but tournament lead or something (superadmin should still be called admin)
+14. when logging out from admin account, redirect to normal login page
+15. remove the seperation of the two login pages and automatically detect if its an admin account, a tournament manger account or a normal player account, this is better ux
+16. there is no logout button for player accounts, add this
+17. when a player presses join it is not instant visible in the create tournament view that he has joined, this shuold be possible
+18. admin needs feature to reset stats, per user, per tournament, per season, and complete, make a new tab in the dashboard for it.
+19. in the admin dashboard is no clickable link that leads back to public view, this needs to be added
+20.

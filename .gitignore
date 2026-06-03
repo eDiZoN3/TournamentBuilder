@@ -24,3 +24,5 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 
+ecosystem.config.js
+!ecosystem.config.js

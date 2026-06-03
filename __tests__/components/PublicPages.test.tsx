@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
 import HomePage from "@/app/(public)/page";
+import StatsPage from "@/app/(public)/stats/page";
 import TournamentPage from "@/app/(public)/tournament/[id]/page";
 import { Tournament } from "@/lib/models/Tournament";
 
@@ -37,6 +38,46 @@ describe("public tournament list", () => {
     expect(markup).toContain("Public Cup");
     expect(markup).toContain("Active");
     expect(markup).toContain(`/tournament/${tournament._id.toString()}`);
+  });
+});
+
+describe("public global stats page", () => {
+  it("renders cross-season team and player stats", async () => {
+    const teams = makeTeams(2);
+    teams[0].name = "Alpha";
+    teams[0].players = ["Alice"];
+    teams[1].name = "Beta";
+    teams[1].players = ["Bob"];
+    await Tournament.create({
+      name: "Stats Cup",
+      status: "completed",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [
+        makeMatch({
+          status: "completed",
+          teamA: { teamId: teams[0]._id, sets: [{ scoreA: 11, scoreB: 9, pointsToWin: 11 }] },
+          teamB: { teamId: teams[1]._id, sets: [] },
+          winnerId: teams[0]._id,
+          loserId: teams[1]._id,
+        }),
+      ],
+    });
+
+    const markup = renderToStaticMarkup(await StatsPage());
+
+    expect(markup).toContain("Global stats");
+    expect(markup).toContain("Alpha");
+    expect(markup).toContain("Alice");
+  });
+
+  it("renders an empty state when no stats exist", async () => {
+    const markup = renderToStaticMarkup(await StatsPage());
+
+    expect(markup).toContain("No team stats yet");
+    expect(markup).toContain("No player stats yet");
   });
 });
 

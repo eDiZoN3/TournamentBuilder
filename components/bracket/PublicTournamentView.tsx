@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { BracketView } from "@/components/bracket/BracketView";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { StandingsTable } from "@/components/bracket/StandingsTable";
+import { TournamentStats } from "@/components/stats/TournamentStats";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
@@ -94,6 +95,7 @@ export function PublicTournamentView({
       ) : (
         <BracketView matches={tournament.matches} teams={tournament.teams} />
       )}
+      <TournamentStats tournament={tournament} />
     </section>
   );
 }

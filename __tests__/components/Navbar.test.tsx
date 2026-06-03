@@ -7,6 +7,8 @@ describe("Navbar", () => {
 
     expect(markup).toContain('href="/admin/login"');
     expect(markup).toContain("Admin login");
+    expect(markup).toContain('href="/stats"');
+    expect(markup).toContain("Stats");
   });
 
   it("links authenticated users to the dashboard", () => {

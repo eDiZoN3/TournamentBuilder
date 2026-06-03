@@ -41,6 +41,8 @@ describe("PublicTournamentView", () => {
 
   it("renders initial bracket data and polls active tournaments every five seconds", () => {
     const teams = makeTeams(2);
+    teams[0].players = ["Alice"];
+    teams[1].players = ["Bob"];
     const initialTournament = tournament({
       _id: teams[0]._id,
       name: "Summer Cup",
@@ -68,6 +70,9 @@ describe("PublicTournamentView", () => {
     expect(screen.getByRole("heading", { name: "Summer Cup" })).toBeInTheDocument();
     expect(screen.getByText("Active")).toBeInTheDocument();
     expect(screen.getByText("Up next")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Stats" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Team stats" })).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
   });
 
   it("stops polling and shows final standings when the tournament is complete", () => {

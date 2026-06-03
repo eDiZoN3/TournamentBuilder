@@ -15,6 +15,9 @@ export function Navbar({ isAuthenticated }: NavbarProps) {
           <Link className="text-slate-600 hover:text-slate-900" href="/">
             Tournaments
           </Link>
+          <Link className="text-slate-600 hover:text-slate-900" href="/stats">
+            Stats
+          </Link>
           <Link
             className="rounded-md bg-slate-900 px-3 py-2 text-white hover:bg-slate-700"
             href={isAuthenticated ? "/admin/dashboard" : "/admin/login"}

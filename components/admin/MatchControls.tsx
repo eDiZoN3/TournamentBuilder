@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CompletedMatchControls } from "@/components/admin/CompletedMatchControls";
 import { CourtOverrideControls } from "@/components/admin/CourtOverrideControls";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
 import { useToast } from "@/components/ui/Toast";
@@ -63,6 +64,20 @@ export function MatchControls({
     },
     [],
   );
+
+  if (match.status === "completed" && !match.isBye) {
+    return (
+      <CompletedMatchControls
+        match={match}
+        onScoreEntryClose={onScoreEntryClose}
+        onScoreEntryOpen={onScoreEntryOpen}
+        onUpdated={onUpdated}
+        teamAName={teamAName}
+        teamBName={teamBName}
+        tournamentId={tournamentId}
+      />
+    );
+  }
 
   if (
     match.isBye ||

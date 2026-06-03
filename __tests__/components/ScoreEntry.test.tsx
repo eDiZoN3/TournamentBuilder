@@ -26,6 +26,19 @@ function liveMatch(overrides: Parameters<typeof makeMatch>[0] = {}) {
   });
 }
 
+function completedMatch(overrides: Parameters<typeof makeMatch>[0] = {}) {
+  const teams = makeTeams(2);
+
+  return makeMatch({
+    status: "completed",
+    teamA: { teamId: teams[0]._id, sets: [makeSet(11, 9)] },
+    teamB: { teamId: teams[1]._id, sets: [] },
+    winnerId: teams[0]._id,
+    loserId: teams[1]._id,
+    ...overrides,
+  });
+}
+
 function enterSet(setNumber: number, scoreA: string, scoreB: string) {
   fireEvent.change(screen.getByLabelText(`Set ${setNumber} Team A`), {
     target: { value: scoreA },
@@ -254,5 +267,121 @@ describe("ScoreEntry", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save set 1" }));
 
     expect(await screen.findByText("Match is already completed")).toBeInTheDocument();
+  });
+
+  it("validates override scores inline without calling the API", () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <ScoreEntry
+        match={completedMatch()}
+        mode="override"
+        onClose={vi.fn()}
+        onUpdated={vi.fn()}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    enterSet(1, "11", "10");
+    fireEvent.click(screen.getByRole("button", { name: "Save set 1" }));
+
+    expect(
+      screen.getByText("Winner must lead by at least 2 points"),
+    ).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("requires explicit confirmation before submitting a winner-changing override", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
+        matchId: "match-id",
+        winnerChanged: true,
+        affectedMatchIds: ["downstream-id"],
+        tournamentStatus: "active",
+      }),
+    );
+    const onClose = vi.fn();
+    const onUpdated = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <ScoreEntry
+        match={completedMatch()}
+        mode="override"
+        onClose={onClose}
+        onUpdated={onUpdated}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    enterSet(1, "9", "11");
+    fireEvent.click(screen.getByRole("button", { name: "Save set 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Submit override" }));
+
+    expect(
+      screen.getByText("Changing the winner will reset downstream matches."),
+    ).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirm override" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/override$/),
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            sets: [{ scoreA: 9, scoreB: 11, pointsToWin: 11 }],
+          }),
+        }),
+      );
+      expect(onUpdated).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+  });
+
+  it("submits same-winner overrides without an extra warning", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
+        matchId: "match-id",
+        winnerChanged: false,
+        affectedMatchIds: [],
+        tournamentStatus: "completed",
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <ToastProvider>
+        <ScoreEntry
+          match={completedMatch()}
+          mode="override"
+          onClose={vi.fn()}
+          onUpdated={vi.fn()}
+          teamAName="Alpha"
+          teamBName="Beta"
+          tournamentId="tournament-id"
+        />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Submit override" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/override$/),
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+    });
+    expect(
+      screen.queryByText("Changing the winner will reset downstream matches."),
+    ).not.toBeInTheDocument();
   });
 });

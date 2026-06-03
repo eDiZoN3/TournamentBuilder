@@ -3,10 +3,16 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import type { IMatch, ISetScore } from "@/lib/models/Tournament";
-import { determineMatchWinner, validateSet, type TeamSide } from "@/lib/scoring";
+import {
+  determineMatchWinner,
+  replaceSet,
+  validateSet,
+  type TeamSide,
+} from "@/lib/scoring";
 
 interface ScoreEntryProps {
   match: IMatch;
+  mode?: "entry" | "override";
   onClose: () => void;
   onUpdated: () => void | Promise<void>;
   teamAName: string;
@@ -22,6 +28,11 @@ interface ScoreDraft {
 interface ScoreResponse {
   sets: ISetScore[];
   matchWinner: TeamSide | null;
+}
+
+interface OverrideResponse {
+  affectedMatchIds: string[];
+  winnerChanged: boolean;
 }
 
 interface ApiError {
@@ -53,6 +64,7 @@ async function apiError(response: Response, fallback: string) {
 
 export function ScoreEntry({
   match,
+  mode = "entry",
   onClose,
   onUpdated,
   teamAName,
@@ -60,6 +72,7 @@ export function ScoreEntry({
   tournamentId,
 }: ScoreEntryProps) {
   const { showToast } = useToast();
+  const isOverride = mode === "override";
   const setCount = match.format === "bo1" ? 1 : 3;
   const initialSets = recordedSets(match);
   const [sets, setSets] = useState<ISetScore[]>(initialSets);
@@ -72,6 +85,19 @@ export function ScoreEntry({
   const [error, setError] = useState<string | null>(null);
   const [savingSet, setSavingSet] = useState<number | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [requiresOverrideConfirmation, setRequiresOverrideConfirmation] =
+    useState(false);
+  const correctedWinnerId =
+    matchWinner === "A"
+      ? match.teamA?.teamId.toString()
+      : matchWinner === "B"
+        ? match.teamB?.teamId.toString()
+        : null;
+  const winnerChanged =
+    isOverride &&
+    Boolean(match.winnerId) &&
+    Boolean(correctedWinnerId) &&
+    match.winnerId?.toString() !== correctedWinnerId;
 
   function updateDraft(index: number, side: keyof ScoreDraft, value: string) {
     setDrafts((current) =>
@@ -97,6 +123,21 @@ export function ScoreEntry({
     }
 
     setError(null);
+
+    if (isOverride) {
+      const replacement = replaceSet(sets, index, {
+        scoreA,
+        scoreB,
+        pointsToWin: validation.pointsToWin,
+      });
+
+      setSets(replacement.sets);
+      setDrafts(draftsFor(replacement.sets, setCount));
+      setMatchWinner(determineMatchWinner(replacement.sets, match.format));
+      setRequiresOverrideConfirmation(false);
+      return;
+    }
+
     setSavingSet(index);
 
     try {
@@ -147,6 +188,69 @@ export function ScoreEntry({
       });
     } finally {
       setSavingSet(null);
+    }
+  }
+
+  async function submitOverride() {
+    if (!matchWinner) {
+      setError("Match winner has not been determined");
+      return;
+    }
+
+    if (winnerChanged && !requiresOverrideConfirmation) {
+      setRequiresOverrideConfirmation(true);
+      return;
+    }
+
+    setError(null);
+    setIsConfirming(true);
+
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournamentId}/matches/${match._id.toString()}/override`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            sets,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const message = await apiError(response, "Unable to override match.");
+
+        showToast({
+          message,
+          title: "Unable to override match",
+          type: "error",
+        });
+        return;
+      }
+
+      const result = (await response.json()) as OverrideResponse;
+      const resetMessage =
+        result.winnerChanged && result.affectedMatchIds.length > 0
+          ? `Result updated and ${result.affectedMatchIds.length} downstream match reset.`
+          : "Result updated.";
+
+      await onUpdated();
+      showToast({
+        message: resetMessage,
+        title: "Match overridden",
+        type: "success",
+      });
+      onClose();
+    } catch {
+      showToast({
+        message: "Unable to override match.",
+        title: "Unable to override match",
+        type: "error",
+      });
+    } finally {
+      setIsConfirming(false);
     }
   }
 
@@ -210,7 +314,7 @@ export function ScoreEntry({
         <header className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold" id="score-entry-title">
-              Enter scores
+              {isOverride ? "Override result" : "Enter scores"}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {match.label} / {match.format === "bo1" ? "Best of 1" : "Best of 3"}
@@ -285,19 +389,39 @@ export function ScoreEntry({
           </p>
         ) : null}
         {matchWinner ? (
-          <div className="mt-5 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-            <p className="text-sm font-semibold text-emerald-700">
-              Winner: {matchWinner === "A" ? teamAName : teamBName}
-            </p>
-            <button
-              className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-              disabled={isConfirming}
-              onClick={() => void confirmMatch()}
-              type="button"
-            >
-              {isConfirming ? "Confirming..." : "Confirm match"}
-            </button>
-          </div>
+          <>
+            {requiresOverrideConfirmation ? (
+              <p
+                className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900"
+                role="alert"
+              >
+                Changing the winner will reset downstream matches.
+              </p>
+            ) : null}
+            <div className="mt-5 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
+              <p className="text-sm font-semibold text-emerald-700">
+                Winner: {matchWinner === "A" ? teamAName : teamBName}
+              </p>
+              <button
+                className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                disabled={isConfirming}
+                onClick={() =>
+                  void (isOverride ? submitOverride() : confirmMatch())
+                }
+                type="button"
+              >
+                {isConfirming
+                  ? isOverride
+                    ? "Submitting..."
+                    : "Confirming..."
+                  : isOverride
+                    ? requiresOverrideConfirmation
+                      ? "Confirm override"
+                      : "Submit override"
+                    : "Confirm match"}
+              </button>
+            </div>
+          </>
         ) : null}
       </section>
     </div>

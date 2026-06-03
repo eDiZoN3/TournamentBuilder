@@ -27,6 +27,9 @@ This is a Next.js (App Router, TypeScript) web application for organizing and ru
 5. **Next.js Conventions:**
    Follow Next.js App Router conventions (`app/` directory). Use React Server Components by default, and only add `'use client'` where React hooks or browser APIs are required.
 
+6. **Test-Driven Development (TDD):**
+   Every development needs to be test-driven. Tests must be created with the wanted functionality *before* starting the implementation.
+
 ## Standard Workflow
 
 1. **Understand:** Read `README.md` and related documentation to gather domain knowledge.

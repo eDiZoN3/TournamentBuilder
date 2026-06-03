@@ -34,14 +34,17 @@ export default function ChangePasswordPage() {
           confirmPassword,
         }),
       });
-      const body = (await response.json()) as { error?: string };
+      const body = (await response.json()) as {
+        error?: string;
+        role?: "admin" | "player";
+      };
 
       if (!response.ok) {
         setError(body.error ?? "Unable to change password.");
         return;
       }
 
-      router.push("/admin/dashboard");
+      router.push(body.role === "player" ? "/account" : "/admin/dashboard");
       router.refresh();
     } catch {
       setError("Unable to change password.");
@@ -55,7 +58,7 @@ export default function ChangePasswordPage() {
       <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <h1 className="text-2xl font-bold tracking-tight">Change password</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Set your own password before using the admin area.
+          Set your own password before continuing.
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>

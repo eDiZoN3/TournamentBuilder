@@ -3,6 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminDashboard, type TournamentSummary } from "@/components/admin/AdminDashboard";
+import type { PlayerUserSummary } from "@/components/admin/PlayerUsersPanel";
 import { ToastProvider } from "@/components/ui/Toast";
 
 const tournaments: TournamentSummary[] = [
@@ -31,6 +32,29 @@ const tournaments: TournamentSummary[] = [
     matchCount: 14,
   },
 ];
+const players: PlayerUserSummary[] = [
+  {
+    _id: "profile-id",
+    userId: "user-id",
+    createdAt: "2026-06-01T12:00:00.000Z",
+    displayName: "Alice Example",
+    email: "alice@example.com",
+    firstName: "Alice",
+    surname: "Example",
+    mustChangePassword: false,
+  },
+];
+const metrics = {
+  playedMatches: 12,
+  registeredAdmins: 1,
+  registeredPlayers: 1,
+  registeredTournaments: 3,
+  tournamentsByStatus: {
+    active: 1,
+    completed: 1,
+    draft: 1,
+  },
+};
 
 describe("AdminDashboard", () => {
   beforeEach(() => {
@@ -48,6 +72,8 @@ describe("AdminDashboard", () => {
             createdAt: "2026-06-01T12:00:00.000Z",
           },
         ]}
+        initialMetrics={metrics}
+        initialPlayers={players}
         initialTournaments={tournaments}
       />,
     );
@@ -72,6 +98,10 @@ describe("AdminDashboard", () => {
     expect(screen.getByRole("button", { name: "Delete Completed Cup" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Admin accounts" })).toBeInTheDocument();
     expect(screen.getByText("owner@example.com")).toBeInTheDocument();
+    expect(screen.getByText("Registered players")).toBeInTheDocument();
+    expect(screen.getByText("Played matches")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Player accounts" })).toBeInTheDocument();
+    expect(screen.getByText("Alice Example")).toBeInTheDocument();
   });
 
   it("requires a second click before deleting a draft", async () => {

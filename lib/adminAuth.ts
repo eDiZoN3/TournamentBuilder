@@ -2,8 +2,12 @@ import { getServerSession } from "next-auth";
 import type { Session } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+export async function requireAuthenticatedSession(): Promise<Session | null> {
+  return getServerSession(authOptions);
+}
+
 export async function requireAdminSession(): Promise<Session | null> {
-  const session = await getServerSession(authOptions);
+  const session = await requireAuthenticatedSession();
 
   return session?.user.role === "admin" ? session : null;
 }

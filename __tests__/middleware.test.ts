@@ -67,5 +67,17 @@ describe("admin middleware", () => {
 
     expect(response.headers.get("location")).toBeNull();
   });
+
+  it("redirects authenticated players away from admin pages", async () => {
+    getToken.mockResolvedValue({ mustChangePassword: false, role: "player" });
+    const { middleware } = await import("@/middleware");
+    const response = await middleware(
+      new NextRequest("http://localhost:3000/admin/dashboard"),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/account",
+    );
+  });
 });
 

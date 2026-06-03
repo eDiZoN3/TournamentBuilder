@@ -3,12 +3,12 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "@/lib/models/User";
 
-const { requireAdminSession } = vi.hoisted(() => ({
-  requireAdminSession: vi.fn(),
+const { requireAuthenticatedSession } = vi.hoisted(() => ({
+  requireAuthenticatedSession: vi.fn(),
 }));
 
 vi.mock("@/lib/adminAuth", () => ({
-  requireAdminSession,
+  requireAuthenticatedSession,
 }));
 
 import { POST as changePassword } from "@/app/api/admin/change-password/route";
@@ -27,11 +27,11 @@ function request(body?: Record<string, unknown>) {
 
 describe("/api/admin/change-password", () => {
   beforeEach(() => {
-    requireAdminSession.mockReset();
+    requireAuthenticatedSession.mockReset();
   });
 
-  it("requires an authenticated admin session", async () => {
-    requireAdminSession.mockResolvedValue(null);
+  it("requires an authenticated account session", async () => {
+    requireAuthenticatedSession.mockResolvedValue(null);
 
     const response = await changePassword(
       request({
@@ -45,7 +45,7 @@ describe("/api/admin/change-password", () => {
   });
 
   it("rejects mismatched password confirmation", async () => {
-    requireAdminSession.mockResolvedValue({ user: { id: "admin-id" } });
+    requireAuthenticatedSession.mockResolvedValue({ user: { id: "admin-id" } });
 
     const response = await changePassword(
       request({
@@ -64,7 +64,7 @@ describe("/api/admin/change-password", () => {
       mustChangePassword: true,
       passwordHash: await bcrypt.hash("temporary1", 4),
     });
-    requireAdminSession.mockResolvedValue({
+    requireAuthenticatedSession.mockResolvedValue({
       user: { id: admin._id.toString(), role: "admin" },
     });
 
@@ -79,13 +79,13 @@ describe("/api/admin/change-password", () => {
     expect(response.status).toBe(409);
   });
 
-  it("updates the password hash and clears the first-login flag", async () => {
+  it("updates the admin password hash and clears the first-login flag", async () => {
     const admin = await User.create({
       email: "admin@example.com",
       mustChangePassword: true,
       passwordHash: await bcrypt.hash("temporary1", 4),
     });
-    requireAdminSession.mockResolvedValue({
+    requireAuthenticatedSession.mockResolvedValue({
       user: { id: admin._id.toString(), role: "admin" },
     });
 
@@ -99,7 +99,7 @@ describe("/api/admin/change-password", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({ mustChangePassword: false });
+    expect(body).toMatchObject({ mustChangePassword: false, role: "admin" });
 
     const updatedAdmin = await User.findById(admin._id);
 
@@ -110,5 +110,36 @@ describe("/api/admin/change-password", () => {
     await expect(
       bcrypt.compare("temporary1", updatedAdmin!.passwordHash),
     ).resolves.toBe(false);
+  });
+
+  it("lets reset players set their own password and clears the forced-change flag", async () => {
+    const player = await User.create({
+      email: "player@example.com",
+      mustChangePassword: true,
+      passwordHash: await bcrypt.hash("temporary1", 4),
+      role: "player",
+    });
+    requireAuthenticatedSession.mockResolvedValue({
+      user: { id: player._id.toString(), role: "player" },
+    });
+
+    const response = await changePassword(
+      request({
+        currentPassword: "temporary1",
+        newPassword: "player-password",
+        confirmPassword: "player-password",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ mustChangePassword: false, role: "player" });
+
+    const updatedPlayer = await User.findById(player._id);
+
+    expect(updatedPlayer?.mustChangePassword).toBe(false);
+    await expect(
+      bcrypt.compare("player-password", updatedPlayer!.passwordHash),
+    ).resolves.toBe(true);
   });
 });

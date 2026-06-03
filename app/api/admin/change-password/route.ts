@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
-import { requireAdminSession } from "@/lib/adminAuth";
+import { requireAuthenticatedSession } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models/User";
 
@@ -40,7 +40,7 @@ function parseChangePasswordBody(body: unknown): ChangePasswordBody | null {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireAdminSession();
+  const session = await requireAuthenticatedSession();
 
   if (!session) {
     return jsonError("Authentication required", "UNAUTHORIZED", 401);
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const admin = await User.findById(session.user.id);
 
     if (!admin) {
-      return jsonError("Admin account not found", "NOT_FOUND", 404);
+      return jsonError("Account not found", "NOT_FOUND", 404);
     }
 
     const currentPasswordMatches = await bcrypt.compare(
@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       mustChangePassword: admin.mustChangePassword,
+      role: admin.role,
     });
   } catch {
     return jsonError("Unable to change password", "INTERNAL_ERROR", 500);

@@ -24,6 +24,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(changePasswordUrl);
     }
 
+    if (pathname !== "/admin/change-password" && token.role !== "admin") {
+      return NextResponse.redirect(new URL("/account", request.url));
+    }
+
     return NextResponse.next();
   }
 

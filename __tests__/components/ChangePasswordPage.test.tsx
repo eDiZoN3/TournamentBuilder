@@ -24,7 +24,7 @@ describe("ChangePasswordPage", () => {
   it("submits a password change and redirects to the dashboard", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ mustChangePassword: false }),
+      json: async () => ({ mustChangePassword: false, role: "admin" }),
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -54,6 +54,32 @@ describe("ChangePasswordPage", () => {
         }),
       });
       expect(push).toHaveBeenCalledWith("/admin/dashboard");
+      expect(refresh).toHaveBeenCalled();
+    });
+  });
+
+  it("redirects players back to their account after changing a reset password", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ mustChangePassword: false, role: "player" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ChangePasswordPage />);
+
+    fireEvent.change(screen.getByLabelText("Current password"), {
+      target: { value: "temporary1" },
+    });
+    fireEvent.change(screen.getByLabelText("New password"), {
+      target: { value: "player-password" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm new password"), {
+      target: { value: "player-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Change password" }));
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/account");
       expect(refresh).toHaveBeenCalled();
     });
   });

@@ -6,9 +6,18 @@ import {
   AdminUsersPanel,
   type AdminUserSummary,
 } from "@/components/admin/AdminUsersPanel";
+import { DashboardMetrics } from "@/components/admin/DashboardMetrics";
+import {
+  PlayerUsersPanel,
+  type PlayerUserSummary,
+} from "@/components/admin/PlayerUsersPanel";
 import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import {
+  emptyAdminDashboardMetrics,
+  type AdminDashboardMetrics,
+} from "@/lib/admin/dashboardMetrics";
 import type { ITournament } from "@/lib/models/Tournament";
 
 export interface TournamentSummary {
@@ -22,11 +31,15 @@ export interface TournamentSummary {
 
 interface AdminDashboardProps {
   initialAdmins?: AdminUserSummary[];
+  initialMetrics?: AdminDashboardMetrics;
+  initialPlayers?: PlayerUserSummary[];
   initialTournaments: TournamentSummary[];
 }
 
 export function AdminDashboard({
   initialAdmins = [],
+  initialMetrics = emptyAdminDashboardMetrics,
+  initialPlayers = [],
   initialTournaments,
 }: AdminDashboardProps) {
   const [tournaments, setTournaments] = useState(initialTournaments);
@@ -46,7 +59,11 @@ export function AdminDashboard({
         </Link>
       </header>
       <div className="mt-8">
+        <DashboardMetrics metrics={initialMetrics} />
+      </div>
+      <div className="mt-8 grid gap-6 xl:grid-cols-2">
         <AdminUsersPanel initialAdmins={initialAdmins} />
+        <PlayerUsersPanel initialPlayers={initialPlayers} />
       </div>
       {tournaments.length === 0 ? (
         <div className="mt-8">

@@ -7,15 +7,28 @@ describe("Navbar", () => {
 
     expect(markup).toContain('href="/admin/login"');
     expect(markup).toContain("Admin login");
+    expect(markup).toContain('href="/signup"');
+    expect(markup).toContain("Sign up");
     expect(markup).toContain('href="/stats"');
     expect(markup).toContain("Stats");
   });
 
   it("links authenticated users to the dashboard", () => {
-    const markup = renderToStaticMarkup(<Navbar isAuthenticated />);
+    const markup = renderToStaticMarkup(
+      <Navbar isAuthenticated role="admin" />,
+    );
 
     expect(markup).toContain('href="/admin/dashboard"');
     expect(markup).toContain("Dashboard");
+  });
+
+  it("links authenticated players to their account", () => {
+    const markup = renderToStaticMarkup(
+      <Navbar isAuthenticated role="player" />,
+    );
+
+    expect(markup).toContain('href="/account"');
+    expect(markup).toContain("Account");
   });
 });
 

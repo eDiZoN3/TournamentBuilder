@@ -115,6 +115,42 @@ describe("/api/tournaments", () => {
     await expect(Tournament.countDocuments()).resolves.toBe(1);
   });
 
+  it("creates a self-joinable player tournament", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Open Player Cup",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "players",
+        allowSelfJoin: true,
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      allowSelfJoin: true,
+      name: "Open Player Cup",
+    });
+
+    const tournament = await Tournament.findOne({ name: "Open Player Cup" });
+
+    expect(tournament?.allowSelfJoin).toBe(true);
+  });
+
+  it("rejects self-join for team-entry tournaments", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Team Cup",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "teams",
+        allowSelfJoin: true,
+      }),
+    );
+
+    expect(response.status).toBe(422);
+  });
+
   it.each([
     [{ name: "Summer Cup", teamSize: 5, courtsAvailable: 1, inputMode: "teams" }],
     [{ name: "Summer Cup", teamSize: 2, courtsAvailable: 0, inputMode: "teams" }],

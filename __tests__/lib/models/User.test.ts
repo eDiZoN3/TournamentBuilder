@@ -27,7 +27,17 @@ describe("User model", () => {
     ).rejects.toMatchObject({ code: 11000 });
   });
 
-  it("rejects non-admin roles", async () => {
+  it("allows player roles", async () => {
+    const user = await User.create({
+      email: "player@example.com",
+      passwordHash: "hashed-password",
+      role: "player",
+    });
+
+    expect(user.role).toBe("player");
+  });
+
+  it("rejects unsupported roles", async () => {
     await expect(
       User.create({
         email: "viewer@example.com",

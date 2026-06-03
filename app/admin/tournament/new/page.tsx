@@ -13,6 +13,7 @@ export default function NewTournamentPage() {
   const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
   const [courtsAvailable, setCourtsAvailable] = useState(1);
   const [inputMode, setInputMode] = useState<"teams" | "players">("teams");
+  const [allowSelfJoin, setAllowSelfJoin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,6 +33,7 @@ export default function NewTournamentPage() {
           teamSize,
           courtsAvailable,
           inputMode,
+          allowSelfJoin,
         }),
       });
       const body = (await response.json()) as ApiError & { _id?: string };
@@ -123,7 +125,10 @@ export default function NewTournamentPage() {
               <input
                 checked={inputMode === "teams"}
                 name="inputMode"
-                onChange={() => setInputMode("teams")}
+                onChange={() => {
+                  setInputMode("teams");
+                  setAllowSelfJoin(false);
+                }}
                 type="radio"
               />
               Enter team names
@@ -139,6 +144,16 @@ export default function NewTournamentPage() {
             </label>
           </div>
         </fieldset>
+
+        <label className="flex items-center gap-2">
+          <input
+            checked={allowSelfJoin}
+            disabled={inputMode !== "players"}
+            onChange={(event) => setAllowSelfJoin(event.target.checked)}
+            type="checkbox"
+          />
+          Allow player account self-join
+        </label>
 
         {error ? (
           <p className="text-sm font-medium text-red-600" role="alert">

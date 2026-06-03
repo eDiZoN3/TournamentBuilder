@@ -62,9 +62,45 @@ describe("NewTournamentPage", () => {
           teamSize: 3,
           courtsAvailable: 2,
           inputMode: "players",
+          allowSelfJoin: false,
         }),
       });
       expect(push).toHaveBeenCalledWith("/admin/tournament/tournament-id/setup");
+    });
+  });
+
+  it("sends self-join settings for player tournaments", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Open Cup" },
+    });
+    fireEvent.click(screen.getByLabelText("Enter player names"));
+    fireEvent.click(screen.getByLabelText("Allow player account self-join"));
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: "Open Cup",
+            teamSize: 2,
+            courtsAvailable: 1,
+            inputMode: "players",
+            allowSelfJoin: true,
+          }),
+        }),
+      );
     });
   });
 

@@ -5,13 +5,17 @@ declare module "next-auth" {
     user: {
       id: string;
       mustChangePassword: boolean;
-      role: "admin";
+      playerDisplayName?: string;
+      playerProfileId?: string;
+      role: "admin" | "player";
     } & DefaultSession["user"];
   }
 
   interface User {
     mustChangePassword: boolean;
-    role: "admin";
+    playerDisplayName?: string;
+    playerProfileId?: string;
+    role: "admin" | "player";
   }
 }
 
@@ -19,7 +23,9 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     mustChangePassword?: boolean;
-    role?: "admin";
+    playerDisplayName?: string;
+    playerProfileId?: string;
+    role?: "admin" | "player";
   }
 }
 

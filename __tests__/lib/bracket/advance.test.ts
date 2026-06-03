@@ -20,9 +20,11 @@ function tournamentWithTeams(teamCount: number, courtsAvailable = 2) {
     teamSize: 2,
     courtsAvailable,
     inputMode: "teams",
+    allowSelfJoin: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     teams,
+    joinedPlayers: [],
     matches,
     currentMatchIds: [],
   } as ITournament;

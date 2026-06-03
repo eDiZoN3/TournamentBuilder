@@ -7,6 +7,7 @@ import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface LoserBracketProps {
+  currentPlayerName?: string | null;
   matches: IMatch[];
   pinnedMatchId?: string | null;
   renderMatchControls?: (
@@ -17,7 +18,29 @@ interface LoserBracketProps {
   teams: ITeam[];
 }
 
+function normalizeName(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function teamIncludesPlayer(
+  teams: ITeam[],
+  teamId: IMatch["winnerId"] | null | undefined,
+  currentPlayerName?: string | null,
+): boolean {
+  if (!teamId || !currentPlayerName) {
+    return false;
+  }
+
+  const playerName = normalizeName(currentPlayerName);
+  const team = teams.find((entry) => entry._id.toString() === teamId.toString());
+
+  return Boolean(
+    team?.players.some((player) => normalizeName(player) === playerName),
+  );
+}
+
 export function LoserBracket({
+  currentPlayerName = null,
   matches,
   pinnedMatchId = null,
   renderMatchControls,
@@ -79,7 +102,17 @@ export function LoserBracket({
                     isPinned={pinnedMatchId === match._id.toString()}
                     key={match._id.toString()}
                     match={match}
+                    teamAIsCurrentPlayerTeam={teamIncludesPlayer(
+                      teams,
+                      match.teamA?.teamId,
+                      currentPlayerName,
+                    )}
                     teamAName={teamAName}
+                    teamBIsCurrentPlayerTeam={teamIncludesPlayer(
+                      teams,
+                      match.teamB?.teamId,
+                      currentPlayerName,
+                    )}
                     teamBName={teamBName}
                   >
                     {renderMatchControls?.(match, teamAName, teamBName)}

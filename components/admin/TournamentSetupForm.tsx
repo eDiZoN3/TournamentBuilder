@@ -10,11 +10,23 @@ export interface SetupTeam {
   seed: number;
 }
 
+export interface SetupJoinedPlayer {
+  userId: string;
+  playerProfileId: string;
+  firstName: string;
+  surname?: string;
+  displayName: string;
+  email: string;
+  joinedAt: string;
+}
+
 export interface SetupTournament {
   _id: string;
   name: string;
   teamSize: 2 | 3 | 4;
   inputMode: "teams" | "players";
+  allowSelfJoin?: boolean;
+  joinedPlayers?: SetupJoinedPlayer[];
   teams: SetupTeam[];
 }
 
@@ -42,6 +54,9 @@ export function TournamentSetupForm({
   tournament,
 }: TournamentSetupFormProps) {
   const router = useRouter();
+  const joinedPlayerNames = (tournament.joinedPlayers ?? []).map(
+    (player) => player.displayName,
+  );
   const [teamNames, setTeamNames] = useState<string[]>(
     tournament.teams.length > 0
       ? tournament.teams.map((team) => team.name)
@@ -50,7 +65,9 @@ export function TournamentSetupForm({
   const [playerNames, setPlayerNames] = useState<string[]>(
     tournament.teams.length > 0
       ? tournament.teams.flatMap((team) => team.players)
-      : ["", ""],
+      : joinedPlayerNames.length > 0
+        ? joinedPlayerNames
+        : ["", ""],
   );
   const [previewTeams, setPreviewTeams] = useState<SetupTeam[]>(
     tournament.inputMode === "players" ? tournament.teams : [],
@@ -230,6 +247,18 @@ export function TournamentSetupForm({
         </div>
       ) : (
         <div className="mt-8">
+          {tournament.allowSelfJoin && (tournament.joinedPlayers ?? []).length > 0 ? (
+            <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Joined players
+              </h2>
+              <ul className="mt-3 space-y-1 text-sm text-slate-600">
+                {(tournament.joinedPlayers ?? []).map((player) => (
+                  <li key={player.userId}>{player.displayName}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
           <div className="space-y-3">
             {playerNames.map((playerName, index) => (
               <div className="flex gap-2" key={index}>

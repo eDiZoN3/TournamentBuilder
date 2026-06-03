@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectDB } from "@/lib/db";
+import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { User } from "@/lib/models/User";
 
 export const authOptions: NextAuthOptions = {
@@ -42,10 +43,17 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        const profile =
+          user.role === "player"
+            ? await PlayerProfile.findOne({ userId: user._id })
+            : null;
+
         return {
           id: user._id.toString(),
           email: user.email,
           mustChangePassword: user.mustChangePassword,
+          playerDisplayName: profile?.displayName,
+          playerProfileId: profile?._id.toString(),
           role: user.role,
         };
       },
@@ -62,6 +70,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.mustChangePassword = user.mustChangePassword;
+        token.playerDisplayName = user.playerDisplayName;
+        token.playerProfileId = user.playerProfileId;
         token.role = user.role;
       }
 
@@ -71,6 +81,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id ?? token.sub ?? "";
         session.user.mustChangePassword = token.mustChangePassword ?? false;
+        session.user.playerDisplayName = token.playerDisplayName;
+        session.user.playerProfileId = token.playerProfileId;
         session.user.role = token.role ?? "admin";
       }
 

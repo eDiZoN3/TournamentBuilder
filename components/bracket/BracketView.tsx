@@ -8,6 +8,7 @@ import { WinnerBracket } from "@/components/bracket/WinnerBracket";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface BracketViewProps {
+  currentPlayerName?: string | null;
   matches: IMatch[];
   pinnedMatchId?: string | null;
   renderMatchControls?: (
@@ -19,6 +20,7 @@ interface BracketViewProps {
 }
 
 export function BracketView({
+  currentPlayerName = null,
   matches,
   pinnedMatchId = null,
   renderMatchControls,
@@ -73,6 +75,7 @@ export function BracketView({
             data-testid="winner-bracket-panel"
           >
             <WinnerBracket
+              currentPlayerName={currentPlayerName}
               matches={matches}
               pinnedMatchId={pinnedMatchId}
               renderMatchControls={renderMatchControls}
@@ -88,6 +91,7 @@ export function BracketView({
               data-testid="loser-bracket-panel"
             >
               <LoserBracket
+                currentPlayerName={currentPlayerName}
                 matches={matches}
                 pinnedMatchId={pinnedMatchId}
                 renderMatchControls={renderMatchControls}

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import type { CredentialsConfig } from "next-auth/providers/credentials";
 import { authOptions } from "@/lib/auth";
+import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { User } from "@/lib/models/User";
 
 function getAuthorize() {
@@ -56,6 +57,38 @@ describe("credentials authentication", () => {
     expect(authenticatedUser).toBeNull();
   });
 
+  it("returns player profile identity for valid player credentials", async () => {
+    const passwordHash = await bcrypt.hash("player-password", 4);
+    const user = await User.create({
+      email: "player@example.com",
+      passwordHash,
+      role: "player",
+    });
+    const profile = await PlayerProfile.create({
+      userId: user._id,
+      firstName: "Alice",
+      surname: "Example",
+      displayName: "Alice Example",
+      email: "player@example.com",
+    });
+
+    const authenticatedUser = await getAuthorize()(
+      {
+        email: "player@example.com",
+        password: "player-password",
+      },
+      {},
+    );
+
+    expect(authenticatedUser).toMatchObject({
+      id: user._id.toString(),
+      email: "player@example.com",
+      playerDisplayName: "Alice Example",
+      playerProfileId: profile._id.toString(),
+      role: "player",
+    });
+  });
+
   it("returns null for an unknown user", async () => {
     const authenticatedUser = await getAuthorize()(
       {
@@ -87,6 +120,8 @@ describe("credentials authentication", () => {
         id: "admin-id",
         email: "admin@example.com",
         mustChangePassword: true,
+        playerDisplayName: undefined,
+        playerProfileId: undefined,
         role: "admin",
       },
       account: null,

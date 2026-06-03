@@ -5,12 +5,14 @@ import useSWR from "swr";
 import { BracketView } from "@/components/bracket/BracketView";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { StandingsTable } from "@/components/bracket/StandingsTable";
+import { JoinTournamentButton } from "@/components/player/JoinTournamentButton";
 import { TournamentStats } from "@/components/stats/TournamentStats";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
 
 interface PublicTournamentViewProps {
+  currentPlayerName?: string | null;
   initialTournament: ITournament;
 }
 
@@ -41,6 +43,7 @@ export function FinalStandings({ tournament }: { tournament: ITournament }) {
 }
 
 export function PublicTournamentView({
+  currentPlayerName = null,
   initialTournament,
 }: PublicTournamentViewProps) {
   const refreshFailures = useRef(0);
@@ -67,6 +70,15 @@ export function PublicTournamentView({
   );
   const tournament = data ?? initialTournament;
   const showSkeleton = isLoading && !data;
+  const joinedPlayers = tournament.joinedPlayers ?? [];
+  const currentPlayerJoined = Boolean(
+    currentPlayerName &&
+      joinedPlayers.some(
+        (player) =>
+          player.displayName.trim().toLowerCase() ===
+          currentPlayerName.trim().toLowerCase(),
+      ),
+  );
 
   return (
     <section className="space-y-6">
@@ -90,10 +102,45 @@ export function PublicTournamentView({
       {tournament.status === "completed" ? (
         <FinalStandings tournament={tournament} />
       ) : null}
+      {tournament.status === "draft" &&
+      tournament.allowSelfJoin &&
+      tournament.inputMode === "players" ? (
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Join phase</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                {joinedPlayers.length} player{joinedPlayers.length === 1 ? "" : "s"} joined
+              </p>
+            </div>
+            <JoinTournamentButton
+              currentPlayerName={currentPlayerName}
+              initiallyJoined={currentPlayerJoined}
+              tournamentId={tournament._id.toString()}
+            />
+          </div>
+          {joinedPlayers.length > 0 ? (
+            <ul className="mt-4 flex flex-wrap gap-2 text-sm">
+              {joinedPlayers.map((player) => (
+                <li
+                  className="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700"
+                  key={player.userId.toString()}
+                >
+                  {player.displayName}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
       {showSkeleton ? (
         <BracketSkeleton />
       ) : (
-        <BracketView matches={tournament.matches} teams={tournament.teams} />
+        <BracketView
+          currentPlayerName={currentPlayerName}
+          matches={tournament.matches}
+          teams={tournament.teams}
+        />
       )}
       <TournamentStats tournament={tournament} />
     </section>

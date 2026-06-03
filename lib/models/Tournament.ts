@@ -19,6 +19,16 @@ export interface ITeam {
   seed: number;
 }
 
+export interface IJoinedPlayer {
+  userId: Types.ObjectId;
+  playerProfileId: Types.ObjectId;
+  firstName: string;
+  surname?: string;
+  displayName: string;
+  email: string;
+  joinedAt: Date;
+}
+
 export interface ITeamSlot {
   teamId: Types.ObjectId;
   sets: ISetScore[];
@@ -54,9 +64,11 @@ export interface ITournament {
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
+  allowSelfJoin: boolean;
   createdAt: Date;
   updatedAt: Date;
   teams: ITeam[];
+  joinedPlayers: IJoinedPlayer[];
   matches: IMatch[];
   currentMatchIds: Types.ObjectId[];
 }
@@ -114,6 +126,50 @@ const teamSchema = new Schema<ITeam>({
     default: 0,
   },
 });
+
+const joinedPlayerSchema = new Schema<IJoinedPlayer>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
+    playerProfileId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 50,
+    },
+    surname: {
+      type: String,
+      trim: true,
+      maxlength: 50,
+    },
+    displayName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 120,
+    },
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+    },
+    joinedAt: {
+      type: Date,
+      default: Date.now,
+      required: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
 
 const matchSchema = new Schema<IMatch>({
   bracket: {
@@ -229,8 +285,17 @@ const tournamentSchema = new Schema<ITournament>(
       enum: ["teams", "players"],
       required: true,
     },
+    allowSelfJoin: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
     teams: {
       type: [teamSchema],
+      default: [],
+    },
+    joinedPlayers: {
+      type: [joinedPlayerSchema],
       default: [],
     },
     matches: {

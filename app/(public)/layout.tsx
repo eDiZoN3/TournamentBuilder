@@ -11,7 +11,10 @@ export default async function PublicLayout({
 
   return (
     <>
-      <Navbar isAuthenticated={Boolean(session)} />
+      <Navbar
+        isAuthenticated={Boolean(session)}
+        role={session?.user.role ?? null}
+      />
       <main className="mx-auto w-full max-w-[1800px] px-4 py-8">
         {children}
       </main>

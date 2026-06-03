@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/db";
 import { Tournament } from "@/lib/models/Tournament";
 
 interface CreateTournamentBody {
+  allowSelfJoin: boolean;
   name: string;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
@@ -16,10 +17,12 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     return null;
   }
 
-  const { name, teamSize, courtsAvailable, inputMode } = body as Record<
+  const { allowSelfJoin, name, teamSize, courtsAvailable, inputMode } = body as Record<
     string,
     unknown
   >;
+  const parsedAllowSelfJoin =
+    typeof allowSelfJoin === "boolean" ? allowSelfJoin : false;
 
   if (
     typeof name !== "string" ||
@@ -29,12 +32,14 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     !Number.isInteger(courtsAvailable) ||
     (courtsAvailable as number) < 1 ||
     (courtsAvailable as number) > 10 ||
-    !["teams", "players"].includes(inputMode as string)
+    !["teams", "players"].includes(inputMode as string) ||
+    (parsedAllowSelfJoin && inputMode !== "players")
   ) {
     return null;
   }
 
   return {
+    allowSelfJoin: parsedAllowSelfJoin,
     name: name.trim(),
     teamSize: teamSize as 2 | 3 | 4,
     courtsAvailable: courtsAvailable as number,
@@ -54,6 +59,7 @@ export async function GET() {
         name: tournament.name,
         status: tournament.status,
         createdAt: tournament.createdAt.toISOString(),
+        allowSelfJoin: tournament.allowSelfJoin,
         teamCount: tournament.teams.length,
         matchCount: tournament.matches.filter((match) => !match.isBye).length,
       })),
@@ -98,6 +104,7 @@ export async function POST(request: NextRequest) {
         status: tournament.status,
         teamSize: tournament.teamSize,
         courtsAvailable: tournament.courtsAvailable,
+        allowSelfJoin: tournament.allowSelfJoin,
       },
       {
         status: 201,

@@ -1,7 +1,10 @@
+import { getServerSession } from "next-auth";
 import { Types } from "mongoose";
 import { notFound } from "next/navigation";
 import { PublicTournamentView } from "@/components/bracket/PublicTournamentView";
+import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { Tournament, type ITournament } from "@/lib/models/Tournament";
 
 interface TournamentPageProps {
@@ -21,7 +24,13 @@ export default async function TournamentPage({ params }: TournamentPageProps) {
 
   await connectDB();
 
-  const tournament = await Tournament.findById(id).lean();
+  const session = await getServerSession(authOptions);
+  const [tournament, profile] = await Promise.all([
+    Tournament.findById(id).lean(),
+    session?.user.role === "player"
+      ? PlayerProfile.findOne({ userId: session.user.id }).lean()
+      : null,
+  ]);
 
   if (!tournament) {
     notFound();
@@ -31,5 +40,10 @@ export default async function TournamentPage({ params }: TournamentPageProps) {
     JSON.stringify(tournament),
   ) as ITournament;
 
-  return <PublicTournamentView initialTournament={initialTournament} />;
+  return (
+    <PublicTournamentView
+      currentPlayerName={profile?.displayName ?? null}
+      initialTournament={initialTournament}
+    />
+  );
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   makeMatch,
@@ -73,6 +73,79 @@ describe("PublicTournamentView", () => {
     expect(screen.getByRole("heading", { name: "Stats" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Team stats" })).toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
+  });
+
+  it("shows self-join controls during draft join phase", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        player: {
+          displayName: "Alice Example",
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const initialTournament = tournament({
+      _id: makeTeams(1)[0]._id,
+      allowSelfJoin: true,
+      inputMode: "players",
+      joinedPlayers: [],
+      name: "Open Cup",
+      status: "draft",
+    });
+
+    render(
+      <PublicTournamentView
+        currentPlayerName="Alice Example"
+        initialTournament={initialTournament}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Join phase" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Join tournament" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        `/api/tournaments/${initialTournament._id.toString()}/join`,
+        { method: "POST" },
+      );
+      expect(screen.getByText("Joined as Alice Example")).toBeInTheDocument();
+    });
+  });
+
+  it("highlights the current player's team in the bracket", () => {
+    const teams = makeTeams(2);
+    teams[0].players = ["Alice Example"];
+    teams[1].players = ["Bob"];
+    const initialTournament = tournament({
+      name: "Player Cup",
+      status: "active",
+      teams,
+      matches: [
+        makeMatch({
+          status: "ready",
+          teamA: { teamId: teams[0]._id, sets: [] },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        }),
+      ],
+    });
+
+    render(
+      <PublicTournamentView
+        currentPlayerName="Alice Example"
+        initialTournament={initialTournament}
+      />,
+    );
+
+    expect(screen.getByTestId("team-a-row")).toHaveAttribute(
+      "data-current-player-team",
+      "true",
+    );
+    expect(screen.getByTestId("team-b-row")).toHaveAttribute(
+      "data-current-player-team",
+      "false",
+    );
   });
 
   it("stops polling and shows final standings when the tournament is complete", () => {

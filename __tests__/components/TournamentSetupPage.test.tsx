@@ -46,6 +46,8 @@ describe("TournamentSetupForm", () => {
           name: "Summer Cup",
           teamSize: 2,
           inputMode: "teams",
+          allowSelfJoin: false,
+          joinedPlayers: [],
           teams: [],
         }}
       />,
@@ -71,6 +73,8 @@ describe("TournamentSetupForm", () => {
           name: "Summer Cup",
           teamSize: 2,
           inputMode: "teams",
+          allowSelfJoin: false,
+          joinedPlayers: [],
           teams: [],
         }}
       />,
@@ -115,6 +119,8 @@ describe("TournamentSetupForm", () => {
           name: "Summer Cup",
           teamSize: 3,
           inputMode: "players",
+          allowSelfJoin: false,
+          joinedPlayers: [],
           teams: [],
         }}
       />,
@@ -136,6 +142,35 @@ describe("TournamentSetupForm", () => {
     expect(screen.getByText("Some players will be added to the last team.")).toBeInTheDocument();
     expect(screen.getByLabelText("Preview team 1 name")).toHaveValue("Team A");
     expect(screen.getByLabelText("Preview team 2 name")).toHaveValue("Team B");
+  });
+
+  it("includes self-joined players in player-mode setup", () => {
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Open Cup",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: true,
+          joinedPlayers: [
+            {
+              userId: "user-a",
+              playerProfileId: "profile-a",
+              firstName: "Alice",
+              displayName: "Alice Example",
+              email: "alice@example.com",
+              joinedAt: "2026-06-03T12:00:00.000Z",
+            },
+          ],
+          teams: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Joined players" })).toBeInTheDocument();
+    expect(screen.getByText("Alice Example")).toBeInTheDocument();
+    expect(screen.getByLabelText("Player 1 name")).toHaveValue("Alice Example");
   });
 
   it("loads the tournament for the setup route", async () => {

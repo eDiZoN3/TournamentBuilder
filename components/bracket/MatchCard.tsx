@@ -5,7 +5,9 @@ interface MatchCardProps {
   children?: ReactNode;
   isPinned?: boolean;
   match: IMatch;
+  teamAIsCurrentPlayerTeam?: boolean;
   teamAName?: string;
+  teamBIsCurrentPlayerTeam?: boolean;
   teamBName?: string;
 }
 
@@ -32,22 +34,25 @@ function MatchRow({
   team,
   scores,
   side,
+  isCurrentPlayerTeam,
   winnerId,
   completed,
 }: {
   team: DisplayTeam;
   scores: number[];
   side: "a" | "b";
+  isCurrentPlayerTeam: boolean;
   winnerId: IMatch["winnerId"];
   completed: boolean;
 }) {
   return (
     <div
-      className={`flex min-h-8 items-center justify-between gap-3 px-3 py-1.5 ${rowClasses(
-        team.slot,
-        winnerId,
-        completed,
-      )}`}
+      className={`flex min-h-8 items-center justify-between gap-3 px-3 py-1.5 ${
+        isCurrentPlayerTeam
+          ? "bg-sky-50 text-sky-900 ring-1 ring-inset ring-sky-200"
+          : rowClasses(team.slot, winnerId, completed)
+      }`}
+      data-current-player-team={isCurrentPlayerTeam}
       data-testid={`team-${side}-row`}
     >
       <span className="truncate">{team.name}</span>
@@ -69,7 +74,9 @@ export function MatchCard({
   children,
   isPinned = false,
   match,
+  teamAIsCurrentPlayerTeam = false,
   teamAName = "TBD",
+  teamBIsCurrentPlayerTeam = false,
   teamBName = "TBD",
 }: MatchCardProps) {
   const isCompleted = match.status === "completed" || match.isBye;
@@ -131,6 +138,7 @@ export function MatchCard({
       <div className="divide-y divide-slate-100">
         <MatchRow
           completed={isCompleted}
+          isCurrentPlayerTeam={teamAIsCurrentPlayerTeam}
           scores={sets.map((set) => set.scoreA)}
           side="a"
           team={teams[0]}
@@ -138,6 +146,7 @@ export function MatchCard({
         />
         <MatchRow
           completed={isCompleted}
+          isCurrentPlayerTeam={teamBIsCurrentPlayerTeam}
           scores={sets.map((set) => set.scoreB)}
           side="b"
           team={teams[1]}

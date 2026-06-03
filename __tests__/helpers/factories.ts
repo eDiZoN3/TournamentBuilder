@@ -48,8 +48,18 @@ export interface Tournament {
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
+  allowSelfJoin: boolean;
   createdAt: Date;
   teams: Team[];
+  joinedPlayers: Array<{
+    userId: Types.ObjectId | string;
+    playerProfileId: Types.ObjectId | string;
+    firstName: string;
+    surname?: string;
+    displayName: string;
+    email: string;
+    joinedAt: Date | string;
+  }>;
   matches: Match[];
   currentMatchIds: Types.ObjectId[];
 }
@@ -120,8 +130,10 @@ export function makeTournament(
     teamSize: 2,
     courtsAvailable: 1,
     inputMode: "teams",
+    allowSelfJoin: false,
     createdAt: new Date(),
     teams: [],
+    joinedPlayers: [],
     matches: [],
     currentMatchIds: [],
     ...overrides,

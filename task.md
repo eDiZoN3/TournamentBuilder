@@ -864,6 +864,96 @@ Tests: auth guard, admin creates player with generated password, duplicate playe
 
 ---
 
+### T69 - Tournament Format Model and API Support (TDD First)
+**Files**: `lib/models/Tournament.ts`, `app/api/tournaments/route.ts`, `app/api/tournaments/[id]/route.ts`, `__tests__/lib/models/Tournament.test.ts`, `__tests__/api/tournaments.test.ts`
+**Depends on**: T13, T14, T63
+**TDD**: Write tests before implementation
+**Description**: Extend tournaments beyond knockout brackets:
+- Add a tournament format field, for example `double_elimination`, `team_round_robin`, and `individual_mixer`.
+- Preserve existing knockout behavior as the default for old and new tournaments.
+- Validate format-specific setup options such as team size, roster source, match format, and whether players or teams are used.
+- Ensure API responses expose the format and setup metadata needed by public/admin views.
+- Keep existing draft, active, and completed lifecycle semantics.
+
+Tests: default format remains knockout, create team round-robin tournament, create individual mixer tournament, reject incompatible input modes, serialize format metadata, update/get preserves existing tournaments without a format.
+
+---
+
+### T70 - Team Round-Robin Schedule Generation (TDD First)
+**Files**: `lib/round-robin/teamSchedule.ts`, `__tests__/lib/round-robin/teamSchedule.test.ts`
+**Depends on**: T69, T03
+**TDD**: Write tests before implementation
+**Description**: Generate "each team vs each team" schedules:
+- Build one match for every unique team pair.
+- Support odd team counts without creating playable bye matches.
+- Assign stable round and position values for display and court scheduling.
+- Reuse existing match shape where practical so scoring and court logic can remain shared.
+- Keep generated schedules deterministic for the same team order.
+
+Tests: 2 teams creates 1 match, 4 teams creates 6 matches, 5 teams creates 10 matches, no duplicate pairings, no self matches, stable round ordering, odd team count does not create a scored bye.
+
+---
+
+### T71 - Individual Mixer Schedule Generation (TDD First)
+**Files**: `lib/round-robin/individualMixer.ts`, `__tests__/lib/round-robin/individualMixer.test.ts`
+**Depends on**: T69, T61, T03
+**TDD**: Write tests before implementation
+**Description**: Generate individual-player tournaments where teams change every match:
+- Create per-match temporary teams from registered players.
+- Rotate player pairings so players get varied partners and opponents where possible.
+- Support configured team sizes using the existing 2/3/4-player team constraints.
+- Avoid assigning the same player to both sides of a match.
+- Track match participation so standings can credit individual players rather than persistent teams.
+
+Tests: creates valid temporary teams for even player counts, handles remainders according to configured rules, no player appears twice in one match, repeated partners are minimized, every player receives a balanced number of matches where possible, generated matches include player participation metadata.
+
+---
+
+### T72 - Non-Knockout Start and Match Lifecycle Integration (TDD First)
+**Files**: `app/api/tournaments/[id]/start/route.ts`, `app/api/tournaments/[id]/matches/[matchId]/status/route.ts`, `app/api/tournaments/[id]/matches/[matchId]/scores/route.ts`, `lib/bracket/advance.ts`, `__tests__/api/start.test.ts`, `__tests__/api/status.test.ts`, `__tests__/api/scores.test.ts`
+**Depends on**: T70, T71, T34, T44
+**TDD**: Write tests before implementation
+**Description**: Start and run round-robin and individual-mixer tournaments:
+- Use the selected format to choose knockout, team round-robin, or individual mixer schedule generation.
+- Keep court assignment and score entry behavior consistent across formats.
+- For non-knockout formats, completing a match should not advance winners/losers through bracket slots.
+- Complete the tournament when all scheduled non-bye matches are completed.
+- Keep automatic court scheduling available for ready non-knockout matches.
+
+Tests: start team round-robin creates pair schedule, start individual mixer creates temporary-team schedule, completing non-knockout match does not route bracket slots, courts free after completion, auto scheduling fills ready round-robin matches, tournament completes after final scheduled match.
+
+---
+
+### T73 - Non-Knockout Standings and Tie-Breaks (TDD First)
+**Files**: `lib/standings/nonKnockout.ts`, `components/bracket/StandingsTable.tsx`, `__tests__/lib/standings/nonKnockout.test.ts`, `__tests__/components/StandingsTable.test.tsx`
+**Depends on**: T52, T72
+**TDD**: Write tests before implementation
+**Description**: Calculate winners for non-knockout formats:
+- Rank team round-robin standings by wins first, then point difference or points when wins are tied.
+- Rank individual mixer standings by each player's accumulated wins and points across temporary teams.
+- Exclude unplayed and bye matches from standings.
+- Provide deterministic ordering after all configured tie-breakers.
+- Reuse stats fields where possible while keeping tournament-winner standings explicit.
+
+Tests: most wins ranks first, tied wins use points or point difference, exact ties use deterministic name ordering, unplayed matches ignored, team round-robin winner calculated, individual mixer winner calculated from temporary team results.
+
+---
+
+### T74 - Non-Knockout Setup and Public/Admin Views
+**Files**: `app/admin/tournament/new/page.tsx`, `app/admin/tournament/[id]/setup/page.tsx`, `components/admin/TournamentManageView.tsx`, `components/bracket/PublicTournamentView.tsx`, `components/bracket/BracketView.tsx`, `components/tournament/RoundRobinView.tsx`, `__tests__/components/NewTournamentPage.test.tsx`, `__tests__/components/TournamentSetupPage.test.tsx`, `__tests__/components/TournamentManageView.test.tsx`, `__tests__/components/PublicTournamentView.test.tsx`
+**Depends on**: T72, T73
+**TDD**: Write tests alongside implementation
+**Description**: Expose round-robin and individual-mixer tournaments in the UI:
+- Add tournament format selection during creation/setup.
+- Show format-specific setup controls for teams, players, and mixer options.
+- Render non-knockout schedules as round lists or match tables instead of bracket graphs.
+- Show live standings beside or above the schedule for public and admin views.
+- Preserve existing knockout bracket UI for knockout tournaments.
+
+Tests: creation form selects format, setup form changes fields by format, public team round-robin view renders schedule and standings, public individual mixer view highlights player standings, admin controls render for non-knockout matches, knockout tournaments still render the bracket view.
+
+---
+
 ## Phase 9 Dependency Summary
 
 ```
@@ -874,6 +964,9 @@ T09, T39 -> T65
 T14, T52, T53, T58, T61 -> T66
 T60, T66 -> T67
 T61, T67 -> T68
+T13, T14, T63 -> T69 -> T70
+T69, T61 -> T71
+T70, T71, T34, T44 -> T72 -> T73 -> T74
 ```
 
 ---
@@ -882,4 +975,4 @@ T61, T67 -> T68
 
 | Phase | Tasks | Notes |
 |---|---|---|
-| 9 - Roadmap Features | 11 | Admin accounts, player accounts/self-join, dark mode, dashboard metrics, and player password reset |
+| 9 - Roadmap Features | 17 | Admin accounts, player accounts/self-join, dark mode, dashboard metrics, player password reset, and non-knockout tournament formats |

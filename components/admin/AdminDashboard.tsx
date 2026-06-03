@@ -14,10 +14,7 @@ import {
 import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import {
-  emptyAdminDashboardMetrics,
-  type AdminDashboardMetrics,
-} from "@/lib/admin/dashboardMetrics";
+import type { AdminDashboardMetrics } from "@/lib/admin/dashboardMetrics";
 import type { ITournament } from "@/lib/models/Tournament";
 
 export interface TournamentSummary {
@@ -36,9 +33,21 @@ interface AdminDashboardProps {
   initialTournaments: TournamentSummary[];
 }
 
+const defaultMetrics: AdminDashboardMetrics = {
+  playedMatches: 0,
+  registeredAdmins: 0,
+  registeredPlayers: 0,
+  registeredTournaments: 0,
+  tournamentsByStatus: {
+    active: 0,
+    completed: 0,
+    draft: 0,
+  },
+};
+
 export function AdminDashboard({
   initialAdmins = [],
-  initialMetrics = emptyAdminDashboardMetrics,
+  initialMetrics = defaultMetrics,
   initialPlayers = [],
   initialTournaments,
 }: AdminDashboardProps) {

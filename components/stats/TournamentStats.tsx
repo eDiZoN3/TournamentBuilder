@@ -1,6 +1,9 @@
+"use client";
+
 import { StatsTable } from "@/components/stats/StatsTable";
 import type { ITournament } from "@/lib/models/Tournament";
 import { calculateTournamentStats, type StatsResult } from "@/lib/stats";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface TournamentStatsProps {
   stats?: StatsResult;
@@ -11,6 +14,7 @@ export function TournamentStats({
   stats,
   tournament,
 }: TournamentStatsProps) {
+  const { t } = useLocale();
   const resolvedStats =
     stats ?? (tournament ? calculateTournamentStats(tournament) : null);
 
@@ -22,19 +26,19 @@ export function TournamentStats({
     <section className="space-y-5">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Stats
+          {t("stats")}
         </h2>
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
         <StatsTable
-          emptyTitle="No team stats yet"
+          emptyTitle={t("noTeamStats")}
           rows={resolvedStats.teams}
-          title="Team stats"
+          title={t("teamStats")}
         />
         <StatsTable
-          emptyTitle="No player stats yet"
+          emptyTitle={t("noPlayerStats")}
           rows={resolvedStats.players}
-          title="Player stats"
+          title={t("playerStats")}
         />
       </div>
     </section>

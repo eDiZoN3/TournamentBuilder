@@ -9,6 +9,7 @@ import { JoinTournamentButton } from "@/components/player/JoinTournamentButton";
 import { TournamentStats } from "@/components/stats/TournamentStats";
 import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
 import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
@@ -29,13 +30,15 @@ async function fetchTournament(url: string): Promise<ITournament> {
 }
 
 export function FinalStandings({ tournament }: { tournament: ITournament }) {
+  const { t } = useLocale();
+
   return (
     <section
       className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 dark:border-emerald-800 dark:bg-emerald-950"
       data-testid="tournament-complete"
     >
       <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
-        Tournament complete
+        {t("tournamentComplete")}
       </h2>
       <div className="mt-4">
         <StandingsTable tournament={tournament} />
@@ -48,6 +51,7 @@ export function PublicTournamentView({
   currentPlayerName = null,
   initialTournament,
 }: PublicTournamentViewProps) {
+  const { t } = useLocale();
   const refreshFailures = useRef(0);
   const [unableToRefresh, setUnableToRefresh] = useState(false);
   const { data, isLoading } = useSWR<ITournament>(
@@ -87,7 +91,7 @@ export function PublicTournamentView({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Tournament bracket
+            {t("tournamentBracket")}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">
             {tournament.name}

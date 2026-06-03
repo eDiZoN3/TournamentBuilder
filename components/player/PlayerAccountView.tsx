@@ -1,3 +1,7 @@
+"use client";
+
+import { useLocale } from "@/components/ui/LocaleProvider";
+
 export interface PlayerAccountProfile {
   _id: string;
   displayName: string;
@@ -20,11 +24,13 @@ interface PlayerAccountViewProps {
 }
 
 export function PlayerAccountView({ profile, stats }: PlayerAccountViewProps) {
+  const { t } = useLocale();
+
   return (
     <section className="space-y-6">
       <header>
         <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Player account
+          {t("playerAccount")}
         </p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">
           {profile.displayName}
@@ -35,19 +41,19 @@ export function PlayerAccountView({ profile, stats }: PlayerAccountViewProps) {
       {stats ? (
         <div className="grid gap-4 sm:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Matches</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("matches")}</p>
             <p className="mt-1 text-2xl font-bold">{stats.matchesPlayed}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Wins</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("wins")}</p>
             <p className="mt-1 text-2xl font-bold">{stats.matchesWon}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Points</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("points")}</p>
             <p className="mt-1 text-2xl font-bold">{stats.pointsFor}</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Win rate</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("winRate")}</p>
             <p className="mt-1 text-2xl font-bold">
               {Math.round(stats.winRate * 100)}%
             </p>

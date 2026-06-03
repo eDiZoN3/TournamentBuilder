@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { LocaleProvider } from "@/components/ui/LocaleProvider";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
@@ -31,18 +33,47 @@ function ThemeStartupScript() {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
 }
 
+function LocaleStartupScript() {
+  const script = `
+(() => {
+  try {
+    var locale = window.localStorage.getItem("${LOCALE_STORAGE_KEY}");
+    if (locale !== "de" && locale !== "en") {
+      locale = "en";
+    }
+    document.documentElement.lang = locale;
+    document.documentElement.dataset.locale = locale;
+  } catch {
+    document.documentElement.lang = "en";
+    document.documentElement.dataset.locale = "en";
+  }
+})();
+`;
+
+  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html className="light" data-theme="light" lang="en" suppressHydrationWarning>
+    <html
+      className="light"
+      data-locale="en"
+      data-theme="light"
+      lang="en"
+      suppressHydrationWarning
+    >
       <body>
+        <LocaleStartupScript />
         <ThemeStartupScript />
-        <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </ThemeProvider>
+        <LocaleProvider>
+          <ThemeProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </ThemeProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { assignPlayersToTeams } from "@/lib/bracket/playerAssign";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 export interface SetupTeam {
   name: string;
@@ -55,6 +56,7 @@ export function TournamentSetupForm({
   tournament,
 }: TournamentSetupFormProps) {
   const router = useRouter();
+  const { locale, t } = useLocale();
   const format = tournament.format ?? "double_elimination";
   const isIndividualMixer = format === "individual_mixer";
   const joinedPlayerNames = (tournament.joinedPlayers ?? []).map(
@@ -225,7 +227,7 @@ export function TournamentSetupForm({
   return (
     <section className="max-w-3xl">
       <h1 className="text-3xl font-bold tracking-tight">
-        Set up {tournament.name}
+        {locale === "de" ? `${tournament.name} ${t("setup")}` : `Set up ${tournament.name}`}
       </h1>
       <p className="mt-2 text-slate-600 dark:text-slate-300">
         Add participants and confirm the teams before starting the tournament.
@@ -242,7 +244,7 @@ export function TournamentSetupForm({
                   className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                   maxLength={50}
                   onChange={(event) => updateTeamName(index, event.target.value)}
-                  placeholder={`Team ${index + 1}`}
+                  placeholder={`${t("team")} ${index + 1}`}
                   value={teamName}
                 />
               </label>
@@ -265,7 +267,7 @@ export function TournamentSetupForm({
             onClick={() => setTeamNames((current) => [...current, ""])}
             type="button"
           >
-            Add team
+            {t("addTeam")}
           </button>
         </div>
       ) : (
@@ -286,14 +288,14 @@ export function TournamentSetupForm({
             {playerNames.map((playerName, index) => (
               <div className="flex gap-2" key={index}>
                 <label className="flex-1">
-                  <span className="sr-only">Player {index + 1} name</span>
+                  <span className="sr-only">{t("player")} {index + 1} {t("name")}</span>
                   <input
                     aria-label={`Player ${index + 1} name`}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                     onChange={(event) =>
                       updatePlayerName(index, event.target.value)
                     }
-                    placeholder={`Player ${index + 1}`}
+                    placeholder={`${t("player")} ${index + 1}`}
                     value={playerName}
                   />
                 </label>
@@ -320,7 +322,7 @@ export function TournamentSetupForm({
               onClick={() => setPlayerNames((current) => [...current, ""])}
               type="button"
             >
-              Add player
+              {t("addPlayer")}
             </button>
             {!isIndividualMixer ? (
               <button
@@ -387,7 +389,7 @@ export function TournamentSetupForm({
         onClick={startTournament}
         type="button"
       >
-        {isSubmitting ? "Starting..." : "Start tournament"}
+        {isSubmitting ? "Starting..." : t("startTournament")}
       </button>
     </section>
   );

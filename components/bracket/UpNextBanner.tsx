@@ -1,4 +1,7 @@
+"use client";
+
 import { resolveTeamName } from "@/components/bracket/utils";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface UpNextBannerProps {
@@ -7,6 +10,7 @@ interface UpNextBannerProps {
 }
 
 export function UpNextBanner({ matches, teams }: UpNextBannerProps) {
+  const { t } = useLocale();
   const readyMatches = matches
     .filter((match) => match.status === "ready" && !match.isBye)
     .sort((first, second) => {
@@ -25,7 +29,7 @@ export function UpNextBanner({ matches, teams }: UpNextBannerProps) {
   return (
     <aside className="rounded-xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-800 dark:bg-sky-950">
       <h2 className="text-sm font-bold uppercase tracking-wide text-sky-900 dark:text-sky-100">
-        Up next
+        {t("upNext")}
       </h2>
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         {readyMatches.map((match) => (

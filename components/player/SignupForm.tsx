@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface ApiError {
   error?: string;
@@ -10,6 +11,7 @@ interface ApiError {
 
 export function SignupForm() {
   const router = useRouter();
+  const { t } = useLocale();
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
@@ -64,14 +66,14 @@ export function SignupForm() {
 
   return (
     <section className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <h1 className="text-2xl font-bold tracking-tight">Player sign up</h1>
+      <h1 className="text-2xl font-bold tracking-tight">{t("playerSignUp")}</h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         Create an account to join open tournaments and track your stats.
       </p>
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="firstName">
-            First name
+            {t("firstName")}
           </label>
           <input
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
@@ -84,7 +86,7 @@ export function SignupForm() {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="surname">
-            Surname
+            {t("surname")}
           </label>
           <input
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
@@ -96,7 +98,7 @@ export function SignupForm() {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
-            Email
+            {t("email")}
           </label>
           <input
             autoComplete="email"
@@ -110,7 +112,7 @@ export function SignupForm() {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
-            Password
+            {t("password")}
           </label>
           <input
             autoComplete="new-password"
@@ -133,7 +135,7 @@ export function SignupForm() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Creating..." : "Create account"}
+          {isSubmitting ? "Creating..." : t("createAccount")}
         </button>
       </form>
     </section>

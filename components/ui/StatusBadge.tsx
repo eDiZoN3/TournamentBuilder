@@ -1,4 +1,7 @@
+"use client";
+
 import type { ITournament } from "@/lib/models/Tournament";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface StatusBadgeProps {
   status: ITournament["status"];
@@ -11,13 +14,18 @@ const styles: Record<ITournament["status"], string> = {
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const label = `${status[0].toUpperCase()}${status.slice(1)}`;
+  const { t } = useLocale();
+  const labels: Record<ITournament["status"], string> = {
+    active: t("active"),
+    completed: t("completed"),
+    draft: t("draft"),
+  };
 
   return (
     <span
       className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${styles[status]}`}
     >
-      {label}
+      {labels[status]}
     </span>
   );
 }

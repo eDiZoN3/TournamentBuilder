@@ -3,11 +3,14 @@
 import { type FormEvent, Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LocaleToggle } from "@/components/ui/LocaleToggle";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -42,18 +45,19 @@ function LoginForm() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="absolute right-4 top-4">
+      <div className="absolute right-4 top-4 flex gap-2">
+        <LocaleToggle />
         <ThemeToggle />
       </div>
       <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <h1 className="text-2xl font-bold tracking-tight">Admin login</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("adminLogin")}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           Sign in to manage volleyball tournaments.
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
-              Email
+              {t("email")}
             </label>
             <input
               autoComplete="email"
@@ -67,7 +71,7 @@ function LoginForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
-              Password
+              {t("password")}
             </label>
             <input
               autoComplete="current-password"
@@ -89,7 +93,7 @@ function LoginForm() {
             disabled={isSubmitting}
             type="submit"
           >
-            {isSubmitting ? "Signing in..." : "Sign in"}
+            {isSubmitting ? t("signingIn") : t("signIn")}
           </button>
         </form>
       </section>

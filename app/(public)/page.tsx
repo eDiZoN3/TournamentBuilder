@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LocalizedText } from "@/components/ui/LocalizedText";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { connectDB } from "@/lib/db";
 import { Tournament } from "@/lib/models/Tournament";
@@ -13,14 +14,14 @@ export default async function HomePage() {
   return (
     <section>
       <h1 className="text-3xl font-bold tracking-tight">
-        Volleyball tournaments
+        <LocalizedText k="volleyballTournaments" />
       </h1>
       <p className="mt-3 text-slate-600 dark:text-slate-300">
-        Follow current tournaments and review completed brackets.
+        <LocalizedText k="followCurrentTournaments" />
       </p>
       {tournaments.length === 0 ? (
         <p className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
-          No tournaments yet.
+          <LocalizedText k="noTournamentsYet" />
         </p>
       ) : (
         <div className="mt-8 grid gap-4">

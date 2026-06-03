@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "@/components/ui/ThemeProvider";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface ThemeToggleProps {
   className?: string;
@@ -8,8 +9,14 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className = "" }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
+  const { locale } = useLocale();
   const nextTheme = theme === "dark" ? "light" : "dark";
-  const label = `Switch to ${nextTheme} mode`;
+  const label =
+    locale === "de"
+      ? nextTheme === "dark"
+        ? "In den Dunkelmodus wechseln"
+        : "In den Hellmodus wechseln"
+      : `Switch to ${nextTheme} mode`;
 
   return (
     <button

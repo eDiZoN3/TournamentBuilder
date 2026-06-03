@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { TournamentFormat } from "@/lib/models/Tournament";
 
 interface ApiError {
@@ -10,6 +11,7 @@ interface ApiError {
 
 export default function NewTournamentPage() {
   const router = useRouter();
+  const { t } = useLocale();
   const [name, setName] = useState("");
   const [format, setFormat] = useState<TournamentFormat>("double_elimination");
   const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
@@ -71,7 +73,7 @@ export default function NewTournamentPage() {
 
   return (
     <section className="max-w-2xl">
-      <h1 className="text-3xl font-bold tracking-tight">New tournament</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{t("newTournament")}</h1>
       <p className="mt-2 text-slate-600 dark:text-slate-300">
         Configure the tournament before entering teams or players.
       </p>
@@ -81,7 +83,7 @@ export default function NewTournamentPage() {
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="name"
           >
-            Tournament name
+            {t("tournamentName")}
           </label>
           <input
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
@@ -95,13 +97,13 @@ export default function NewTournamentPage() {
 
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Tournament format
+            {t("tournamentFormat")}
           </legend>
           <div className="mt-2 space-y-2">
             {([
-              ["double_elimination", "Double elimination"],
-              ["team_round_robin", "Team round robin"],
-              ["individual_mixer", "Individual mixer"],
+              ["double_elimination", t("doubleElimination")],
+              ["team_round_robin", t("teamRoundRobin")],
+              ["individual_mixer", t("individualMixer")],
             ] as const).map(([value, label]) => (
               <label className="flex items-center gap-2" key={value}>
                 <input
@@ -118,7 +120,7 @@ export default function NewTournamentPage() {
 
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Team size
+            {t("teamSize")}
           </legend>
           <div className="mt-2 flex gap-4">
             {([2, 3, 4] as const).map((size) => (
@@ -140,7 +142,7 @@ export default function NewTournamentPage() {
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="courtsAvailable"
           >
-            Courts available
+            {t("courtsAvailable")}
           </label>
           <input
             className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
@@ -175,7 +177,7 @@ export default function NewTournamentPage() {
                 }}
                 type="radio"
               />
-              Enter team names
+              {t("enterTeamNames")}
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -190,7 +192,7 @@ export default function NewTournamentPage() {
                 }}
                 type="radio"
               />
-              Enter player names
+              {t("enterPlayerNames")}
             </label>
           </div>
         </fieldset>
@@ -216,7 +218,7 @@ export default function NewTournamentPage() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Creating..." : "Create tournament"}
+          {isSubmitting ? "Creating..." : t("createTournament")}
         </button>
       </form>
     </section>

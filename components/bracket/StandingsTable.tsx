@@ -1,8 +1,11 @@
+"use client";
+
 import type { IMatch, ITeam, ITournament } from "@/lib/models/Tournament";
 import {
   buildNonKnockoutStandings,
   isNonKnockoutFormat,
 } from "@/lib/standings/nonKnockout";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface StandingRow {
   place: number;
@@ -149,6 +152,8 @@ export function StandingsTable({
   title = "Final standings",
   tournament,
 }: StandingsTableProps) {
+  const { t } = useLocale();
+
   if (isNonKnockoutFormat(tournament.format)) {
     const standings = buildNonKnockoutStandings(tournament);
     const currentPlayerKey = currentPlayerName
@@ -164,14 +169,14 @@ export function StandingsTable({
           <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-emerald-200 text-xs uppercase tracking-wide text-emerald-800 dark:border-emerald-800 dark:text-emerald-200">
-                <th className="py-2 pr-4 font-semibold">Place</th>
+                <th className="py-2 pr-4 font-semibold">{t("place")}</th>
                 <th className="px-4 py-2 font-semibold">
-                  {tournament.format === "individual_mixer" ? "Player" : "Team"}
+                  {tournament.format === "individual_mixer" ? t("player") : t("team")}
                 </th>
-                <th className="px-4 py-2 font-semibold">Wins</th>
-                <th className="px-4 py-2 font-semibold">Losses</th>
-                <th className="px-4 py-2 font-semibold">Diff</th>
-                <th className="py-2 pl-4 font-semibold">Points</th>
+                <th className="px-4 py-2 font-semibold">{t("wins")}</th>
+                <th className="px-4 py-2 font-semibold">{t("losses")}</th>
+                <th className="px-4 py-2 font-semibold">{t("diff")}</th>
+                <th className="py-2 pl-4 font-semibold">{t("points")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-emerald-100 dark:divide-emerald-900">
@@ -222,14 +227,14 @@ export function StandingsTable({
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">{title}</h2>
+      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">{title === "Final standings" ? t("finalStandings") : title}</h2>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-emerald-200 text-xs uppercase tracking-wide text-emerald-800 dark:border-emerald-800 dark:text-emerald-200">
-              <th className="py-2 pr-4 font-semibold">Place</th>
-              <th className="px-4 py-2 font-semibold">Team</th>
-              <th className="py-2 pl-4 font-semibold">Players</th>
+              <th className="py-2 pr-4 font-semibold">{t("place")}</th>
+              <th className="px-4 py-2 font-semibold">{t("team")}</th>
+              <th className="py-2 pl-4 font-semibold">{t("player")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-emerald-100 dark:divide-emerald-900">

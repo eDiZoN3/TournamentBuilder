@@ -13,6 +13,7 @@ import {
 } from "@/components/admin/PlayerUsersPanel";
 import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { AdminDashboardMetrics } from "@/lib/admin/dashboardMetrics";
 import type { ITournament } from "@/lib/models/Tournament";
@@ -52,19 +53,22 @@ export function AdminDashboard({
   initialTournaments,
 }: AdminDashboardProps) {
   const [tournaments, setTournaments] = useState(initialTournaments);
+  const { t } = useLocale();
 
   return (
     <section>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-300">Manage volleyball tournaments.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("dashboard")}</h1>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">
+            {t("manageVolleyballTournaments")}
+          </p>
         </div>
         <Link
           className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
           href="/admin/tournament/new"
         >
-          Create New Tournament
+          {t("createNewTournament")}
         </Link>
       </header>
       <div className="mt-8">
@@ -82,11 +86,11 @@ export function AdminDashboard({
                 className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                 href="/admin/tournament/new"
               >
-                Create New Tournament
+                {t("createNewTournament")}
               </Link>
             }
             description="Create one to start scheduling matches."
-            title="No tournaments yet."
+            title={t("noTournamentsYet")}
           />
         </div>
       ) : (
@@ -102,7 +106,8 @@ export function AdminDashboard({
                     {tournament.name}
                   </h2>
                   <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {tournament.teamCount} teams / {tournament.matchCount} matches
+                    {tournament.teamCount} {t("teams").toLowerCase()} /{" "}
+                    {tournament.matchCount} {t("matches").toLowerCase()}
                   </p>
                 </div>
                 <StatusBadge status={tournament.status} />
@@ -110,28 +115,28 @@ export function AdminDashboard({
               <div className="mt-4 flex flex-wrap gap-2">
                 {tournament.status === "draft" ? (
                   <Link
-                    aria-label={`Setup ${tournament.name}`}
+                    aria-label={`${t("setup")} ${tournament.name}`}
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
                     href={`/admin/tournament/${tournament._id}/setup`}
                   >
-                    Setup
+                    {t("setup")}
                   </Link>
                 ) : null}
                 {tournament.status === "active" ? (
                   <Link
-                    aria-label={`Manage ${tournament.name}`}
+                    aria-label={`${t("manage")} ${tournament.name}`}
                     className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white"
                     href={`/admin/tournament/${tournament._id}/manage`}
                   >
-                    Manage
+                    {t("manage")}
                   </Link>
                 ) : null}
                 <Link
-                  aria-label={`View ${tournament.name}`}
+                  aria-label={`${t("view")} ${tournament.name}`}
                   className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
                   href={`/tournament/${tournament._id}`}
                 >
-                  View
+                  {t("view")}
                 </Link>
                 <TournamentDeleteControl
                   onDeleted={() =>

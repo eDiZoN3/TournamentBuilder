@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { LocaleToggle } from "@/components/ui/LocaleToggle";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface NavbarProps {
@@ -7,8 +11,9 @@ interface NavbarProps {
 }
 
 export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
+  const { t } = useLocale();
   const accountHref = role === "player" ? "/account" : "/admin/dashboard";
-  const accountLabel = role === "player" ? "Account" : "Dashboard";
+  const accountLabel = role === "player" ? t("account") : t("dashboard");
 
   return (
     <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
@@ -21,28 +26,29 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
             className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
             href="/"
           >
-            Tournaments
+            {t("tournaments")}
           </Link>
           <Link
             className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
             href="/stats"
           >
-            Stats
+            {t("stats")}
           </Link>
           {!isAuthenticated ? (
             <Link
               className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
               href="/signup"
             >
-              Sign up
+              {t("signUp")}
             </Link>
           ) : null}
           <Link
             className="rounded-md bg-slate-900 px-3 py-2 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
             href={isAuthenticated ? accountHref : "/admin/login"}
           >
-            {isAuthenticated ? accountLabel : "Admin login"}
+            {isAuthenticated ? accountLabel : t("adminLogin")}
           </Link>
+          <LocaleToggle />
           <ThemeToggle />
         </div>
       </nav>

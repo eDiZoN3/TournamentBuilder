@@ -1,4 +1,5 @@
 import { StatsTable } from "@/components/stats/StatsTable";
+import { LocalizedText } from "@/components/ui/LocalizedText";
 import { connectDB } from "@/lib/db";
 import { Tournament, type ITournament } from "@/lib/models/Tournament";
 import { aggregateStats } from "@/lib/stats";
@@ -16,7 +17,9 @@ export default async function StatsPage() {
   return (
     <section className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight">Global stats</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          <LocalizedText k="globalStats" />
+        </h1>
       </header>
       <div className="grid gap-6 xl:grid-cols-2">
         <StatsTable

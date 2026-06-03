@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { StandingsTable } from "@/components/bracket/StandingsTable";
 import { UpNextBanner } from "@/components/bracket/UpNextBanner";
 import { resolveTeamName } from "@/components/bracket/utils";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { IMatch, ITournament } from "@/lib/models/Tournament";
 
 interface RoundRobinViewProps {
@@ -58,6 +59,7 @@ export function RoundRobinView({
   renderMatchControls,
   tournament,
 }: RoundRobinViewProps) {
+  const { t } = useLocale();
   const rounds = groupedRounds(tournament.matches);
 
   return (
@@ -65,29 +67,29 @@ export function RoundRobinView({
       <UpNextBanner matches={tournament.matches} teams={tournament.teams} />
       <StandingsTable
         currentPlayerName={currentPlayerName}
-        title="Standings"
+        title={t("standings")}
         tournament={tournament}
       />
       <section>
         <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Schedule
+          {t("schedule")}
         </h2>
         <div className="mt-4 space-y-5">
           {rounds.map(([round, matches]) => (
             <section key={round}>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                Round {round}
+                {t("round")} {round}
               </h3>
               <div className="mt-2 overflow-x-auto">
                 <table className="w-full min-w-[42rem] border-collapse text-left text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                      <th className="py-2 pr-4 font-semibold">Match</th>
-                      <th className="px-4 py-2 font-semibold">Teams</th>
-                      <th className="px-4 py-2 font-semibold">Score</th>
-                      <th className="px-4 py-2 font-semibold">Status</th>
+                      <th className="py-2 pr-4 font-semibold">{t("match")}</th>
+                      <th className="px-4 py-2 font-semibold">{t("teams")}</th>
+                      <th className="px-4 py-2 font-semibold">{t("score")}</th>
+                      <th className="px-4 py-2 font-semibold">{t("status")}</th>
                       {renderMatchControls ? (
-                        <th className="py-2 pl-4 font-semibold">Controls</th>
+                        <th className="py-2 pl-4 font-semibold">{t("controls")}</th>
                       ) : null}
                     </tr>
                   </thead>

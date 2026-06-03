@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 import { MatchCard } from "@/components/bracket/MatchCard";
+import { RoundTabs } from "@/components/bracket/RoundTabs";
 import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
@@ -21,6 +24,11 @@ export function LoserBracket({
   teams,
 }: LoserBracketProps) {
   const rounds = roundsFor(matches, "loser");
+  const [activeRound, setActiveRound] = useState(rounds[0]?.[0] ?? 1);
+  const roundTabs = rounds.map(([round, roundMatches]) => ({
+    label: roundMatches[0]?.label ?? `LB Round ${round}`,
+    round,
+  }));
 
   if (rounds.length === 0) {
     return null;
@@ -34,10 +42,19 @@ export function LoserBracket({
       >
         Loser bracket
       </h2>
+      <RoundTabs
+        activeRound={activeRound}
+        ariaLabel="Loser bracket rounds"
+        onChange={setActiveRound}
+        rounds={roundTabs}
+      />
       <div className="flex min-w-max gap-8">
         {rounds.map(([round, roundMatches]) => (
           <section
-            className="w-64 shrink-0"
+            className={`w-64 shrink-0 ${
+              activeRound === round ? "block" : "hidden md:block"
+            }`}
+            data-active={activeRound === round}
             data-testid="loser-round"
             key={round}
           >

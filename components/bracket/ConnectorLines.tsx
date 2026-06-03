@@ -140,7 +140,8 @@ export function ConnectorLines({ containerRef, matches }: ConnectorLinesProps) {
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 z-0 h-full w-full overflow-visible"
+      className="pointer-events-none absolute inset-0 z-0 hidden h-full w-full overflow-visible md:block"
+      data-testid="connector-lines"
     >
       {lines.map((line) => (
         <path

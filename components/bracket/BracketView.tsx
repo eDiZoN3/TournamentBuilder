@@ -29,6 +29,13 @@ export function BracketView({
   );
   const bracketRef = useRef<HTMLDivElement>(null);
   const hasLoserBracket = matches.some((match) => match.bracket === "loser");
+  const hasLargeBracket = teams.length > 8;
+  const layoutClasses = [
+    "grid min-w-full grid-cols-1 gap-10",
+    hasLargeBracket ? "" : "min-[1400px]:grid-cols-2",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <section className="space-y-6">
@@ -57,7 +64,7 @@ export function BracketView({
         </div>
       ) : null}
       <div className="relative overflow-x-auto pb-4" ref={bracketRef}>
-        <div className="grid min-w-max gap-10 lg:grid-cols-2">
+        <div className={layoutClasses} data-testid="bracket-layout">
           <div
             className={`overflow-x-auto ${
               activeBracket === "winner" ? "block" : "hidden md:block"

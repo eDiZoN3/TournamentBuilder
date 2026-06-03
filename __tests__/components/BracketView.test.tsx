@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useRef } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
@@ -144,6 +144,9 @@ describe("BracketView", () => {
     expect(
       screen.getByRole("button", { name: "Winner bracket" }),
     ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("bracket-layout")).toHaveClass(
+      "min-[1400px]:grid-cols-2",
+    );
   });
 
   it("switches the active mobile bracket tab", () => {
@@ -172,5 +175,59 @@ describe("BracketView", () => {
       screen.queryByRole("button", { name: "Loser bracket" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId("loser-bracket-panel")).not.toBeInTheDocument();
+  });
+
+  it("keeps larger tournaments stacked instead of forcing side-by-side brackets", () => {
+    const teams = makeTeams(10);
+    const matches = [
+      makeMatch({ bracket: "winner", round: 1 }),
+      makeMatch({ bracket: "winner", round: 2 }),
+      makeMatch({ bracket: "winner", round: 3 }),
+      makeMatch({ bracket: "loser", round: 1 }),
+      makeMatch({ bracket: "loser", round: 2 }),
+      makeMatch({ bracket: "loser", round: 3 }),
+    ];
+
+    render(<BracketView matches={matches} teams={teams} />);
+
+    expect(screen.getByTestId("bracket-layout")).toHaveClass("grid-cols-1");
+    expect(screen.getByTestId("bracket-layout")).not.toHaveClass(
+      "min-[1400px]:grid-cols-2",
+    );
+  });
+
+  it("filters visible mobile rounds and hides connector lines in round mode", async () => {
+    const matches = [
+      makeMatch({ bracket: "winner", round: 1, label: "WB Round 1" }),
+      makeMatch({ bracket: "winner", round: 2, label: "WB Final" }),
+      makeMatch({ bracket: "loser", round: 1, label: "LB Final", isLBFinal: true }),
+    ];
+
+    render(<BracketView matches={matches} teams={[]} />);
+
+    const winnerRounds = screen.getByRole("group", {
+      name: "Winner bracket rounds",
+    });
+
+    expect(screen.getAllByTestId("winner-round")[0]).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+
+    fireEvent.click(within(winnerRounds).getByRole("button", { name: "Final" }));
+
+    expect(screen.getAllByTestId("winner-round")[0]).toHaveAttribute(
+      "data-active",
+      "false",
+    );
+    expect(screen.getAllByTestId("winner-round")[0]).toHaveClass("hidden");
+    expect(screen.getAllByTestId("winner-round")[1]).toHaveAttribute(
+      "data-active",
+      "true",
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("connector-lines")).not.toBeInTheDocument();
+    });
   });
 });

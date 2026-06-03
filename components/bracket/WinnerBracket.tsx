@@ -1,5 +1,8 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 import { MatchCard } from "@/components/bracket/MatchCard";
+import { RoundTabs } from "@/components/bracket/RoundTabs";
 import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
@@ -21,6 +24,11 @@ export function WinnerBracket({
   teams,
 }: WinnerBracketProps) {
   const rounds = roundsFor(matches, "winner");
+  const [activeRound, setActiveRound] = useState(rounds[0]?.[0] ?? 1);
+  const roundTabs = rounds.map(([round, roundMatches]) => ({
+    label: roundMatches[0]?.label ?? `WB Round ${round}`,
+    round,
+  }));
 
   return (
     <section aria-labelledby="winner-bracket-title">
@@ -30,10 +38,19 @@ export function WinnerBracket({
       >
         Winner bracket
       </h2>
+      <RoundTabs
+        activeRound={activeRound}
+        ariaLabel="Winner bracket rounds"
+        onChange={setActiveRound}
+        rounds={roundTabs}
+      />
       <div className="flex min-w-max gap-8">
         {rounds.map(([round, roundMatches], roundIndex) => (
           <section
-            className="w-64 shrink-0"
+            className={`w-64 shrink-0 ${
+              activeRound === round ? "block" : "hidden md:block"
+            }`}
+            data-active={activeRound === round}
             data-testid="winner-round"
             key={round}
           >

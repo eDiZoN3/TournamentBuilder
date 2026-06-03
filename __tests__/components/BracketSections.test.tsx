@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
 import { LoserBracket } from "@/components/bracket/LoserBracket";
@@ -38,6 +38,27 @@ describe("WinnerBracket", () => {
     expect(screen.getByText("Team A")).toBeInTheDocument();
     expect(screen.getByText("Team B")).toBeInTheDocument();
     expect(screen.queryByText("LB Final")).not.toBeInTheDocument();
+  });
+
+  it("renders round tabs and marks inactive mobile rounds as hidden", () => {
+    const matches = [
+      makeMatch({ bracket: "winner", round: 1, label: "WB Round 1" }),
+      makeMatch({ bracket: "winner", round: 2, label: "WB Final" }),
+    ];
+
+    render(<WinnerBracket matches={matches} teams={[]} />);
+
+    const tabs = screen.getByRole("group", { name: "Winner bracket rounds" });
+
+    expect(within(tabs).getByRole("button", { name: "Round 1" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    fireEvent.click(within(tabs).getByRole("button", { name: "Final" }));
+
+    expect(screen.getAllByTestId("winner-round")[0]).toHaveClass("hidden");
+    expect(screen.getAllByTestId("winner-round")[1]).toHaveClass("block");
   });
 });
 
@@ -83,6 +104,20 @@ describe("LoserBracket", () => {
     render(<LoserBracket matches={[]} teams={[]} />);
 
     expect(screen.queryByRole("heading", { name: "Loser bracket" })).not.toBeInTheDocument();
+  });
+
+  it("renders loser-bracket round tabs", () => {
+    const matches = [
+      makeMatch({ bracket: "loser", round: 1, label: "LB Round 1" }),
+      makeMatch({ bracket: "loser", round: 2, label: "LB Final", isLBFinal: true }),
+    ];
+
+    render(<LoserBracket matches={matches} teams={[]} />);
+
+    const tabs = screen.getByRole("group", { name: "Loser bracket rounds" });
+
+    expect(within(tabs).getByRole("button", { name: "Round 1" })).toBeInTheDocument();
+    expect(within(tabs).getByRole("button", { name: "Final" })).toBeInTheDocument();
   });
 });
 

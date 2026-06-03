@@ -31,6 +31,8 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (!cache.promise || mongoose.connection.readyState === 0) {
     cache.promise = mongoose.connect(uri, {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
     });
   }
 

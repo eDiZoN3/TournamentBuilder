@@ -3,3 +3,4 @@
 3. [implemented] dark mode (switchable)
 4. admin dashboard with : registered player, registered admins, registered tournament, sum played matches, player registration, abbility to reset password of player accounts
 5. support for not only ko phase tournaments -> everyone(individual) vs everyone(individual) with new teams each match, each team vs each team, winner is team or indivual with most wins, decided by points if same amount of wins
+6. add german translation to frontend, can be toggled like dark mode

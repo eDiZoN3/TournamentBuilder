@@ -59,6 +59,7 @@ describe("NewTournamentPage", () => {
         },
         body: JSON.stringify({
           name: "Summer Cup",
+          format: "double_elimination",
           teamSize: 3,
           courtsAvailable: 2,
           inputMode: "players",
@@ -94,10 +95,81 @@ describe("NewTournamentPage", () => {
         expect.objectContaining({
           body: JSON.stringify({
             name: "Open Cup",
+            format: "double_elimination",
             teamSize: 2,
             courtsAvailable: 1,
             inputMode: "players",
             allowSelfJoin: true,
+          }),
+        }),
+      );
+    });
+  });
+
+  it("sends the team round-robin format with team entry", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "League Cup" },
+    });
+    fireEvent.click(screen.getByLabelText("Team round robin"));
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: "League Cup",
+            format: "team_round_robin",
+            teamSize: 2,
+            courtsAvailable: 1,
+            inputMode: "teams",
+            allowSelfJoin: false,
+          }),
+        }),
+      );
+    });
+  });
+
+  it("sends the individual mixer format with player entry", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Mixer Cup" },
+    });
+    fireEvent.click(screen.getByLabelText("Individual mixer"));
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: "Mixer Cup",
+            format: "individual_mixer",
+            teamSize: 2,
+            courtsAvailable: 1,
+            inputMode: "players",
+            allowSelfJoin: false,
           }),
         }),
       );

@@ -145,7 +145,11 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return jsonError("Tournament not found", "NOT_FOUND", 404);
     }
 
-    return NextResponse.json(tournament);
+    const responseBody = tournament.toObject();
+
+    responseBody.format ??= "double_elimination";
+
+    return NextResponse.json(responseBody);
   } catch {
     return jsonError("Unable to load tournament", "INTERNAL_ERROR", 500);
   }
@@ -197,7 +201,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     await tournament.save();
 
-    return NextResponse.json(tournament);
+    const responseBody = tournament.toObject();
+
+    responseBody.format ??= "double_elimination";
+
+    return NextResponse.json(responseBody);
   } catch {
     return jsonError("Unable to update tournament", "INTERNAL_ERROR", 500);
   }

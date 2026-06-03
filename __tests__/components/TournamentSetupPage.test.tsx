@@ -173,6 +173,65 @@ describe("TournamentSetupForm", () => {
     expect(screen.getByLabelText("Player 1 name")).toHaveValue("Alice Example");
   });
 
+  it("persists individual mixer players without generating fixed teams", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(jsonResponse({ tournamentId: "tournament-id" }));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Mixer Cup",
+          format: "individual_mixer",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    for (let index = 0; index < 2; index += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "Add player" }));
+    }
+
+    screen.getAllByLabelText(/Player \d+ name/).forEach((input, index) => {
+      fireEvent.change(input, {
+        target: {
+          value: ["Alice", "Bob", "Charlie", "Dana"][index],
+        },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        "/api/tournaments/tournament-id",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            teams: [
+              { name: "Alice", players: ["Alice"], seed: 1 },
+              { name: "Bob", players: ["Bob"], seed: 2 },
+              { name: "Charlie", players: ["Charlie"], seed: 3 },
+              { name: "Dana", players: ["Dana"], seed: 4 },
+            ],
+          }),
+        }),
+      );
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/tournaments/tournament-id/start",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    expect(screen.queryByRole("button", { name: "Generate teams" })).not.toBeInTheDocument();
+  });
+
   it("loads the tournament for the setup route", async () => {
     vi.stubGlobal(
       "fetch",

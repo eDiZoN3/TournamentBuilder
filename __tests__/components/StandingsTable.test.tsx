@@ -109,4 +109,44 @@ describe("StandingsTable", () => {
     expect(screen.getByRole("row", { name: /2nd Team B/ })).toBeInTheDocument();
     expect(screen.queryByText("3rd")).not.toBeInTheDocument();
   });
+
+  it("renders non-knockout standings with wins and point difference", () => {
+    const teams = makeTeams(3);
+    const tournament = completedTournament({
+      format: "team_round_robin",
+      teams,
+      matches: [
+        makeMatch({
+          label: "Round 1",
+          status: "completed",
+          winnerId: teams[0]._id,
+          loserId: teams[1]._id,
+          teamA: {
+            teamId: teams[0]._id,
+            sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+          },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        }),
+        makeMatch({
+          label: "Round 2",
+          round: 2,
+          status: "completed",
+          winnerId: teams[2]._id,
+          loserId: teams[1]._id,
+          teamA: {
+            teamId: teams[2]._id,
+            sets: [{ scoreA: 11, scoreB: 5, pointsToWin: 11 }],
+          },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        }),
+      ],
+    });
+
+    render(<StandingsTable tournament={tournament} />);
+
+    expect(screen.getByRole("heading", { name: "Final standings" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Wins" })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /1st Team C 1 0 \+6/ })).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /2nd Team A 1 0 \+3/ })).toBeInTheDocument();
+  });
 });

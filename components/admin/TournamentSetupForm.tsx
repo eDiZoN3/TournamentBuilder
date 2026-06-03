@@ -23,6 +23,7 @@ export interface SetupJoinedPlayer {
 export interface SetupTournament {
   _id: string;
   name: string;
+  format?: "double_elimination" | "team_round_robin" | "individual_mixer";
   teamSize: 2 | 3 | 4;
   inputMode: "teams" | "players";
   allowSelfJoin?: boolean;
@@ -54,6 +55,8 @@ export function TournamentSetupForm({
   tournament,
 }: TournamentSetupFormProps) {
   const router = useRouter();
+  const format = tournament.format ?? "double_elimination";
+  const isIndividualMixer = format === "individual_mixer";
   const joinedPlayerNames = (tournament.joinedPlayers ?? []).map(
     (player) => player.displayName,
   );
@@ -79,6 +82,7 @@ export function TournamentSetupForm({
     .map((player) => player.trim())
     .filter(Boolean);
   const hasPlayerRemainder =
+    !isIndividualMixer &&
     enteredPlayerNames.length > 0 &&
     enteredPlayerNames.length % tournament.teamSize !== 0;
 
@@ -134,17 +138,36 @@ export function TournamentSetupForm({
   async function startTournament() {
     setError(null);
 
-    const teams =
-      tournament.inputMode === "teams"
-        ? teamNames.map((name) => ({
-            name: name.trim(),
-            players: [],
-            seed: 0,
-          }))
-        : previewTeams.map((team) => ({
-            ...team,
-            name: team.name.trim(),
-          }));
+    const teams = (() => {
+      if (tournament.inputMode === "teams") {
+        return teamNames.map((name) => ({
+          name: name.trim(),
+          players: [],
+          seed: 0,
+        }));
+      }
+
+      if (isIndividualMixer) {
+        return enteredPlayerNames.map((name, index) => ({
+          name,
+          players: [name],
+          seed: index + 1,
+        }));
+      }
+
+      return previewTeams.map((team) => ({
+        ...team,
+        name: team.name.trim(),
+      }));
+    })();
+
+    if (
+      isIndividualMixer &&
+      enteredPlayerNames.length < tournament.teamSize * 2
+    ) {
+      setError(`Enter at least ${tournament.teamSize * 2} players.`);
+      return;
+    }
 
     if (teams.length < 2 || teams.some((team) => team.name.length === 0)) {
       setError(
@@ -299,13 +322,15 @@ export function TournamentSetupForm({
             >
               Add player
             </button>
-            <button
-              className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-              onClick={generateTeams}
-              type="button"
-            >
-              Generate teams
-            </button>
+            {!isIndividualMixer ? (
+              <button
+                className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white"
+                onClick={generateTeams}
+                type="button"
+              >
+                Generate teams
+              </button>
+            ) : null}
           </div>
 
           {hasPlayerRemainder ? (
@@ -314,7 +339,7 @@ export function TournamentSetupForm({
             </p>
           ) : null}
 
-          {previewTeams.length > 0 ? (
+          {!isIndividualMixer && previewTeams.length > 0 ? (
             <div className="mt-8 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Team preview</h2>

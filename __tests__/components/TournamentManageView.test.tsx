@@ -104,6 +104,35 @@ describe("TournamentManageView", () => {
     expect(card).not.toHaveClass("z-40");
   });
 
+  it("renders admin controls for non-knockout schedule matches", () => {
+    const teams = makeTeams(2);
+    const liveMatch = makeMatch({
+      label: "Round 1",
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const initialTournament = {
+      ...makeTournament({
+        format: "team_round_robin",
+        name: "League Admin Cup",
+        status: "active",
+        courtsAvailable: 1,
+        currentMatchIds: [liveMatch._id],
+        teams,
+        matches: [liveMatch],
+      }),
+      updatedAt: new Date(),
+    } as ITournament;
+
+    render(<TournamentManageView initialTournament={initialTournament} />);
+
+    expect(screen.getByTestId("round-robin-view")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Winner bracket" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enter scores" })).toBeInTheDocument();
+  });
+
   it("deletes the tournament after typed confirmation and redirects to the dashboard", async () => {
     const teams = makeTeams(2);
     const liveMatch = makeMatch({

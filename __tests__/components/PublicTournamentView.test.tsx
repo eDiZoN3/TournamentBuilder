@@ -148,6 +148,91 @@ describe("PublicTournamentView", () => {
     );
   });
 
+  it("renders round-robin schedules and live standings instead of a bracket", () => {
+    const teams = makeTeams(3);
+    const initialTournament = tournament({
+      format: "team_round_robin",
+      name: "League Cup",
+      status: "active",
+      teams,
+      matches: [
+        makeMatch({
+          label: "Round 1",
+          status: "completed",
+          winnerId: teams[0]._id,
+          loserId: teams[1]._id,
+          teamA: {
+            teamId: teams[0]._id,
+            sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+          },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        }),
+        makeMatch({
+          label: "Round 2",
+          round: 2,
+          status: "ready",
+          teamA: { teamId: teams[0]._id, sets: [] },
+          teamB: { teamId: teams[2]._id, sets: [] },
+        }),
+      ],
+    });
+
+    render(<PublicTournamentView initialTournament={initialTournament} />);
+
+    const roundRobinView = screen.getByTestId("round-robin-view");
+
+    expect(roundRobinView).toBeInTheDocument();
+    expect(within(roundRobinView).getByRole("heading", { name: "Standings" })).toBeInTheDocument();
+    expect(within(roundRobinView).getByRole("heading", { name: "Schedule" })).toBeInTheDocument();
+    expect(within(roundRobinView).getByText("Round 1")).toBeInTheDocument();
+    expect(within(roundRobinView).getAllByText("Team A").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading", { name: "Winner bracket" })).not.toBeInTheDocument();
+  });
+
+  it("highlights the current player in individual mixer standings", () => {
+    const teams = makeTeams(2);
+    teams[0].name = "Round 1 Team A";
+    teams[0].players = ["Alice Example", "Bob"];
+    teams[1].name = "Round 1 Team B";
+    teams[1].players = ["Charlie", "Dana"];
+    const initialTournament = tournament({
+      format: "individual_mixer",
+      inputMode: "players",
+      name: "Mixer Cup",
+      status: "active",
+      teams,
+      matches: [
+        makeMatch({
+          label: "Round 1",
+          status: "completed",
+          winnerId: teams[0]._id,
+          loserId: teams[1]._id,
+          teamA: {
+            teamId: teams[0]._id,
+            sets: [{ scoreA: 11, scoreB: 7, pointsToWin: 11 }],
+          },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        }),
+      ],
+    });
+
+    render(
+      <PublicTournamentView
+        currentPlayerName="Alice Example"
+        initialTournament={initialTournament}
+      />,
+    );
+
+    expect(
+      within(screen.getByTestId("round-robin-view")).getByRole("row", {
+        name: /Alice Example/,
+      }),
+    ).toHaveAttribute(
+      "data-current-player",
+      "true",
+    );
+  });
+
   it("stops polling and shows final standings when the tournament is complete", () => {
     const teams = makeTeams(4);
     const initialTournament = tournament({

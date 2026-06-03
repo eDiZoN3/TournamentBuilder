@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
-import { Tournament } from "@/lib/models/Tournament";
+import { Tournament, type TournamentFormat } from "@/lib/models/Tournament";
 
 interface CreateTournamentBody {
   allowSelfJoin: boolean;
+  format: TournamentFormat;
   name: string;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
@@ -17,12 +18,14 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     return null;
   }
 
-  const { allowSelfJoin, name, teamSize, courtsAvailable, inputMode } = body as Record<
-    string,
-    unknown
-  >;
+  const { allowSelfJoin, format, name, teamSize, courtsAvailable, inputMode } =
+    body as Record<string, unknown>;
   const parsedAllowSelfJoin =
     typeof allowSelfJoin === "boolean" ? allowSelfJoin : false;
+  const parsedFormat =
+    format === undefined
+      ? "double_elimination"
+      : (format as TournamentFormat);
 
   if (
     typeof name !== "string" ||
@@ -33,6 +36,11 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     (courtsAvailable as number) < 1 ||
     (courtsAvailable as number) > 10 ||
     !["teams", "players"].includes(inputMode as string) ||
+    !["double_elimination", "team_round_robin", "individual_mixer"].includes(
+      parsedFormat,
+    ) ||
+    (parsedFormat === "team_round_robin" && inputMode !== "teams") ||
+    (parsedFormat === "individual_mixer" && inputMode !== "players") ||
     (parsedAllowSelfJoin && inputMode !== "players")
   ) {
     return null;
@@ -40,6 +48,7 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
 
   return {
     allowSelfJoin: parsedAllowSelfJoin,
+    format: parsedFormat,
     name: name.trim(),
     teamSize: teamSize as 2 | 3 | 4,
     courtsAvailable: courtsAvailable as number,
@@ -58,6 +67,7 @@ export async function GET() {
         _id: tournament._id.toString(),
         name: tournament.name,
         status: tournament.status,
+        format: tournament.format ?? "double_elimination",
         createdAt: tournament.createdAt.toISOString(),
         allowSelfJoin: tournament.allowSelfJoin,
         teamCount: tournament.teams.length,
@@ -102,8 +112,10 @@ export async function POST(request: NextRequest) {
         _id: tournament._id.toString(),
         name: tournament.name,
         status: tournament.status,
+        format: tournament.format,
         teamSize: tournament.teamSize,
         courtsAvailable: tournament.courtsAvailable,
+        inputMode: tournament.inputMode,
         allowSelfJoin: tournament.allowSelfJoin,
       },
       {

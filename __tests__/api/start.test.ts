@@ -90,6 +90,75 @@ describe("POST /api/tournaments/[id]/start", () => {
     expect(body.autoStartedMatches).toHaveLength(1);
   });
 
+  it("starts a team round-robin tournament with every team pairing", async () => {
+    const teams = makeTeams(4);
+    const tournament = await Tournament.create({
+      name: "League Cup",
+      format: "team_round_robin",
+      teamSize: 2,
+      courtsAvailable: 3,
+      inputMode: "teams",
+      teams,
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+    const savedTournament = await Tournament.findById(tournament._id);
+    const pairKeys = savedTournament?.matches.map((match) =>
+      [match.teamA?.teamId.toString(), match.teamB?.teamId.toString()]
+        .sort()
+        .join(":"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      format: "team_round_robin",
+      matchesGenerated: 6,
+      byeCount: 0,
+    });
+    expect(body.autoStartedMatches).toHaveLength(3);
+    expect(savedTournament?.matches).toHaveLength(6);
+    expect(new Set(pairKeys).size).toBe(6);
+    expect(savedTournament?.matches.some((match) => match.bracket === "loser")).toBe(false);
+  });
+
+  it("starts an individual mixer tournament with temporary match teams", async () => {
+    const tournament = await Tournament.create({
+      name: "Mixer Cup",
+      format: "individual_mixer",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "players",
+      teams: [
+        { name: "Alice", players: ["Alice"], seed: 1 },
+        { name: "Bob", players: ["Bob"], seed: 2 },
+        { name: "Charlie", players: ["Charlie"], seed: 3 },
+        { name: "Dana", players: ["Dana"], seed: 4 },
+      ],
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+    const savedTournament = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      format: "individual_mixer",
+      matchesGenerated: 3,
+      byeCount: 0,
+    });
+    expect(savedTournament?.teams).toHaveLength(6);
+    expect(savedTournament?.teams[0].players).toHaveLength(2);
+    expect(savedTournament?.matches).toHaveLength(3);
+    expect(savedTournament?.matches.every((match) => match.teamA && match.teamB)).toBe(true);
+  });
+
   it("rejects an already-active tournament", async () => {
     const tournament = await Tournament.create({
       name: "Started Cup",

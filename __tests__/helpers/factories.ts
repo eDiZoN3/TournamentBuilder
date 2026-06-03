@@ -41,10 +41,16 @@ export interface Match {
   courtNumber: number | null;
 }
 
+export type TournamentFormat =
+  | "double_elimination"
+  | "team_round_robin"
+  | "individual_mixer";
+
 export interface Tournament {
   _id: Types.ObjectId;
   name: string;
   status: "draft" | "active" | "completed";
+  format: TournamentFormat;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
@@ -127,6 +133,7 @@ export function makeTournament(
     _id: new Types.ObjectId(),
     name: "Test Tournament",
     status: "draft",
+    format: "double_elimination",
     teamSize: 2,
     courtsAvailable: 1,
     inputMode: "teams",

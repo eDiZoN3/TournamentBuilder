@@ -237,6 +237,99 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/status", () => {
     expect(savedLoserTarget).toMatchObject({ status: "ready" });
   });
 
+  it("confirms a non-knockout match without routing bracket slots", async () => {
+    const teams = makeTeams(4);
+    const liveMatch = makeMatch({
+      label: "Round 1",
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [makeSet(11, 7)] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const readyMatch = makeMatch({
+      label: "Round 2",
+      round: 2,
+      status: "ready",
+      teamA: { teamId: teams[2]._id, sets: [] },
+      teamB: { teamId: teams[3]._id, sets: [] },
+    });
+    const tournament = await Tournament.create({
+      name: "League Cup",
+      format: "team_round_robin",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [liveMatch, readyMatch],
+      currentMatchIds: [liveMatch._id],
+    });
+
+    const response = await updateStatus(
+      request(tournament._id.toString(), liveMatch._id.toString(), {
+        status: "completed",
+      }),
+      context(tournament._id.toString(), liveMatch._id.toString()),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(tournament._id);
+    const savedReadyMatch = saved?.matches.find(
+      (match) => match._id.toString() === readyMatch._id.toString(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      nextMatchesReady: [],
+      tournamentCompleted: false,
+    });
+    expect(body.autoStartedMatches).toEqual([
+      {
+        matchId: readyMatch._id.toString(),
+        courtNumber: 1,
+      },
+    ]);
+    expect(savedReadyMatch).toMatchObject({
+      status: "in_progress",
+      teamA: { teamId: teams[2]._id },
+      teamB: { teamId: teams[3]._id },
+    });
+  });
+
+  it("completes a non-knockout tournament after the final scheduled match", async () => {
+    const teams = makeTeams(2);
+    const finalMatch = makeMatch({
+      label: "Round 1",
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [makeSet(11, 8)] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const tournament = await Tournament.create({
+      name: "Small League",
+      format: "team_round_robin",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [finalMatch],
+      currentMatchIds: [finalMatch._id],
+    });
+
+    const response = await updateStatus(
+      request(tournament._id.toString(), finalMatch._id.toString(), {
+        status: "completed",
+      }),
+      context(tournament._id.toString(), finalMatch._id.toString()),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(body.tournamentCompleted).toBe(true);
+    expect(saved?.status).toBe("completed");
+  });
+
   it.each([
     ["without scores", []],
     ["with an undetermined BO3 winner", [makeSet(11, 9)]],

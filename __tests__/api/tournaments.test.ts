@@ -78,12 +78,14 @@ describe("/api/tournaments", () => {
     expect(body.tournaments).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          format: "double_elimination",
           name: "First Cup",
           status: "draft",
           teamCount: 2,
           matchCount: 1,
         }),
         expect.objectContaining({
+          format: "double_elimination",
           name: "Second Cup",
           status: "draft",
           teamCount: 0,
@@ -109,10 +111,84 @@ describe("/api/tournaments", () => {
       _id: expect.any(String),
       name: "Summer Cup",
       status: "draft",
+      format: "double_elimination",
       teamSize: 3,
       courtsAvailable: 2,
     });
     await expect(Tournament.countDocuments()).resolves.toBe(1);
+  });
+
+  it("creates a team round-robin tournament", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "League Cup",
+        format: "team_round_robin",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "teams",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      format: "team_round_robin",
+      inputMode: "teams",
+      name: "League Cup",
+    });
+    await expect(Tournament.findOne({ name: "League Cup" }).lean()).resolves.toMatchObject({
+      format: "team_round_robin",
+    });
+  });
+
+  it("creates an individual mixer tournament", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Mixer Cup",
+        format: "individual_mixer",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "players",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      format: "individual_mixer",
+      inputMode: "players",
+      name: "Mixer Cup",
+    });
+  });
+
+  it.each([
+    [
+      "team round-robin with players",
+      {
+        name: "Bad League",
+        format: "team_round_robin",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "players",
+      },
+    ],
+    [
+      "individual mixer with teams",
+      {
+        name: "Bad Mixer",
+        format: "individual_mixer",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      },
+    ],
+  ])("rejects incompatible format settings: %s", async (_label, body) => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", body),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+    });
   });
 
   it("creates a self-joinable player tournament", async () => {
@@ -232,6 +308,7 @@ describe("/api/tournaments/[id]", () => {
     expect(response.status).toBe(200);
     expect(body).toMatchObject({
       _id: tournament._id.toString(),
+      format: "double_elimination",
       inputMode: "teams",
       teams: expect.any(Array),
       matches: [expect.objectContaining({ label: "WB Final" })],

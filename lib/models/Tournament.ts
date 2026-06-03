@@ -29,6 +29,11 @@ export interface IJoinedPlayer {
   joinedAt: Date;
 }
 
+export type TournamentFormat =
+  | "double_elimination"
+  | "team_round_robin"
+  | "individual_mixer";
+
 export interface ITeamSlot {
   teamId: Types.ObjectId;
   sets: ISetScore[];
@@ -61,6 +66,7 @@ export interface ITournament {
   _id: Types.ObjectId;
   name: string;
   status: "draft" | "active" | "completed";
+  format: TournamentFormat;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
@@ -267,6 +273,12 @@ const tournamentSchema = new Schema<ITournament>(
       type: String,
       enum: ["draft", "active", "completed"],
       default: "draft",
+      required: true,
+    },
+    format: {
+      type: String,
+      enum: ["double_elimination", "team_round_robin", "individual_mixer"],
+      default: "double_elimination",
       required: true,
     },
     teamSize: {

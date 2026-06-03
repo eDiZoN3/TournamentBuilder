@@ -1,8 +1,18 @@
 import type { IMatch, ITeam, ITournament } from "@/lib/models/Tournament";
+import {
+  buildNonKnockoutStandings,
+  isNonKnockoutFormat,
+} from "@/lib/standings/nonKnockout";
 
 interface StandingRow {
   place: number;
   team: ITeam;
+}
+
+interface StandingsTableProps {
+  currentPlayerName?: string | null;
+  title?: string;
+  tournament: ITournament;
 }
 
 function idString(id: { toString(): string } | null | undefined): string {
@@ -26,6 +36,14 @@ function ordinal(value: number): string {
     default:
       return `${value}th`;
   }
+}
+
+function signed(value: number): string {
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+function normalizeName(name: string): string {
+  return name.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 function placeRange(match: IMatch): [number, number] | null {
@@ -126,12 +144,85 @@ export function buildStandings(tournament: ITournament): StandingRow[] {
   return rows.sort((first, second) => first.place - second.place);
 }
 
-export function StandingsTable({ tournament }: { tournament: ITournament }) {
+export function StandingsTable({
+  currentPlayerName = null,
+  title = "Final standings",
+  tournament,
+}: StandingsTableProps) {
+  if (isNonKnockoutFormat(tournament.format)) {
+    const standings = buildNonKnockoutStandings(tournament);
+    const currentPlayerKey = currentPlayerName
+      ? normalizeName(currentPlayerName)
+      : null;
+
+    return (
+      <section>
+        <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
+          {title}
+        </h2>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-emerald-200 text-xs uppercase tracking-wide text-emerald-800 dark:border-emerald-800 dark:text-emerald-200">
+                <th className="py-2 pr-4 font-semibold">Place</th>
+                <th className="px-4 py-2 font-semibold">
+                  {tournament.format === "individual_mixer" ? "Player" : "Team"}
+                </th>
+                <th className="px-4 py-2 font-semibold">Wins</th>
+                <th className="px-4 py-2 font-semibold">Losses</th>
+                <th className="px-4 py-2 font-semibold">Diff</th>
+                <th className="py-2 pl-4 font-semibold">Points</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-emerald-100 dark:divide-emerald-900">
+              {standings.map((row) => {
+                const isCurrentPlayer =
+                  row.entity === "player" &&
+                  currentPlayerKey === normalizeName(row.name);
+
+                return (
+                  <tr
+                    className={
+                      isCurrentPlayer
+                        ? "bg-sky-50 dark:bg-sky-950"
+                        : undefined
+                    }
+                    data-current-player={isCurrentPlayer}
+                    key={`${row.entity}-${row.name}`}
+                  >
+                    <td className="py-3 pr-4 font-bold text-emerald-800 dark:text-emerald-200">
+                      {ordinal(row.rank)}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
+                      {row.name}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                      {row.wins}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
+                      {row.losses}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-slate-700 dark:text-slate-200">
+                      {signed(row.pointDiff)}
+                    </td>
+                    <td className="py-3 pl-4 text-slate-600 dark:text-slate-300">
+                      {row.pointsFor}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
   const standings = buildStandings(tournament);
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">Final standings</h2>
+      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">{title}</h2>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
           <thead>

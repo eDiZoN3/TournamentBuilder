@@ -8,9 +8,11 @@ import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteCont
 import { BracketView } from "@/components/bracket/BracketView";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { FinalStandings } from "@/components/bracket/PublicTournamentView";
+import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
+import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
 
 interface TournamentManageViewProps {
   initialTournament: ITournament;
@@ -90,6 +92,26 @@ export function TournamentManageView({
       ) : null}
       {showSkeleton ? (
         <BracketSkeleton />
+      ) : isNonKnockoutFormat(tournament.format) ? (
+        <RoundRobinView
+          renderMatchControls={(match, teamAName, teamBName) => (
+            <MatchControls
+              courtsAvailable={tournament.courtsAvailable}
+              currentMatchIds={tournament.currentMatchIds}
+              key={match._id.toString()}
+              match={match}
+              onScoreEntryClose={() => setPinnedMatchId(null)}
+              onScoreEntryOpen={setPinnedMatchId}
+              onUpdated={async () => {
+                await mutate();
+              }}
+              teamAName={teamAName}
+              teamBName={teamBName}
+              tournamentId={tournament._id.toString()}
+            />
+          )}
+          tournament={tournament}
+        />
       ) : (
         <BracketView
           matches={tournament.matches}

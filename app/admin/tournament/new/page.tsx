@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { TournamentFormat } from "@/lib/models/Tournament";
 
 interface ApiError {
   error?: string;
@@ -10,12 +11,27 @@ interface ApiError {
 export default function NewTournamentPage() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [format, setFormat] = useState<TournamentFormat>("double_elimination");
   const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
   const [courtsAvailable, setCourtsAvailable] = useState(1);
   const [inputMode, setInputMode] = useState<"teams" | "players">("teams");
   const [allowSelfJoin, setAllowSelfJoin] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function updateFormat(nextFormat: TournamentFormat) {
+    setFormat(nextFormat);
+
+    if (nextFormat === "team_round_robin") {
+      setInputMode("teams");
+      setAllowSelfJoin(false);
+    }
+
+    if (nextFormat === "individual_mixer") {
+      setInputMode("players");
+      setAllowSelfJoin(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,6 +46,7 @@ export default function NewTournamentPage() {
         },
         body: JSON.stringify({
           name,
+          format,
           teamSize,
           courtsAvailable,
           inputMode,
@@ -75,6 +92,29 @@ export default function NewTournamentPage() {
             value={name}
           />
         </div>
+
+        <fieldset>
+          <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Tournament format
+          </legend>
+          <div className="mt-2 space-y-2">
+            {([
+              ["double_elimination", "Double elimination"],
+              ["team_round_robin", "Team round robin"],
+              ["individual_mixer", "Individual mixer"],
+            ] as const).map(([value, label]) => (
+              <label className="flex items-center gap-2" key={value}>
+                <input
+                  checked={format === value}
+                  name="format"
+                  onChange={() => updateFormat(value)}
+                  type="radio"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -124,9 +164,13 @@ export default function NewTournamentPage() {
             <label className="flex items-center gap-2">
               <input
                 checked={inputMode === "teams"}
+                disabled={format === "individual_mixer"}
                 name="inputMode"
                 onChange={() => {
                   setInputMode("teams");
+                  if (format === "individual_mixer") {
+                    setFormat("double_elimination");
+                  }
                   setAllowSelfJoin(false);
                 }}
                 type="radio"
@@ -136,8 +180,14 @@ export default function NewTournamentPage() {
             <label className="flex items-center gap-2">
               <input
                 checked={inputMode === "players"}
+                disabled={format === "team_round_robin"}
                 name="inputMode"
-                onChange={() => setInputMode("players")}
+                onChange={() => {
+                  setInputMode("players");
+                  if (format === "team_round_robin") {
+                    setFormat("double_elimination");
+                  }
+                }}
                 type="radio"
               />
               Enter player names

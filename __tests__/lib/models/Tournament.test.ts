@@ -12,6 +12,7 @@ describe("Tournament model", () => {
     expect(tournament).toMatchObject({
       name: "Summer Cup",
       status: "draft",
+      format: "double_elimination",
       teamSize: 2,
       courtsAvailable: 3,
       inputMode: "teams",
@@ -19,6 +20,33 @@ describe("Tournament model", () => {
       matches: [],
       currentMatchIds: [],
     });
+  });
+
+  it.each(["team_round_robin", "individual_mixer"] as const)(
+    "accepts the %s tournament format",
+    async (format) => {
+      const tournament = await Tournament.create({
+        name: "Format Cup",
+        format,
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: format === "team_round_robin" ? "teams" : "players",
+      });
+
+      expect(tournament.format).toBe(format);
+    },
+  );
+
+  it("rejects unknown tournament formats", async () => {
+    await expect(
+      Tournament.create({
+        name: "Bad Format Cup",
+        format: "single_elimination",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      }),
+    ).rejects.toThrow();
   });
 
   it("rejects tournaments with invalid court counts", async () => {
@@ -66,4 +94,3 @@ describe("Tournament model", () => {
     ]);
   });
 });
-

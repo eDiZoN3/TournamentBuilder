@@ -7,9 +7,11 @@ import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { StandingsTable } from "@/components/bracket/StandingsTable";
 import { JoinTournamentButton } from "@/components/player/JoinTournamentButton";
 import { TournamentStats } from "@/components/stats/TournamentStats";
+import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
+import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
 
 interface PublicTournamentViewProps {
   currentPlayerName?: string | null;
@@ -135,6 +137,11 @@ export function PublicTournamentView({
       ) : null}
       {showSkeleton ? (
         <BracketSkeleton />
+      ) : isNonKnockoutFormat(tournament.format) ? (
+        <RoundRobinView
+          currentPlayerName={currentPlayerName}
+          tournament={tournament}
+        />
       ) : (
         <BracketView
           currentPlayerName={currentPlayerName}

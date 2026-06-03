@@ -45,6 +45,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user._id.toString(),
           email: user.email,
+          mustChangePassword: user.mustChangePassword,
           role: user.role,
         };
       },
@@ -60,6 +61,7 @@ export const authOptions: NextAuthOptions = {
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.mustChangePassword = user.mustChangePassword;
         token.role = user.role;
       }
 
@@ -68,6 +70,7 @@ export const authOptions: NextAuthOptions = {
     session({ session, token }) {
       if (session.user) {
         session.user.id = token.id ?? token.sub ?? "";
+        session.user.mustChangePassword = token.mustChangePassword ?? false;
         session.user.role = token.role ?? "admin";
       }
 

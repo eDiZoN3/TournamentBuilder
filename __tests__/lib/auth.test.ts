@@ -18,6 +18,7 @@ describe("credentials authentication", () => {
     const passwordHash = await bcrypt.hash("correct-password", 4);
     const user = await User.create({
       email: "admin@example.com",
+      mustChangePassword: true,
       passwordHash,
     });
 
@@ -32,6 +33,7 @@ describe("credentials authentication", () => {
     expect(authenticatedUser).toMatchObject({
       id: user._id.toString(),
       email: "admin@example.com",
+      mustChangePassword: true,
       role: "admin",
     });
   });
@@ -84,6 +86,7 @@ describe("credentials authentication", () => {
       user: {
         id: "admin-id",
         email: "admin@example.com",
+        mustChangePassword: true,
         role: "admin",
       },
       account: null,
@@ -92,13 +95,18 @@ describe("credentials authentication", () => {
       isNewUser: false,
     });
 
-    expect(token).toMatchObject({ id: "admin-id", role: "admin" });
+    expect(token).toMatchObject({
+      id: "admin-id",
+      mustChangePassword: true,
+      role: "admin",
+    });
 
     const authenticatedSession = await session!({
       session: {
         user: {
           id: "",
           email: "admin@example.com",
+          mustChangePassword: false,
           role: "admin",
         },
         expires: new Date(Date.now() + 60_000).toISOString(),
@@ -108,6 +116,7 @@ describe("credentials authentication", () => {
         id: "admin-id",
         email: "admin@example.com",
         emailVerified: null,
+        mustChangePassword: true,
         role: "admin",
       },
       newSession: undefined,
@@ -116,6 +125,7 @@ describe("credentials authentication", () => {
 
     expect(authenticatedSession.user).toMatchObject({
       id: "admin-id",
+      mustChangePassword: true,
       role: "admin",
     });
   });

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
 import AdminDashboardPage from "@/app/admin/dashboard/page";
 import ManageTournamentPage from "@/app/admin/tournament/[id]/manage/page";
+import { User } from "@/lib/models/User";
 import { Tournament } from "@/lib/models/Tournament";
 
 const { notFound } = vi.hoisted(() => ({
@@ -28,11 +29,16 @@ describe("admin dashboard page", () => {
       courtsAvailable: 1,
       inputMode: "teams",
     });
+    await User.create({
+      email: "owner@example.com",
+      passwordHash: "hashed-password",
+    });
 
     const markup = renderToStaticMarkup(await AdminDashboardPage());
 
     expect(markup).toContain("Admin Cup");
     expect(markup).toContain("Create New Tournament");
+    expect(markup).toContain("owner@example.com");
   });
 });
 

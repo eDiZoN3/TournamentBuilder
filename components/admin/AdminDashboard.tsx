@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  AdminUsersPanel,
+  type AdminUserSummary,
+} from "@/components/admin/AdminUsersPanel";
 import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -17,10 +21,14 @@ export interface TournamentSummary {
 }
 
 interface AdminDashboardProps {
+  initialAdmins?: AdminUserSummary[];
   initialTournaments: TournamentSummary[];
 }
 
-export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
+export function AdminDashboard({
+  initialAdmins = [],
+  initialTournaments,
+}: AdminDashboardProps) {
   const [tournaments, setTournaments] = useState(initialTournaments);
 
   return (
@@ -37,6 +45,9 @@ export function AdminDashboard({ initialTournaments }: AdminDashboardProps) {
           Create New Tournament
         </Link>
       </header>
+      <div className="mt-8">
+        <AdminUsersPanel initialAdmins={initialAdmins} />
+      </div>
       {tournaments.length === 0 ? (
         <div className="mt-8">
           <EmptyState

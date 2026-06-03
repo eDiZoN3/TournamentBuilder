@@ -37,10 +37,32 @@ describe("admin middleware", () => {
   });
 
   it("allows authenticated admin requests", async () => {
-    getToken.mockResolvedValue({ role: "admin" });
+    getToken.mockResolvedValue({ mustChangePassword: false, role: "admin" });
     const { middleware } = await import("@/middleware");
     const response = await middleware(
       new NextRequest("http://localhost:3000/admin/dashboard"),
+    );
+
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("redirects first-login admins to the password change page", async () => {
+    getToken.mockResolvedValue({ mustChangePassword: true, role: "admin" });
+    const { middleware } = await import("@/middleware");
+    const response = await middleware(
+      new NextRequest("http://localhost:3000/admin/dashboard"),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/admin/change-password?callbackUrl=%2Fadmin%2Fdashboard",
+    );
+  });
+
+  it("allows first-login admins to access the password change page", async () => {
+    getToken.mockResolvedValue({ mustChangePassword: true, role: "admin" });
+    const { middleware } = await import("@/middleware");
+    const response = await middleware(
+      new NextRequest("http://localhost:3000/admin/change-password"),
     );
 
     expect(response.headers.get("location")).toBeNull();

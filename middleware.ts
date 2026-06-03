@@ -2,7 +2,9 @@ import { getToken } from "next-auth/jwt";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === "/admin/login") {
+  const pathname = request.nextUrl.pathname;
+
+  if (pathname === "/admin/login") {
     return NextResponse.next();
   }
 
@@ -12,6 +14,16 @@ export async function middleware(request: NextRequest) {
   });
 
   if (token) {
+    if (token.mustChangePassword === true && pathname !== "/admin/change-password") {
+      const changePasswordUrl = new URL("/admin/change-password", request.url);
+      changePasswordUrl.searchParams.set(
+        "callbackUrl",
+        `${pathname}${request.nextUrl.search}`,
+      );
+
+      return NextResponse.redirect(changePasswordUrl);
+    }
+
     return NextResponse.next();
   }
 

@@ -38,7 +38,19 @@ describe("AdminDashboard", () => {
   });
 
   it("shows status-specific actions and the create link", () => {
-    render(<AdminDashboard initialTournaments={tournaments} />);
+    render(
+      <AdminDashboard
+        initialAdmins={[
+          {
+            _id: "owner-id",
+            email: "owner@example.com",
+            mustChangePassword: false,
+            createdAt: "2026-06-01T12:00:00.000Z",
+          },
+        ]}
+        initialTournaments={tournaments}
+      />,
+    );
 
     expect(screen.getByRole("link", { name: "Create New Tournament" })).toHaveAttribute(
       "href",
@@ -58,6 +70,8 @@ describe("AdminDashboard", () => {
     );
     expect(screen.getByRole("button", { name: "Delete Active Cup" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete Completed Cup" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Admin accounts" })).toBeInTheDocument();
+    expect(screen.getByText("owner@example.com")).toBeInTheDocument();
   });
 
   it("requires a second click before deleting a draft", async () => {

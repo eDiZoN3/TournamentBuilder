@@ -1,4 +1,4 @@
-1. admin feature to add new admin accounts to create, first time login on new admin account with simple random generated password 10 chars and then the prompt to change it to a self set password from the admin
+1. [implemented] admin feature to add new admin accounts to create, first time login on new admin account with simple random generated password 10 chars and then the prompt to change it to a self set password from the admin
 2. future player accounts to track own stats, enter tournament on your own that are available, needs setting in tournament creation of admin to make it self joinable with accounts from players. ongoing tournaments can not be joined anymore, but in join phase either players are entered or player can join on their own. saved player data contains name, evt surname, hashedpassword, username/email, player accounts can be created by themselves als sign up, own name/account in tournament should be highlighted and easy visible for the player
 3. dark mode (switchable)
 4. admin dashboard with : registered player, registered admins, registered tournament, sum played matches, player registration, abbility to reset password of player accounts

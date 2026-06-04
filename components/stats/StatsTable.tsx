@@ -61,8 +61,8 @@ export function StatsTable({
       <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
         {displayTitle}
       </h3>
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-        <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
+      <div className="w-full max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        <table className="w-full min-w-max divide-y divide-slate-200 text-sm dark:divide-slate-700">
           <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
             <tr>
               <th className="px-3 py-3" scope="col">
@@ -98,7 +98,7 @@ export function StatsTable({
             {rows.map((row, index) => (
               <tr key={`${row.name}-${index}`}>
                 <th
-                  className="max-w-52 truncate px-3 py-3 text-left font-semibold text-slate-900 dark:text-white"
+                  className="max-w-64 break-words px-3 py-3 text-left font-semibold text-slate-900 dark:text-white"
                   scope="row"
                 >
                   {row.name}

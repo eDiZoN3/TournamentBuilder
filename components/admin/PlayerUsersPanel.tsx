@@ -116,7 +116,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
   return (
     <section
       aria-labelledby="player-accounts-title"
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      className="w-full max-w-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
     >
       <div>
         <h2
@@ -130,8 +130,11 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
         </p>
       </div>
 
-      <form className="mt-5 grid gap-3 md:grid-cols-4" onSubmit={handleSubmit}>
-        <div>
+      <form
+        className="mt-5 grid min-w-0 gap-3 md:grid-cols-4"
+        onSubmit={handleSubmit}
+      >
+        <div className="min-w-0">
           <label
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-player-first-name"
@@ -147,7 +150,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
             value={firstName}
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <label
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-player-surname"
@@ -162,7 +165,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
             value={surname}
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <label
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-player-email"
@@ -223,13 +226,13 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
         </div>
       ) : null}
 
-      <div className="mt-5 overflow-x-auto">
+      <div className="mt-5 w-full max-w-full overflow-x-auto">
         {players.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
             No player accounts yet.
           </p>
         ) : (
-          <table className="min-w-full text-left text-sm">
+          <table className="w-full min-w-max text-left text-sm">
             <thead className="text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-2 pr-4 font-semibold">Name</th>
@@ -241,10 +244,10 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {players.map((player) => (
                 <tr key={player._id}>
-                  <td className="py-3 pr-4 font-medium text-slate-900 dark:text-white">
+                  <td className="max-w-64 break-words py-3 pr-4 font-medium text-slate-900 dark:text-white">
                     {player.displayName}
                   </td>
-                  <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
+                  <td className="max-w-72 break-all py-3 pr-4 text-slate-600 dark:text-slate-300">
                     {player.email}
                   </td>
                   <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">

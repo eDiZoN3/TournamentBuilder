@@ -71,7 +71,7 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
   return (
     <section
       aria-labelledby="admin-accounts-title"
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      className="w-full max-w-full rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -79,21 +79,24 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
             className="text-lg font-semibold text-slate-900 dark:text-white"
             id="admin-accounts-title"
           >
-            Admin accounts
+            Tournament lead accounts
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Create admins with a one-time temporary password.
+            Create tournament leads with a one-time temporary password.
           </p>
         </div>
       </div>
 
-      <form className="mt-5 flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
+      <form
+        className="mt-5 flex min-w-0 flex-col gap-3 sm:flex-row"
+        onSubmit={handleSubmit}
+      >
         <div className="min-w-0 flex-1">
           <label
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-admin-email"
           >
-            New admin email
+            New tournament lead email
           </label>
           <input
             autoComplete="email"
@@ -111,7 +114,7 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
             disabled={isSubmitting}
             type="submit"
           >
-            {isSubmitting ? "Creating..." : "Create admin"}
+            {isSubmitting ? "Creating..." : "Create tournament lead"}
           </button>
         </div>
       </form>
@@ -131,7 +134,7 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
                 {createdAdmin.temporaryPassword}
               </p>
               <p className="mt-1 text-sm">
-                Share it once. This admin must change it on first login.
+                Share it once. This tournament lead must change it on first login.
               </p>
             </div>
             <button
@@ -146,11 +149,13 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
         </div>
       ) : null}
 
-      <div className="mt-5 overflow-x-auto">
+      <div className="mt-5 w-full max-w-full overflow-x-auto">
         {admins.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">No admin accounts yet.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            No tournament lead accounts yet.
+          </p>
         ) : (
-          <table className="min-w-full text-left text-sm">
+          <table className="w-full min-w-max text-left text-sm">
             <thead className="text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-2 pr-4 font-semibold">Email</th>
@@ -161,7 +166,7 @@ export function AdminUsersPanel({ initialAdmins }: AdminUsersPanelProps) {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {admins.map((admin) => (
                 <tr key={admin._id}>
-                  <td className="py-3 pr-4 font-medium text-slate-900 dark:text-white">
+                  <td className="max-w-72 break-all py-3 pr-4 font-medium text-slate-900 dark:text-white">
                     {admin.email}
                   </td>
                   <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ComponentType } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminDashboard, type TournamentSummary } from "@/components/admin/AdminDashboard";
 import type { PlayerUserSummary } from "@/components/admin/PlayerUsersPanel";
@@ -70,8 +71,9 @@ describe("AdminDashboard", () => {
             email: "owner@example.com",
             mustChangePassword: false,
             createdAt: "2026-06-01T12:00:00.000Z",
+            role: "admin",
           },
-        ]}
+        ] as never}
         initialMetrics={metrics}
         initialPlayers={players}
         initialTournaments={tournaments}
@@ -90,18 +92,53 @@ describe("AdminDashboard", () => {
       "href",
       "/admin/tournament/active-id/manage",
     );
-    expect(screen.getByRole("link", { name: "View Active Cup" })).toHaveAttribute(
-      "href",
-      "/tournament/active-id",
-    );
+    expect(
+      screen.getByRole("link", { name: "Public View Draft Cup" }),
+    ).toHaveAttribute("href", "/tournament/draft-id");
+    expect(
+      screen.getByRole("link", { name: "Public View Active Cup" }),
+    ).toHaveAttribute("href", "/tournament/active-id");
+    expect(
+      screen.getByRole("link", { name: "Public View Completed Cup" }),
+    ).toHaveAttribute("href", "/tournament/completed-id");
+    expect(
+      screen.getByRole("link", { name: "Public tournament list" }),
+    ).toHaveAttribute("href", "/");
     expect(screen.getByRole("button", { name: "Delete Active Cup" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete Completed Cup" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Admin accounts" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Tournament lead accounts" })).toBeInTheDocument();
     expect(screen.getByText("owner@example.com")).toBeInTheDocument();
     expect(screen.getByText("Registered players")).toBeInTheDocument();
     expect(screen.getByText("Played matches")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Player accounts" })).toBeInTheDocument();
     expect(screen.getByText("Alice Example")).toBeInTheDocument();
+  });
+
+  it("shows the stats reset tab for admins", () => {
+    const Dashboard = AdminDashboard as ComponentType<{
+      currentUserRole: "admin";
+      initialMetrics: typeof metrics;
+      initialPlayers: PlayerUserSummary[];
+      initialTournaments: TournamentSummary[];
+    }>;
+
+    render(
+      <Dashboard
+        currentUserRole="admin"
+        initialMetrics={metrics}
+        initialPlayers={players}
+        initialTournaments={tournaments}
+      />,
+    );
+
+    expect(screen.getByRole("tab", { name: "Tournaments" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Accounts" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Stats reset" }));
+
+    expect(
+      screen.getByRole("heading", { name: "Stats reset" }),
+    ).toBeInTheDocument();
   });
 
   it("requires a second click before deleting a draft", async () => {

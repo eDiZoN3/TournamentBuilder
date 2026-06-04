@@ -37,6 +37,16 @@ describe("User model", () => {
     expect(user.role).toBe("player");
   });
 
+  it("allows tournament lead roles for regular tournament managers", async () => {
+    const user = await User.create({
+      email: "lead@example.com",
+      passwordHash: "hashed-password",
+      role: "tournament_lead",
+    });
+
+    expect(user.role).toBe("tournament_lead");
+  });
+
   it("rejects unsupported roles", async () => {
     await expect(
       User.create({

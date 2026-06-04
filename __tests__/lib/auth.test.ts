@@ -15,7 +15,7 @@ function getAuthorize() {
 }
 
 describe("credentials authentication", () => {
-  it("returns the admin for valid credentials", async () => {
+  it("returns the super admin for valid credentials", async () => {
     const passwordHash = await bcrypt.hash("correct-password", 4);
     const user = await User.create({
       email: "admin@example.com",
@@ -36,6 +36,30 @@ describe("credentials authentication", () => {
       email: "admin@example.com",
       mustChangePassword: true,
       role: "admin",
+    });
+  });
+
+  it("returns tournament lead identity for valid lead credentials", async () => {
+    const passwordHash = await bcrypt.hash("lead-password", 4);
+    const user = await User.create({
+      email: "lead@example.com",
+      passwordHash,
+      role: "tournament_lead",
+    });
+
+    const authenticatedUser = await getAuthorize()(
+      {
+        email: "lead@example.com",
+        password: "lead-password",
+      },
+      {},
+    );
+
+    expect(authenticatedUser).toMatchObject({
+      id: user._id.toString(),
+      email: "lead@example.com",
+      mustChangePassword: false,
+      role: "tournament_lead",
     });
   });
 
@@ -163,5 +187,62 @@ describe("credentials authentication", () => {
       mustChangePassword: true,
       role: "admin",
     });
+  });
+
+  it("stores the authenticated tournament lead in JWT and session callbacks", async () => {
+    const jwt = authOptions.callbacks?.jwt;
+    const session = authOptions.callbacks?.session;
+
+    const token = await jwt!({
+      token: {},
+      user: {
+        id: "lead-id",
+        email: "lead@example.com",
+        mustChangePassword: false,
+        role: "tournament_lead",
+      } as never,
+      account: null,
+      profile: undefined,
+      trigger: "signIn",
+      isNewUser: false,
+    });
+
+    expect(token).toMatchObject({
+      id: "lead-id",
+      mustChangePassword: false,
+      role: "tournament_lead",
+    });
+
+    const authenticatedSession = await session!({
+      session: {
+        user: {
+          id: "",
+          email: "lead@example.com",
+          mustChangePassword: false,
+          role: "tournament_lead",
+        },
+        expires: new Date(Date.now() + 60_000).toISOString(),
+      } as never,
+      token,
+      user: {
+        id: "lead-id",
+        email: "lead@example.com",
+        emailVerified: null,
+        mustChangePassword: false,
+        role: "tournament_lead",
+      } as never,
+      newSession: undefined,
+      trigger: "update",
+    });
+
+    expect(authenticatedSession.user).toMatchObject({
+      id: "lead-id",
+      mustChangePassword: false,
+      role: "tournament_lead",
+    });
+  });
+
+  it("uses the shared login page for NextAuth sign-in redirects", () => {
+    expect(authOptions.pages?.signIn).toBe("/login");
   });
 });

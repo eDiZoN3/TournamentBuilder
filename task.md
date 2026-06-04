@@ -143,6 +143,43 @@ Tests: join API response includes updated roster, join button changes to joined 
 
 ---
 
+### T83 - Stats Reset Logic and API (TDD First)
+**Files**: `lib/models/StatsReset.ts`, `lib/stats.ts`, `app/api/admin/stats/reset/route.ts`, `app/api/stats/route.ts`, `app/api/tournaments/[id]/stats/route.ts`, `__tests__/api/stats-reset.test.ts`
+**Depends on**: T67, T78, T80
+**TDD**: Write tests before implementation
+**Description**: Add an admin-only stats reset mechanism without deleting tournaments, matches, scores, or bracket history:
+- Store reset rules/audit entries separately from tournaments so historical match data remains intact.
+- Reset rules are applied when public/global stats and per-tournament stats are calculated.
+- Supported reset scopes:
+  - `player`: reset one player/user's individual stats by stable `playerProfileId`; team stats remain unchanged.
+  - `tournament`: reset all team and player stats produced by one tournament.
+  - `season`: reset all stats from tournaments created in a calendar-year season, using `createdAt` until a dedicated season model exists.
+  - `all`: reset all calculated stats.
+- Reset requests require the super-admin/Admin role; tournament leads cannot reset stats.
+- Reset requests require an exact confirmation phrase and validate target IDs/season values.
+- Reset operations are idempotent and return a summary of the affected scope.
+
+Tests: super admin can reset one player, reset player leaves team stats intact, reset tournament removes only that tournament from global and tournament stats, reset season removes only tournaments from that year, complete reset returns empty stats, tournament leads are rejected, invalid payloads are rejected, reset does not delete tournaments or match history.
+
+---
+
+### T84 - Dashboard Stats Reset Tab and Controls (TDD First)
+**Files**: `components/admin/AdminDashboard.tsx`, `components/admin/StatsResetPanel.tsx`, `app/admin/dashboard/page.tsx`, `app/api/admin/dashboard/route.ts`, `__tests__/components/AdminDashboard.test.tsx`, `__tests__/components/StatsResetPanel.test.tsx`
+**Depends on**: T83
+**TDD**: Write tests before implementation
+**Description**: Add a dedicated stats reset tab to the admin dashboard:
+- Dashboard exposes a "Stats reset" tab/section separate from tournament and account management.
+- Super admins can choose a reset scope: player, tournament, season, or all.
+- Player and tournament scopes use selectable existing players/tournaments; season scope uses available calendar-year seasons derived from tournament creation dates.
+- Destructive reset buttons stay disabled until the exact confirmation phrase is entered.
+- Submitting calls `/api/admin/stats/reset` with the selected scope and target.
+- Successful resets show a confirmation message and refresh dashboard/stat views; failures show an inline error.
+- Tournament leads see a disabled/read-only explanation instead of destructive reset controls.
+
+Tests: stats reset tab renders, scope selector changes required target controls, confirmation gates the submit button, player/tournament/season/all submissions send the expected API payloads, success and error states render, tournament leads cannot access destructive controls.
+
+---
+
 ### T85 - Public View Links from Admin Dashboard
 **Files**: `components/admin/AdminDashboard.tsx`, `app/admin/dashboard/page.tsx`, `components/ui/AdminSidebar.tsx`, `__tests__/components/AdminDashboard.test.tsx`, `__tests__/components/AdminSidebar.test.tsx`
 **Depends on**: T31, T38

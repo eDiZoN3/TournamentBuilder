@@ -230,4 +230,104 @@ describe("BracketView", () => {
       expect(screen.queryByTestId("connector-lines")).not.toBeInTheDocument();
     });
   });
+
+  it("uses numbered winner round tabs until the real final", () => {
+    const matches = [
+      makeMatch({
+        bracket: "winner",
+        round: 1,
+        label: "WB Final",
+        isWBFinal: false,
+      }),
+      makeMatch({
+        bracket: "winner",
+        round: 2,
+        label: "WB Final",
+        isWBFinal: false,
+      }),
+      makeMatch({
+        bracket: "winner",
+        round: 3,
+        label: "WB Final",
+        isWBFinal: true,
+      }),
+    ];
+
+    render(<BracketView matches={matches} teams={makeTeams(8)} />);
+
+    const winnerRounds = screen.getByRole("group", {
+      name: "Winner bracket rounds",
+    });
+
+    expect(
+      within(winnerRounds)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Round 1", "Round 2", "Final"]);
+  });
+
+  it("uses increasing loser round tabs and keeps the lower-bracket final distinct", () => {
+    const matches = [
+      makeMatch({ bracket: "winner", round: 1 }),
+      makeMatch({
+        bracket: "loser",
+        round: 1,
+        label: "LB Final",
+        isLBFinal: false,
+      }),
+      makeMatch({
+        bracket: "loser",
+        round: 2,
+        label: "LB Final",
+        isLBFinal: false,
+      }),
+      makeMatch({
+        bracket: "loser",
+        round: 3,
+        label: "LB Final",
+        isLBFinal: true,
+      }),
+    ];
+
+    render(<BracketView matches={matches} teams={makeTeams(8)} />);
+
+    const loserRounds = screen.getByRole("group", {
+      name: "Loser bracket rounds",
+    });
+
+    expect(
+      within(loserRounds)
+        .getAllByRole("button")
+      .map((button) => button.textContent),
+    ).toEqual(["Round 1", "Round 2", "LB Final"]);
+  });
+
+  it("keeps non-power-of-two winner tabs numbered before the final", () => {
+    const matches = [
+      makeMatch({
+        bracket: "winner",
+        round: 1,
+        label: "WB Final",
+        isWBFinal: false,
+      }),
+      makeMatch({
+        bracket: "winner",
+        round: 2,
+        label: "WB Final",
+        isWBFinal: true,
+      }),
+    ];
+
+    render(<BracketView matches={matches} teams={makeTeams(3)} />);
+
+    const winnerRounds = screen.getByRole("group", {
+      name: "Winner bracket rounds",
+    });
+
+    expect(
+      within(winnerRounds)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Round 1", "Final"]);
+  });
 });

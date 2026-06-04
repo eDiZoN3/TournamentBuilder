@@ -19,6 +19,23 @@ describe("computeLabel", () => {
   it("labels the 4-team loser bracket match as the final", () => {
     expect(computeLabel("loser", 1, 2, false, true)).toBe("LB Final");
   });
+
+  it.each([
+    ["3-team", 2, 1],
+    ["4-team", 2, 1],
+    ["8-team", 3, 1],
+    ["16-team", 4, 1],
+  ])(
+    "keeps non-final %s opening rounds as numbered labels",
+    (_label, totalWBRounds, openingRound) => {
+      expect(
+        computeLabel("winner", openingRound, totalWBRounds, false, false),
+      ).not.toBe("WB Final");
+      expect(
+        computeLabel("loser", openingRound, totalWBRounds, false, false),
+      ).not.toBe("LB Final");
+    },
+  );
 });
 
 describe("computePlaceRange", () => {
@@ -69,4 +86,3 @@ describe("computePlaceRange", () => {
     expect(computePlaceRange("loser", 2, false, false, 6, 8)).toBe("");
   });
 });
-

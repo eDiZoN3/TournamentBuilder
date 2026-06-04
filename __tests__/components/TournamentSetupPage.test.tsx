@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useParams, useRouter } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TournamentSetupForm } from "@/components/admin/TournamentSetupForm";
@@ -34,6 +34,7 @@ describe("TournamentSetupForm", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -268,5 +269,62 @@ describe("TournamentSetupForm", () => {
     render(<TournamentSetupPage />);
 
     expect(await screen.findByText("Tournament not found")).toBeInTheDocument();
+  });
+
+  it("refreshes joined players while the setup route stays open", async () => {
+    vi.useFakeTimers();
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          _id: "tournament-id",
+          name: "Open Cup",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: true,
+          joinedPlayers: [],
+          teams: [],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          _id: "tournament-id",
+          name: "Open Cup",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: true,
+          joinedPlayers: [
+            {
+              userId: "user-a",
+              playerProfileId: "profile-a",
+              firstName: "Alice",
+              displayName: "Alice Example",
+              email: "alice@example.com",
+              joinedAt: "2026-06-03T12:00:00.000Z",
+            },
+          ],
+          teams: [],
+        }),
+      );
+    vi.stubGlobal("fetch", fetch);
+
+    render(<TournamentSetupPage />);
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(screen.getByText("Set up Open Cup")).toBeInTheDocument();
+    expect(screen.queryByText("Alice Example")).not.toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(5_000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Alice Example")).toBeInTheDocument();
   });
 });

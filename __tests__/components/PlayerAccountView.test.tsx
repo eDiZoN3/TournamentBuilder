@@ -1,10 +1,21 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { signOut } from "next-auth/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlayerAccountView } from "@/components/player/PlayerAccountView";
 
+vi.mock("next-auth/react", () => ({
+  signOut: vi.fn(),
+}));
+
+const mockedSignOut = vi.mocked(signOut);
+
 describe("PlayerAccountView", () => {
+  beforeEach(() => {
+    mockedSignOut.mockReset();
+  });
+
   it("shows profile data and the player stats summary", () => {
     render(
       <PlayerAccountView
@@ -46,5 +57,24 @@ describe("PlayerAccountView", () => {
     );
 
     expect(screen.getByText("No completed matches yet.")).toBeInTheDocument();
+  });
+
+  it("shows a player logout button that redirects to the shared login page", () => {
+    render(
+      <PlayerAccountView
+        profile={{
+          _id: "profile-id",
+          displayName: "Alice Example",
+          email: "alice@example.com",
+          firstName: "Alice",
+          userId: "user-id",
+        }}
+        stats={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+
+    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login" });
   });
 });

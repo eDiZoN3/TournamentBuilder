@@ -66,6 +66,13 @@ describe("POST /api/tournaments/[id]/join", () => {
       displayName: "Alice Example",
       email: "alice@example.com",
     });
+    expect(body.joinedPlayerCount).toBe(1);
+    expect(body.joinedPlayers).toEqual([
+      expect.objectContaining({
+        displayName: "Alice Example",
+        email: "alice@example.com",
+      }),
+    ]);
 
     const updated = await Tournament.findById(tournament._id);
 

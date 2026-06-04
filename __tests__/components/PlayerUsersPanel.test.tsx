@@ -129,4 +129,40 @@ describe("PlayerUsersPanel", () => {
 
     expect(await screen.findByText("Email already registered")).toBeInTheDocument();
   });
+
+  it("uses responsive container classes for the create-player card", () => {
+    render(<PlayerUsersPanel initialPlayers={players} />);
+
+    expect(screen.getByRole("region", { name: "Player accounts" })).toHaveClass(
+      "w-full",
+      "max-w-full",
+    );
+  });
+
+  it("wraps long player names and emails in the account table", () => {
+    render(
+      <PlayerUsersPanel
+        initialPlayers={[
+          {
+            ...players[0],
+            displayName:
+              "Alexandria Example With A Very Long Display Name For Mobile",
+            email:
+              "alexandria.example.with.a.very.long.email.address@example-volleyball.test",
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "Alexandria Example With A Very Long Display Name For Mobile",
+      ),
+    ).toHaveClass("break-words");
+    expect(
+      screen.getByText(
+        "alexandria.example.with.a.very.long.email.address@example-volleyball.test",
+      ),
+    ).toHaveClass("break-all");
+  });
 });

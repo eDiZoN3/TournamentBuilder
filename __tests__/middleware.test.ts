@@ -12,13 +12,17 @@ describe("admin middleware", () => {
     getToken.mockReset();
   });
 
-  it("allows access to the login page without a session", async () => {
+  it("redirects the stale admin login URL to the shared login page", async () => {
     const { middleware } = await import("@/middleware");
     const response = await middleware(
-      new NextRequest("http://localhost:3000/admin/login"),
+      new NextRequest(
+        "http://localhost:3000/admin/login?callbackUrl=/admin/dashboard",
+      ),
     );
 
-    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/login?callbackUrl=%2Fadmin%2Fdashboard",
+    );
     expect(getToken).not.toHaveBeenCalled();
   });
 
@@ -32,7 +36,7 @@ describe("admin middleware", () => {
     );
 
     expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/admin/login?callbackUrl=%2Fadmin%2Ftournament%2F123%2Fmanage%3Fview%3Dcompact",
+      "http://localhost:3000/login?callbackUrl=%2Fadmin%2Ftournament%2F123%2Fmanage%3Fview%3Dcompact",
     );
   });
 
@@ -63,6 +67,19 @@ describe("admin middleware", () => {
     const { middleware } = await import("@/middleware");
     const response = await middleware(
       new NextRequest("http://localhost:3000/admin/change-password"),
+    );
+
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("allows authenticated tournament lead requests", async () => {
+    getToken.mockResolvedValue({
+      mustChangePassword: false,
+      role: "tournament_lead",
+    });
+    const { middleware } = await import("@/middleware");
+    const response = await middleware(
+      new NextRequest("http://localhost:3000/admin/dashboard"),
     );
 
     expect(response.headers.get("location")).toBeNull();

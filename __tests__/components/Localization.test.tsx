@@ -8,6 +8,7 @@ import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { LocaleProvider, LOCALE_STORAGE_KEY } from "@/components/ui/LocaleProvider";
 import { Navbar } from "@/components/ui/Navbar";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { translate, type TranslationKey } from "@/lib/i18n";
 import type { ITournament } from "@/lib/models/Tournament";
 
 vi.mock("next/navigation", () => ({
@@ -21,6 +22,10 @@ function renderGerman(ui: React.ReactNode) {
   window.localStorage.setItem(LOCALE_STORAGE_KEY, "de");
 
   return render(<LocaleProvider>{ui}</LocaleProvider>);
+}
+
+function de(key: TranslationKey) {
+  return translate("de", key);
 }
 
 describe("frontend localization", () => {
@@ -52,12 +57,12 @@ describe("frontend localization", () => {
   it("translates shared public navigation in German mode", async () => {
     renderGerman(<Navbar isAuthenticated={false} />);
 
-    expect(await screen.findByText("Turniere")).toBeInTheDocument();
-    expect(screen.getByText("Statistiken")).toBeInTheDocument();
-    expect(screen.getByText("Registrieren")).toBeInTheDocument();
-    expect(screen.getByText("Admin-Login")).toBeInTheDocument();
+    expect(await screen.findByText(de("tournaments"))).toBeInTheDocument();
+    expect(screen.getByText(de("stats"))).toBeInTheDocument();
+    expect(screen.getByText(de("signUp"))).toBeInTheDocument();
+    expect(screen.getByText(de("adminLogin"))).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Sprache auf Englisch wechseln" }),
+      screen.getByRole("button", { name: de("languageSwitchToEnglish") }),
     ).toBeInTheDocument();
   });
 
@@ -70,12 +75,12 @@ describe("frontend localization", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Neues Turnier" }),
+      await screen.findByRole("heading", { name: de("newTournament") }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Turnierformat")).toBeInTheDocument();
-    expect(screen.getByText("Team-Rundenturnier")).toBeInTheDocument();
-    expect(screen.getByText("Einzel-Mixer")).toBeInTheDocument();
-    expect(screen.getByText("Abgeschlossen")).toBeInTheDocument();
+    expect(screen.getByText(de("tournamentFormat"))).toBeInTheDocument();
+    expect(screen.getByText(de("teamRoundRobin"))).toBeInTheDocument();
+    expect(screen.getByText(de("individualMixer"))).toBeInTheDocument();
+    expect(screen.getByText(de("completed"))).toBeInTheDocument();
   });
 
   it("translates non-knockout standings and schedule headings", async () => {
@@ -99,9 +104,15 @@ describe("frontend localization", () => {
 
     renderGerman(<RoundRobinView tournament={tournament} />);
 
-    expect(await screen.findByRole("heading", { name: "Tabelle" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Spielplan" })).toBeInTheDocument();
-    expect(screen.getByText("Runde 1")).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Siege" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: de("standings") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: de("schedule") }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(`${de("round")} 1`)).toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", { name: de("wins") }),
+    ).toBeInTheDocument();
   });
 });

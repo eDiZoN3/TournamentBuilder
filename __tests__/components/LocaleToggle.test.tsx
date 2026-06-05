@@ -7,6 +7,7 @@ import {
   LocaleProvider,
 } from "@/components/ui/LocaleProvider";
 import { LocaleToggle } from "@/components/ui/LocaleToggle";
+import { translate } from "@/lib/i18n";
 
 describe("LocaleToggle", () => {
   let storageEntries: Map<string, string>;
@@ -47,7 +48,9 @@ describe("LocaleToggle", () => {
       expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("en");
     });
     expect(
-      screen.getByRole("button", { name: "Switch language to German" }),
+      screen.getByRole("button", {
+        name: translate("en", "languageSwitchToGerman"),
+      }),
     ).toBeInTheDocument();
   });
 
@@ -64,12 +67,16 @@ describe("LocaleToggle", () => {
       expect(document.documentElement).toHaveAttribute("lang", "de");
       expect(document.documentElement).toHaveAttribute("data-locale", "de");
       expect(
-        screen.getByRole("button", { name: "Sprache auf Englisch wechseln" }),
+        screen.getByRole("button", {
+          name: translate("de", "languageSwitchToEnglish"),
+        }),
       ).toBeInTheDocument();
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Sprache auf Englisch wechseln" }),
+      screen.getByRole("button", {
+        name: translate("de", "languageSwitchToEnglish"),
+      }),
     );
 
     expect(document.documentElement).toHaveAttribute("lang", "en");
@@ -85,11 +92,13 @@ describe("LocaleToggle", () => {
     );
 
     await screen.findByRole("button", {
-      name: "Switch language to German",
+      name: translate("en", "languageSwitchToGerman"),
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Switch language to German" }),
+      screen.getByRole("button", {
+        name: translate("en", "languageSwitchToGerman"),
+      }),
     );
 
     expect(document.documentElement).toHaveAttribute("lang", "de");

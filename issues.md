@@ -11,9 +11,9 @@
 11. [implemented] in mobile view the round tabs are all labeld final which is wrong. it should be round 1, round 2. etc.
 12. [implemented] need burger menu navbar in mobile view
 13. [implemented] super admin (created with runtime script) needs to be able to remove other admins, call admin not admin anymore but tournament lead or something (superadmin should still be called admin)
-14. when logging out from admin account, redirect to normal login page
-15. remove the seperation of the two login pages and automatically detect if its an admin account, a tournament manger account or a normal player account, this is better ux
-16. there is no logout button for player accounts, add this
+14. [implemented] when logging out from admin account, redirect to normal login page
+15. [implemented] remove the seperation of the two login pages and automatically detect if its an admin account, a tournament manger account or a normal player account, this is better ux
+16. [implemented] there is no logout button for player accounts, add this
 17. when a player presses join it is not instant visible in the create tournament view that he has joined, this shuold be possible
 18. admin needs feature to reset stats, per user, per tournament, per season, and complete, make a new tab in the dashboard for it.
 19. in the admin dashboard is no clickable link that leads back to public view, this needs to be added

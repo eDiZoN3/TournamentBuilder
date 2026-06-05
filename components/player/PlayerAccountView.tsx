@@ -1,5 +1,6 @@
 "use client";
 
+import { signOut } from "next-auth/react";
 import { useLocale } from "@/components/ui/LocaleProvider";
 
 export interface PlayerAccountProfile {
@@ -28,14 +29,25 @@ export function PlayerAccountView({ profile, stats }: PlayerAccountViewProps) {
 
   return (
     <section className="space-y-6">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {t("playerAccount")}
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight">
-          {profile.displayName}
-        </h1>
-        <p className="mt-2 text-slate-600 dark:text-slate-300">{profile.email}</p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t("playerAccount")}
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">
+            {profile.displayName}
+          </h1>
+          <p className="mt-2 text-slate-600 dark:text-slate-300">
+            {profile.email}
+          </p>
+        </div>
+        <button
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          type="button"
+        >
+          {t("logOut")}
+        </button>
       </header>
 
       {stats ? (

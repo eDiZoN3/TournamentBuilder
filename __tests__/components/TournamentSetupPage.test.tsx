@@ -319,7 +319,7 @@ describe("TournamentSetupForm", () => {
     expect(screen.queryByText("Alice Example")).not.toBeInTheDocument();
 
     await act(async () => {
-      vi.advanceTimersByTime(5_000);
+      vi.advanceTimersByTime(999);
       await Promise.resolve();
       await Promise.resolve();
     });

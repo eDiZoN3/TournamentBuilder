@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { assignPlayersToTeams } from "@/lib/bracket/playerAssign";
 import { useLocale } from "@/components/ui/LocaleProvider";
@@ -79,6 +79,23 @@ export function TournamentSetupForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (tournament.inputMode !== "players" || joinedPlayerNames.length === 0) {
+      return;
+    }
+
+    setPlayerNames((current) => {
+      const currentNames = new Set(
+        current.map((playerName) => playerName.trim()).filter(Boolean),
+      );
+      const newJoinedNames = joinedPlayerNames.filter(
+        (playerName) => !currentNames.has(playerName),
+      );
+
+      return newJoinedNames.length > 0 ? [...current, ...newJoinedNames] : current;
+    });
+  }, [joinedPlayerNames, tournament.inputMode]);
 
   const enteredPlayerNames = playerNames
     .map((player) => player.trim())

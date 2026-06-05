@@ -13,16 +13,25 @@ interface RouteContext {
 }
 
 function joinedPlayerSummary(player: {
+  joinedAt?: Date | string;
+  playerProfileId?: { toString(): string };
   displayName: string;
   email: string;
   firstName: string;
   surname?: string | null;
+  userId?: { toString(): string };
 }) {
   return {
+    userId: player.userId?.toString(),
+    playerProfileId: player.playerProfileId?.toString(),
     firstName: player.firstName,
     surname: player.surname ?? undefined,
     displayName: player.displayName,
     email: player.email,
+    joinedAt:
+      player.joinedAt instanceof Date
+        ? player.joinedAt.toISOString()
+        : player.joinedAt,
   };
 }
 
@@ -83,9 +92,13 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
     await tournament.save();
 
+    const joinedPlayers = tournament.joinedPlayers.map(joinedPlayerSummary);
+
     return NextResponse.json({
       joined: true,
       player: joinedPlayerSummary(profile),
+      joinedPlayerCount: joinedPlayers.length,
+      joinedPlayers,
     });
   } catch {
     return jsonError("Unable to join tournament", "INTERNAL_ERROR", 500);

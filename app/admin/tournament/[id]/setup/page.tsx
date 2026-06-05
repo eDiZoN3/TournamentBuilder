@@ -8,6 +8,8 @@ import {
   type SetupTournament,
 } from "@/components/admin/TournamentSetupForm";
 
+const JOINED_PLAYERS_REFRESH_INTERVAL_MS = 750;
+
 export default function TournamentSetupPage() {
   const params = useParams<{ id: string }>();
   const [tournament, setTournament] = useState<SetupTournament | null>(null);
@@ -41,8 +43,13 @@ export default function TournamentSetupPage() {
 
     void loadTournament();
 
+    const refreshInterval = window.setInterval(() => {
+      void loadTournament();
+    }, JOINED_PLAYERS_REFRESH_INTERVAL_MS);
+
     return () => {
       isActive = false;
+      window.clearInterval(refreshInterval);
     };
   }, [params.id]);
 

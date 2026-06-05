@@ -9,7 +9,10 @@ export async function requireAuthenticatedSession(): Promise<Session | null> {
 export async function requireAdminSession(): Promise<Session | null> {
   const session = await requireAuthenticatedSession();
 
-  return session?.user.role === "admin" ? session : null;
+  return session?.user.role === "admin" ||
+    session?.user.role === "tournament_lead"
+    ? session
+    : null;
 }
 
 export async function requirePlayerSession(): Promise<Session | null> {

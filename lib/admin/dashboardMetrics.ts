@@ -32,7 +32,7 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
   await connectDB();
 
   const [registeredAdmins, registeredPlayers, tournaments] = await Promise.all([
-    User.countDocuments({ role: "admin" }),
+    User.countDocuments({ role: { $in: ["admin", "tournament_lead"] } }),
     User.countDocuments({ role: "player" }),
     Tournament.find().select("status matches").lean(),
   ]);

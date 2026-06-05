@@ -28,6 +28,7 @@ export interface TournamentSummary {
 }
 
 interface AdminDashboardProps {
+  canManageTournamentLeads?: boolean;
   initialAdmins?: AdminUserSummary[];
   initialMetrics?: AdminDashboardMetrics;
   initialPlayers?: PlayerUserSummary[];
@@ -47,6 +48,7 @@ const defaultMetrics: AdminDashboardMetrics = {
 };
 
 export function AdminDashboard({
+  canManageTournamentLeads = true,
   initialAdmins = [],
   initialMetrics = defaultMetrics,
   initialPlayers = [],
@@ -75,7 +77,10 @@ export function AdminDashboard({
         <DashboardMetrics metrics={initialMetrics} />
       </div>
       <div className="mt-8 grid gap-6 xl:grid-cols-2">
-        <AdminUsersPanel initialAdmins={initialAdmins} />
+        <AdminUsersPanel
+          canManageTournamentLeads={canManageTournamentLeads}
+          initialAdmins={initialAdmins}
+        />
         <PlayerUsersPanel initialPlayers={initialPlayers} />
       </div>
       {tournaments.length === 0 ? (

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { randomInt } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
-import { requireAdmin } from "@/lib/adminAuth";
+import { requireAdmin, requireAdminSession } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models/User";
 
@@ -19,11 +19,16 @@ function adminSummary(admin: {
   createdAt: Date;
   email: string;
   mustChangePassword: boolean;
+  role: "admin" | "tournament_lead";
 }) {
+  const displayRole = admin.role === "admin" ? "Admin" : "Tournament Lead";
+
   return {
     _id: admin._id.toString(),
     email: admin.email,
     mustChangePassword: admin.mustChangePassword,
+    role: admin.role,
+    displayRole,
     createdAt: admin.createdAt.toISOString(),
   };
 }
@@ -71,7 +76,9 @@ export async function GET() {
   try {
     await connectDB();
 
-    const admins = await User.find({ role: "admin" }).sort({ createdAt: -1 });
+    const admins = await User.find({
+      role: { $in: ["admin", "tournament_lead"] },
+    }).sort({ createdAt: -1 });
 
     return NextResponse.json({
       admins: admins.map(adminSummary),
@@ -82,8 +89,18 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await requireAdmin())) {
+  const session = await requireAdminSession();
+
+  if (!session) {
     return jsonError("Authentication required", "UNAUTHORIZED", 401);
+  }
+
+  if (session.user.role !== "admin") {
+    return jsonError(
+      "Only admins can create tournament leads",
+      "FORBIDDEN",
+      403,
+    );
   }
 
   let body: unknown;
@@ -97,7 +114,7 @@ export async function POST(request: NextRequest) {
   const parsedBody = parseCreateBody(body);
 
   if (!parsedBody) {
-    return jsonError("Invalid admin email", "VALIDATION_ERROR", 422);
+    return jsonError("Invalid tournament lead email", "VALIDATION_ERROR", 422);
   }
 
   try {
@@ -106,7 +123,7 @@ export async function POST(request: NextRequest) {
     const existingAdmin = await User.findOne({ email: parsedBody.email });
 
     if (existingAdmin) {
-      return jsonError("Admin email already exists", "CONFLICT", 409);
+      return jsonError("Tournament lead email already exists", "CONFLICT", 409);
     }
 
     const temporaryPassword = generateTemporaryPassword();
@@ -115,7 +132,7 @@ export async function POST(request: NextRequest) {
       email: parsedBody.email,
       mustChangePassword: true,
       passwordHash,
-      role: "admin",
+      role: "tournament_lead",
     });
 
     return NextResponse.json(

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 export type ApiErrorCode =
+  | "FORBIDDEN"
   | "UNAUTHORIZED"
   | "NOT_FOUND"
   | "VALIDATION_ERROR"
@@ -22,4 +23,3 @@ export function jsonError(
     },
   );
 }
-

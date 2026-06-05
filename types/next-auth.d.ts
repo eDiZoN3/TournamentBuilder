@@ -1,5 +1,7 @@
 import type { DefaultSession } from "next-auth";
 
+type UserRole = "admin" | "tournament_lead" | "player";
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -7,7 +9,7 @@ declare module "next-auth" {
       mustChangePassword: boolean;
       playerDisplayName?: string;
       playerProfileId?: string;
-      role: "admin" | "player";
+      role: UserRole;
     } & DefaultSession["user"];
   }
 
@@ -15,7 +17,7 @@ declare module "next-auth" {
     mustChangePassword: boolean;
     playerDisplayName?: string;
     playerProfileId?: string;
-    role: "admin" | "player";
+    role: UserRole;
   }
 }
 
@@ -25,7 +27,7 @@ declare module "next-auth/jwt" {
     mustChangePassword?: boolean;
     playerDisplayName?: string;
     playerProfileId?: string;
-    role?: "admin" | "player";
+    role?: UserRole;
   }
 }
 

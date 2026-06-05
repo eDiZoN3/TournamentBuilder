@@ -17,4 +17,3 @@
 17. when a player presses join it is not instant visible in the create tournament view that he has joined, this shuold be possible
 18. admin needs feature to reset stats, per user, per tournament, per season, and complete, make a new tab in the dashboard for it.
 19. in the admin dashboard is no clickable link that leads back to public view, this needs to be added
-20.

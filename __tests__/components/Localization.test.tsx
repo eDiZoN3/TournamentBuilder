@@ -60,7 +60,7 @@ describe("frontend localization", () => {
     expect(await screen.findByText(de("tournaments"))).toBeInTheDocument();
     expect(screen.getByText(de("stats"))).toBeInTheDocument();
     expect(screen.getByText(de("signUp"))).toBeInTheDocument();
-    expect(screen.getByText(de("adminLogin"))).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: de("signIn") })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: de("languageSwitchToEnglish") }),
     ).toBeInTheDocument();

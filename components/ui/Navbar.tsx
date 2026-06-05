@@ -13,12 +13,12 @@ interface NavbarProps {
 }
 
 export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
-  const { locale, t } = useLocale();
+  const { t } = useLocale();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const accountHref = role === "player" ? "/account" : "/admin/dashboard";
   const accountLabel = role === "player" ? t("account") : t("dashboard");
-  const loginLabel = locale === "de" ? t("adminLogin") : t("signIn");
+  const loginLabel = t("signIn");
 
   useEffect(() => {
     if (!isMenuOpen) {

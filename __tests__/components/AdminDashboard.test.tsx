@@ -106,12 +106,15 @@ describe("AdminDashboard", () => {
     ).toHaveAttribute("href", "/");
     expect(screen.getByRole("button", { name: "Delete Active Cup" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Delete Completed Cup" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Tournament lead accounts" })).toBeInTheDocument();
-    expect(screen.getByText("owner@example.com")).toBeInTheDocument();
     expect(screen.getByText("Registered players")).toBeInTheDocument();
     expect(screen.getByText("Played matches")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Accounts" }));
+
     expect(screen.getByRole("heading", { name: "Player accounts" })).toBeInTheDocument();
     expect(screen.getByText("Alice Example")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Tournament lead accounts" })).toBeInTheDocument();
+    expect(screen.getByText("owner@example.com")).toBeInTheDocument();
   });
 
   it("shows the stats reset tab for admins", () => {

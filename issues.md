@@ -15,5 +15,5 @@
 15. [implemented] remove the seperation of the two login pages and automatically detect if its an admin account, a tournament manger account or a normal player account, this is better ux
 16. [implemented] there is no logout button for player accounts, add this
 17. [implemented] when a player presses join it is not instant visible in the create tournament view that he has joined, this shuold be possible
-18. admin needs feature to reset stats, per user, per tournament, per season, and complete, make a new tab in the dashboard for it.
-19. in the admin dashboard is no clickable link that leads back to public view, this needs to be added
+18. [implemented] admin needs feature to reset stats, per user, per tournament, per season, and complete, make a new tab in the dashboard for it.
+19. [implemented] in the admin dashboard is no clickable link that leads back to public view, this needs to be added

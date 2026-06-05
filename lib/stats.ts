@@ -18,6 +18,15 @@ export interface StatsResult {
   players: StatsRow[];
 }
 
+export type StatsResetScope = "player" | "tournament" | "season" | "all";
+
+export interface StatsResetRule {
+  scope: StatsResetScope;
+  playerNameKey?: string | null;
+  tournamentId?: { toString(): string } | string | null;
+  season?: number | null;
+}
+
 interface MutableStats extends StatsRow {
   key: string;
 }
@@ -31,11 +40,13 @@ interface MatchSideDelta {
   won: boolean;
 }
 
-function idString(id: { toString(): string } | string | null): string {
+function idString(
+  id: { toString(): string } | string | null | undefined,
+): string {
   return id?.toString() ?? "";
 }
 
-function normalizeName(name: string): string {
+export function normalizeName(name: string): string {
   return name.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
@@ -101,6 +112,69 @@ function sortStats(rows: StatsRow[]): StatsRow[] {
       second.pointDiff - first.pointDiff ||
       first.name.localeCompare(second.name),
   );
+}
+
+function emptyStats(): StatsResult {
+  return {
+    teams: [],
+    players: [],
+  };
+}
+
+function createdAtDate(tournament: ITournament): Date {
+  return tournament.createdAt instanceof Date
+    ? tournament.createdAt
+    : new Date(tournament.createdAt);
+}
+
+function isTournamentInSeason(tournament: ITournament, season: number): boolean {
+  const createdAt = createdAtDate(tournament);
+  const seasonStart = Date.UTC(season, 0, 1);
+  const nextSeasonStart = Date.UTC(season + 1, 0, 1);
+  const createdAtTime = createdAt.getTime();
+
+  return createdAtTime >= seasonStart && createdAtTime < nextSeasonStart;
+}
+
+function resetAppliesToTournament(
+  rule: StatsResetRule,
+  tournament: ITournament,
+): boolean {
+  if (rule.scope === "all") {
+    return true;
+  }
+
+  if (rule.scope === "tournament") {
+    return idString(rule.tournamentId) === idString(tournament._id);
+  }
+
+  if (rule.scope === "season" && typeof rule.season === "number") {
+    return isTournamentInSeason(tournament, rule.season);
+  }
+
+  return false;
+}
+
+function playerResetKeys(resetRules: StatsResetRule[]): Set<string> {
+  return new Set(
+    resetRules
+      .filter((rule) => rule.scope === "player")
+      .map((rule) => rule.playerNameKey ?? "")
+      .filter(Boolean),
+  );
+}
+
+function filterPlayerStats(
+  rows: StatsRow[],
+  resetRules: StatsResetRule[],
+): StatsRow[] {
+  const resetKeys = playerResetKeys(resetRules);
+
+  if (resetKeys.size === 0) {
+    return rows;
+  }
+
+  return rows.filter((row) => !resetKeys.has(normalizeName(row.name)));
 }
 
 function playableCompleted(match: IMatch): boolean {
@@ -179,7 +253,14 @@ function teamById(teams: ITeam[]): Map<string, ITeam> {
   return new Map(teams.map((team) => [idString(team._id), team]));
 }
 
-export function calculateTournamentStats(tournament: ITournament): StatsResult {
+export function calculateTournamentStats(
+  tournament: ITournament,
+  resetRules: StatsResetRule[] = [],
+): StatsResult {
+  if (resetRules.some((rule) => resetAppliesToTournament(rule, tournament))) {
+    return emptyStats();
+  }
+
   const teamStatsByKey = new Map<string, MutableStats>();
   const playerStatsByKey = new Map<string, MutableStats>();
   const teamsById = teamById(tournament.teams);
@@ -219,7 +300,10 @@ export function calculateTournamentStats(tournament: ITournament): StatsResult {
 
   return {
     teams: sortStats([...teamStatsByKey.values()].map(finalizeStats)),
-    players: sortStats([...playerStatsByKey.values()].map(finalizeStats)),
+    players: filterPlayerStats(
+      sortStats([...playerStatsByKey.values()].map(finalizeStats)),
+      resetRules,
+    ),
   };
 }
 
@@ -240,12 +324,19 @@ function mergeStats(
   }
 }
 
-export function aggregateStats(tournaments: ITournament[]): StatsResult {
+export function aggregateStats(
+  tournaments: ITournament[],
+  resetRules: StatsResetRule[] = [],
+): StatsResult {
   const teamStatsByKey = new Map<string, MutableStats>();
   const playerStatsByKey = new Map<string, MutableStats>();
+  const tournamentsForStats = tournaments.filter(
+    (tournament) =>
+      !resetRules.some((rule) => resetAppliesToTournament(rule, tournament)),
+  );
 
-  for (const tournament of tournaments) {
-    const stats = calculateTournamentStats(tournament);
+  for (const tournament of tournamentsForStats) {
+    const stats = calculateTournamentStats(tournament, resetRules);
 
     mergeStats(teamStatsByKey, stats.teams);
     mergeStats(playerStatsByKey, stats.players);
@@ -253,6 +344,9 @@ export function aggregateStats(tournaments: ITournament[]): StatsResult {
 
   return {
     teams: sortStats([...teamStatsByKey.values()].map(finalizeStats)),
-    players: sortStats([...playerStatsByKey.values()].map(finalizeStats)),
+    players: filterPlayerStats(
+      sortStats([...playerStatsByKey.values()].map(finalizeStats)),
+      resetRules,
+    ),
   };
 }

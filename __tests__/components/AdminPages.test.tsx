@@ -8,10 +8,15 @@ import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { User } from "@/lib/models/User";
 import { Tournament } from "@/lib/models/Tournament";
 
-const { notFound } = vi.hoisted(() => ({
+const { getServerSession, notFound } = vi.hoisted(() => ({
+  getServerSession: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NOT_FOUND");
   }),
+}));
+
+vi.mock("next-auth", () => ({
+  getServerSession,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -23,6 +28,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("admin dashboard page", () => {
+  beforeEach(() => {
+    getServerSession.mockResolvedValue({
+      user: {
+        id: "owner-id",
+        role: "admin",
+      },
+    });
+  });
+
   it("server-renders stored tournaments", async () => {
     await Tournament.create({
       name: "Admin Cup",
@@ -51,9 +65,10 @@ describe("admin dashboard page", () => {
 
     expect(markup).toContain("Admin Cup");
     expect(markup).toContain("Create New Tournament");
-    expect(markup).toContain("owner@example.com");
+    expect(markup).toContain("Public View");
+    expect(markup).toContain("Accounts");
+    expect(markup).toContain("Stats reset");
     expect(markup).toContain("Registered players");
-    expect(markup).toContain("Alice Example");
   });
 });
 

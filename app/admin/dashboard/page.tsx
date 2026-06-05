@@ -46,6 +46,9 @@ export default async function AdminDashboardPage() {
   return (
     <AdminDashboard
       canManageTournamentLeads={session?.user.role === "admin"}
+      currentUserRole={
+        session?.user.role === "tournament_lead" ? "tournament_lead" : "admin"
+      }
       initialAdmins={initialAdmins}
       initialMetrics={initialMetrics}
       initialPlayers={initialPlayers}

@@ -64,6 +64,22 @@ async function createCompletedTournament(name: string, playerNames = ["Alice", "
   });
 }
 
+async function setTournamentCreatedAt(
+  tournament: { _id: Types.ObjectId },
+  createdAt: string,
+) {
+  await Tournament.collection.updateOne(
+    {
+      _id: tournament._id,
+    },
+    {
+      $set: {
+        createdAt: new Date(createdAt),
+      },
+    },
+  );
+}
+
 describe("POST /api/admin/stats/reset", () => {
   beforeEach(() => {
     requireAdminSession.mockReset();
@@ -167,12 +183,14 @@ describe("POST /api/admin/stats/reset", () => {
       "Eve",
       "Frank",
     ]);
-    await Tournament.findByIdAndUpdate(seasonTournament._id, {
-      createdAt: new Date("2026-03-01T12:00:00.000Z"),
-    });
-    await Tournament.findByIdAndUpdate(otherTournament._id, {
-      createdAt: new Date("2025-03-01T12:00:00.000Z"),
-    });
+    await setTournamentCreatedAt(
+      seasonTournament,
+      "2026-03-01T12:00:00.000Z",
+    );
+    await setTournamentCreatedAt(
+      otherTournament,
+      "2025-03-01T12:00:00.000Z",
+    );
 
     const response = await resetStats({
       scope: "season",
@@ -193,6 +211,54 @@ describe("POST /api/admin/stats/reset", () => {
     expect(stats.teams).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "Older Cup Alpha" }),
+      ]),
+    );
+  });
+
+  it("treats a season as the full calendar year from January 1 through December 31", async () => {
+    const firstDayTournament = await createCompletedTournament("First Day Cup");
+    const lastDayTournament = await createCompletedTournament("Last Day Cup");
+    const previousYearTournament = await createCompletedTournament("Previous Year Cup");
+    const nextYearTournament = await createCompletedTournament("Next Year Cup");
+
+    await setTournamentCreatedAt(
+      firstDayTournament,
+      "2026-01-01T00:00:00.000Z",
+    );
+    await setTournamentCreatedAt(
+      lastDayTournament,
+      "2026-12-31T23:59:59.999Z",
+    );
+    await setTournamentCreatedAt(
+      previousYearTournament,
+      "2025-12-31T23:59:59.999Z",
+    );
+    await setTournamentCreatedAt(
+      nextYearTournament,
+      "2027-01-01T00:00:00.000Z",
+    );
+
+    const response = await resetStats({
+      scope: "season",
+      season: 2026,
+      confirmation: "RESET STATS",
+    });
+
+    expect(response.status).toBe(200);
+
+    const statsResponse = await globalStats();
+    const stats = await statsResponse.json();
+
+    expect(stats.teams).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "First Day Cup Alpha" }),
+        expect.objectContaining({ name: "Last Day Cup Alpha" }),
+      ]),
+    );
+    expect(stats.teams).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Previous Year Cup Alpha" }),
+        expect.objectContaining({ name: "Next Year Cup Alpha" }),
       ]),
     );
   });

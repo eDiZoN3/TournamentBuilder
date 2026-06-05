@@ -2,8 +2,9 @@ import { Types } from "mongoose";
 import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { connectDB } from "@/lib/db";
+import { StatsReset } from "@/lib/models/StatsReset";
 import { Tournament, type ITournament } from "@/lib/models/Tournament";
-import { calculateTournamentStats } from "@/lib/stats";
+import { calculateTournamentStats, type StatsResetRule } from "@/lib/stats";
 
 interface RouteContext {
   params: Promise<{
@@ -21,7 +22,10 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   try {
     await connectDB();
 
-    const tournament = await Tournament.findById(id).lean();
+    const [tournament, resetRules] = await Promise.all([
+      Tournament.findById(id).lean(),
+      StatsReset.find().lean(),
+    ]);
 
     if (!tournament) {
       return jsonError("Tournament not found", "NOT_FOUND", 404);
@@ -30,6 +34,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     return NextResponse.json(
       calculateTournamentStats(
         JSON.parse(JSON.stringify(tournament)) as ITournament,
+        JSON.parse(JSON.stringify(resetRules)) as StatsResetRule[],
       ),
     );
   } catch {

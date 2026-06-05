@@ -48,8 +48,14 @@ export function WinnerBracket({
 }: WinnerBracketProps) {
   const rounds = roundsFor(matches, "winner");
   const [activeRound, setActiveRound] = useState(rounds[0]?.[0] ?? 1);
+  const finalRound = rounds.at(-1)?.[0] ?? 1;
   const roundTabs = rounds.map(([round, roundMatches]) => ({
-    label: roundMatches[0]?.label ?? `WB Round ${round}`,
+    label: roundMatches.some(
+      (match) =>
+        match.isWBFinal || (round === finalRound && /final/i.test(match.label)),
+    )
+      ? "Final"
+      : `Round ${round}`,
     round,
   }));
 

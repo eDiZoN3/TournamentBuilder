@@ -49,7 +49,11 @@ export function LoserBracket({
   const rounds = roundsFor(matches, "loser");
   const [activeRound, setActiveRound] = useState(rounds[0]?.[0] ?? 1);
   const roundTabs = rounds.map(([round, roundMatches]) => ({
-    label: roundMatches[0]?.label ?? `LB Round ${round}`,
+    label: roundMatches.some((match) => match.isLBFinal)
+      ? rounds.length > 2
+        ? "LB Final"
+        : "Final"
+      : `Round ${round}`,
     round,
   }));
 

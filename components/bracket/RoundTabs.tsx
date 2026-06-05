@@ -11,6 +11,10 @@ interface RoundTabsProps {
 }
 
 export function roundTabLabel(label: string, round: number): string {
+  if (/^lb final$/i.test(label.trim())) {
+    return "LB Final";
+  }
+
   if (/final/i.test(label)) {
     return "Final";
   }

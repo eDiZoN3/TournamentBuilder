@@ -291,8 +291,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
   de: {
     account: "Konto",
     active: "Aktiv",
-    addPlayer: "Spieler hinzufugen",
-    addTeam: "Team hinzufugen",
+    addPlayer: "Spieler hinzufügen",
+    addTeam: "Team hinzufügen",
     adminLogin: "Admin-Login",
     allowPlayerSelfJoin: "Spieler selbst beitreten lassen",
     assignCourt: "Feld zuweisen",
@@ -331,7 +331,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterPlayerNames: "Spielernamen eingeben",
     enterTeamNames: "Teamnamen eingeben",
     exactPlayerCountRequirement:
-      "Spieleranzahl muss durch die Teamgroesse teilbar sein.",
+      "Spieleranzahl muss durch die Teamgröße teilbar sein.",
     finalStandings: "Endstand",
     firstName: "Vorname",
     followCurrentTournaments:
@@ -480,22 +480,27 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     confirmMatch: "Spiel bestätigen",
     confirmOverride: "Überschreiben bestätigen",
     confirming: "Bestätigen...",
-    configureTournamentDescription: "Konfigurieren Sie das Turnier, bevor Sie Teams oder Spieler eingeben.",
+    configureTournamentDescription:
+      "Konfigurieren Sie das Turnier, bevor Sie Teams oder Spieler eingeben.",
     court: "Feld",
     courtAssignedMessage: "Feld {court} wurde zugewiesen.",
-    courtAssignedWithReplacement: "Feld {court} wurde zugewiesen; das vorherige Spiel ist wieder bereit.",
+    courtAssignedWithReplacement:
+      "Feld {court} wurde zugewiesen; das vorherige Spiel ist wieder bereit.",
     courtOverride: "Feld überschreiben",
     courtOverrideFailed: "Feldüberschreibung fehlgeschlagen",
     courtsInUse: "{current}/{total} Felder in Nutzung",
-    createTournamentDescription: "Konfigurieren Sie das Turnier, bevor Sie Teams oder Spieler eingeben.",
-    createdAccountSignInFailed: "Konto erstellt, aber die Anmeldung ist fehlgeschlagen.",
+    createTournamentDescription:
+      "Konfigurieren Sie das Turnier, bevor Sie Teams oder Spieler eingeben.",
+    createdAccountSignInFailed:
+      "Konto erstellt, aber die Anmeldung ist fehlgeschlagen.",
     creating: "Erstellen...",
     dashboardOverview: "Dashboard-Übersicht",
     dashboardSections: "Dashboard-Bereiche",
     dismissError: "Fehler schließen",
     dismissTemporaryPassword: "Temporäres Passwort schließen",
     emptyTournamentDescription: "Erstellen Sie eins, um Spiele zu planen.",
-    enableJavaScriptApiDocs: "Aktivieren Sie JavaScript, um Swagger UI anzuzeigen. Das OpenAPI-JSON ist unter /api/openapi verfügbar.",
+    enableJavaScriptApiDocs:
+      "Aktivieren Sie JavaScript, um Swagger UI anzuzeigen. Das OpenAPI-JSON ist unter /api/openapi verfügbar.",
     enterAtLeastTwoTeamNames: "Geben Sie mindestens zwei Teamnamen ein.",
     enterScores: "Ergebnisse eingeben",
     final: "Finale",
@@ -508,7 +513,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     loadingMatch: "Spiel wird geladen",
     loserBracket: "Verliererbaum",
     loserBracketRounds: "Runden im Verliererbaum",
-    manageTournamentLeadsNote: "Turnierleiter erstellen und temporäre Passwörter zurücksetzen.",
+    manageTournamentLeadsNote:
+      "Turnierleiter erstellen und temporäre Passwörter zurücksetzen.",
     markAsInProgress: "Als laufend markieren",
     matchCompleted: "{match} wurde abgeschlossen.",
     matchConfirmed: "Spiel bestätigt",
@@ -533,14 +539,16 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     resetPlayerPassword: "Passwort zurücksetzen",
     resetPlayerPasswordAction: "Passwort für {name} zurücksetzen",
     resultUpdated: "Ergebnis aktualisiert.",
-    resultUpdatedWithDownstreamReset: "Ergebnis aktualisiert und {count} nachgelagertes Spiel zurückgesetzt.",
+    resultUpdatedWithDownstreamReset:
+      "Ergebnis aktualisiert und {count} nachgelagertes Spiel zurückgesetzt.",
     saveSet: "Satz speichern",
     scoreSaved: "Ergebnis gespeichert",
     semiFinal: "Halbfinale",
     set: "Satz",
     setSaved: "Satz {set} wurde gespeichert.",
     shuffleTeams: "Teams mischen",
-    signInDescription: "Melden Sie sich mit Ihrem Turnier- oder Spielerkonto an.",
+    signInDescription:
+      "Melden Sie sich mit Ihrem Turnier- oder Spielerkonto an.",
     signUpToJoin: "Zum Beitreten registrieren",
     submitOverride: "Überschreibung senden",
     submitting: "Senden...",
@@ -548,7 +556,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     switchToLightMode: "In den Hellmodus wechseln",
     teamNameField: "Team {n} Name",
     teamPreviewNameField: "Teamvorschau {n} Name",
-    temporaryPasswordHelp: "Teilen Sie dieses temporäre Passwort. Der Benutzer muss danach ein eigenes Passwort festlegen.",
+    temporaryPasswordHelp:
+      "Teilen Sie dieses temporäre Passwort. Der Benutzer muss danach ein eigenes Passwort festlegen.",
     toBeDetermined: "Offen",
     tournamentLead: "Turnierleiter",
     unableToAssignCourt: "Konnte Feld nicht zuweisen.",
@@ -572,12 +581,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     winner: "Sieger",
     winnerBracket: "Gewinnerbaum",
     winnerBracketRounds: "Runden im Gewinnerbaum",
-    changingWinnerWarning: "Eine Änderung des Siegers setzt nachgelagerte Spiele zurück.",
+    changingWinnerWarning:
+      "Eine Änderung des Siegers setzt nachgelagerte Spiele zurück.",
     playerNameField: "Spieler {n} Name",
-    playerRemainderWarning: "Einige Spieler werden dem letzten Team hinzugefügt.",
+    playerRemainderWarning:
+      "Einige Spieler werden dem letzten Team hinzugefügt.",
     addParticipantsNote:
       "Fügen Sie Teilnehmer hinzu und bestätigen Sie die Teams, bevor Sie das Turnier starten.",
-    completedNonByeMatches: "Abgeschlossene Nicht-Bye-Spiele",
+    completedNonByeMatches: "Gespielte Matches",
     individualMixer: "Einzel-Mixer",
   },
   en: {
@@ -756,7 +767,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     admin: "Admin",
     adminNavigation: "Admin navigation",
     allCourtsOccupied: "All courts occupied",
-    apiDocsDescription: "Interactive documentation generated from the OpenAPI document.",
+    apiDocsDescription:
+      "Interactive documentation generated from the OpenAPI document.",
     apiDocsTitle: "Swagger API Docs",
     assigning: "Assigning...",
     bestOfOne: "Best of 1",
@@ -768,14 +780,17 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     confirmMatch: "Confirm match",
     confirmOverride: "Confirm override",
     confirming: "Confirming...",
-    configureTournamentDescription: "Configure the tournament before entering teams or players.",
+    configureTournamentDescription:
+      "Configure the tournament before entering teams or players.",
     court: "Court",
     courtAssignedMessage: "Court {court} assigned.",
-    courtAssignedWithReplacement: "Court {court} assigned; previous match returned to ready.",
+    courtAssignedWithReplacement:
+      "Court {court} assigned; previous match returned to ready.",
     courtOverride: "Court override",
     courtOverrideFailed: "Court override failed",
     courtsInUse: "{current}/{total} courts in use",
-    createTournamentDescription: "Configure the tournament before entering teams or players.",
+    createTournamentDescription:
+      "Configure the tournament before entering teams or players.",
     createdAccountSignInFailed: "Account created, but sign in failed.",
     creating: "Creating...",
     dashboardOverview: "Dashboard overview",
@@ -783,7 +798,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     dismissError: "Dismiss error",
     dismissTemporaryPassword: "Dismiss temporary password",
     emptyTournamentDescription: "Create one to start scheduling matches.",
-    enableJavaScriptApiDocs: "Enable JavaScript to view Swagger UI. The OpenAPI JSON is available at /api/openapi.",
+    enableJavaScriptApiDocs:
+      "Enable JavaScript to view Swagger UI. The OpenAPI JSON is available at /api/openapi.",
     enterAtLeastTwoTeamNames: "Enter at least two team names.",
     enterScores: "Enter scores",
     final: "Final",
@@ -796,7 +812,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     loadingMatch: "Loading match",
     loserBracket: "Loser bracket",
     loserBracketRounds: "Loser bracket rounds",
-    manageTournamentLeadsNote: "Create tournament leads and reset temporary passwords.",
+    manageTournamentLeadsNote:
+      "Create tournament leads and reset temporary passwords.",
     markAsInProgress: "Mark as in progress",
     matchCompleted: "{match} was completed.",
     matchConfirmed: "Match confirmed",
@@ -821,7 +838,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     resetPlayerPassword: "Reset password",
     resetPlayerPasswordAction: "Reset {name} password",
     resultUpdated: "Result updated.",
-    resultUpdatedWithDownstreamReset: "Result updated and {count} downstream match reset.",
+    resultUpdatedWithDownstreamReset:
+      "Result updated and {count} downstream match reset.",
     saveSet: "Save set",
     scoreSaved: "Score saved",
     semiFinal: "Semi-Final",
@@ -836,7 +854,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     switchToLightMode: "Switch to light mode",
     teamNameField: "Team {n} name",
     teamPreviewNameField: "Preview team {n} name",
-    temporaryPasswordHelp: "Share this temporary password. The user must set their own password next.",
+    temporaryPasswordHelp:
+      "Share this temporary password. The user must set their own password next.",
     toBeDetermined: "TBD",
     tournamentLead: "Tournament Lead",
     unableToAssignCourt: "Unable to assign court.",

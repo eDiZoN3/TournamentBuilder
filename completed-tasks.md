@@ -1314,3 +1314,55 @@ Tests cover login layout classes, signup card layout metadata, and accessible co
 Tests cover one-court hidden states, status endpoint usage, and preserved multi-court override behavior.
 
 ---
+
+## Phase 12 - Issue 20
+
+Archived from `task.md` after issue 20 was implemented.
+
+### T92 - Team Round-Robin Player Entry and Match Format API (TDD First)
+**Files**: `lib/models/Tournament.ts`, `app/api/tournaments/route.ts`, `app/api/tournaments/[id]/route.ts`, `lib/openapi.ts`, `__tests__/lib/models/Tournament.test.ts`, `__tests__/api/tournaments.test.ts`, `__tests__/api/openapi.test.ts`
+**Depends on**: T69, T70, T72
+**TDD**: Tests written before implementation
+**Description**: Extended team round-robin tournament configuration so the format can be driven by player rosters as well as pre-entered teams:
+- `team_round_robin` tournaments can use `inputMode: "players"`.
+- Player account self-join is allowed for team round-robin player-entry tournaments.
+- Round-robin match format is persisted as `roundRobinMatchFormat`, defaults to `bo1`, and accepts `bo3`.
+- Incompatible server-side combinations are rejected so knockout and individual-mixer behavior stays unchanged.
+- Tournament API responses and OpenAPI now serialize/document the new metadata.
+
+Tests cover player-entry creation, self-join creation, BO1 defaulting, BO3 acceptance, invalid match-format rejection, existing creation behavior, and OpenAPI documentation.
+
+---
+
+### T93 - Exact Team Generation for Team Round-Robin Players (TDD First)
+**Files**: `lib/bracket/playerAssign.ts`, `lib/round-robin/teamSchedule.ts`, `app/api/tournaments/[id]/start/route.ts`, `__tests__/lib/playerAssign.test.ts`, `__tests__/lib/round-robin/teamSchedule.test.ts`, `__tests__/api/start.test.ts`
+**Depends on**: T92
+**TDD**: Tests written before implementation
+**Description**: Added strict player-to-team generation for team round-robin player-entry tournaments:
+- Team round-robin player entry requires `playerCount % teamSize === 0`.
+- Tournament start is rejected until enough players exist and exact divisibility is satisfied.
+- Manual player names and self-joined player accounts are combined into one deterministic deduplicated roster.
+- Equal-sized teams are generated randomly before the round-robin schedule is created.
+- Existing flexible remainder behavior for knockout player assignment is preserved.
+- Generated round-robin matches use the persisted `bo1` or `bo3` match format.
+
+Tests cover exact 8-player generation, 9-player rejection, self-joined player inclusion, duplicate-name deduplication, BO3 match generation, and preserved knockout assignment coverage.
+
+---
+
+### T94 - Team Round-Robin Player Setup UI (TDD First)
+**Files**: `app/admin/tournament/new/page.tsx`, `components/admin/TournamentSetupForm.tsx`, `components/player/JoinTournamentButton.tsx`, `lib/i18n.ts`, `__tests__/components/NewTournamentPage.test.tsx`, `__tests__/components/TournamentSetupPage.test.tsx`, `__tests__/components/JoinTournamentButton.test.tsx`, `__tests__/components/Localization.test.tsx`
+**Depends on**: T92, T93
+**TDD**: Tests written before implementation
+**Description**: Exposed team round-robin player entry in the admin UI:
+- The new tournament form lets tournament leads choose team round-robin with player-name entry.
+- Self-join can be enabled for team round-robin player-entry tournaments.
+- Round-robin match format defaults to one set per match and can be changed to BO3.
+- The setup page shows player entry, self-joined roster data, exact-count validation, and generated team previews.
+- Starting is blocked with an inline message until the exact divisibility rule and at least two generated teams are satisfied.
+- Regeneration keeps team previews equal-sized.
+- German and English labels were added for the new controls and validation messages.
+
+Tests cover player-entry selection, self-join availability, BO1 and BO3 submission, invalid player-count blocking, equal preview generation, self-joined player display, and localized labels.
+
+---

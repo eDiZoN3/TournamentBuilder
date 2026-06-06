@@ -34,6 +34,8 @@ export type TournamentFormat =
   | "team_round_robin"
   | "individual_mixer";
 
+export type RoundRobinMatchFormat = "bo1" | "bo3";
+
 export interface ITeamSlot {
   teamId: Types.ObjectId;
   sets: ISetScore[];
@@ -46,7 +48,7 @@ export interface IMatch {
   position: number;
   label: string;
   placeRange: string;
-  format: "bo1" | "bo3";
+  format: RoundRobinMatchFormat;
   teamA: ITeamSlot | null;
   teamB: ITeamSlot | null;
   status: "pending" | "ready" | "in_progress" | "completed";
@@ -67,6 +69,7 @@ export interface ITournament {
   name: string;
   status: "draft" | "active" | "completed";
   format: TournamentFormat;
+  roundRobinMatchFormat: RoundRobinMatchFormat;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
@@ -279,6 +282,12 @@ const tournamentSchema = new Schema<ITournament>(
       type: String,
       enum: ["double_elimination", "team_round_robin", "individual_mixer"],
       default: "double_elimination",
+      required: true,
+    },
+    roundRobinMatchFormat: {
+      type: String,
+      enum: ["bo1", "bo3"],
+      default: "bo1",
       required: true,
     },
     teamSize: {

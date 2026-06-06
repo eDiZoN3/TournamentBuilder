@@ -18,6 +18,8 @@ export interface TeamSlot {
   sets: SetScore[];
 }
 
+export type RoundRobinMatchFormat = "bo1" | "bo3";
+
 export interface Match {
   _id: Types.ObjectId;
   bracket: "winner" | "loser";
@@ -25,7 +27,7 @@ export interface Match {
   position: number;
   label: string;
   placeRange: string;
-  format: "bo1" | "bo3";
+  format: RoundRobinMatchFormat;
   teamA: TeamSlot | null;
   teamB: TeamSlot | null;
   status: "pending" | "ready" | "in_progress" | "completed";
@@ -51,6 +53,7 @@ export interface Tournament {
   name: string;
   status: "draft" | "active" | "completed";
   format: TournamentFormat;
+  roundRobinMatchFormat: RoundRobinMatchFormat;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
@@ -134,6 +137,7 @@ export function makeTournament(
     name: "Test Tournament",
     status: "draft",
     format: "double_elimination",
+    roundRobinMatchFormat: "bo1",
     teamSize: 2,
     courtsAvailable: 1,
     inputMode: "teams",

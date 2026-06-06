@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { assignPlayersToTeams } from "@/lib/bracket/playerAssign";
+import {
+  assignPlayersToEqualTeams,
+  assignPlayersToTeams,
+} from "@/lib/bracket/playerAssign";
 
 function players(count: number) {
   return Array.from({ length: count }, (_, index) => `Player ${index + 1}`);
@@ -73,3 +76,44 @@ describe("assignPlayersToTeams", () => {
   });
 });
 
+describe("assignPlayersToEqualTeams", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("shuffles and splits only evenly divisible player lists", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+
+    const teams = assignPlayersToEqualTeams(players(8), 2);
+
+    expect(teams.map((team) => team.players)).toEqual([
+      ["Player 1", "Player 2"],
+      ["Player 3", "Player 4"],
+      ["Player 5", "Player 6"],
+      ["Player 7", "Player 8"],
+    ]);
+    expect(teams.every((team) => team.players.length === 2)).toBe(true);
+  });
+
+  it("rejects player lists that are not exactly divisible by team size", () => {
+    expect(() => assignPlayersToEqualTeams(players(9), 2)).toThrow(
+      "Player count must be divisible by team size",
+    );
+  });
+
+  it("deduplicates duplicate player names deterministically before splitting", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+
+    const teams = assignPlayersToEqualTeams(
+      ["Alice", "Bob", "alice", "Charlie", "Dana"],
+      2,
+    );
+
+    expect(teams.flatMap((team) => team.players)).toEqual([
+      "Alice",
+      "Bob",
+      "Charlie",
+      "Dana",
+    ]);
+  });
+});

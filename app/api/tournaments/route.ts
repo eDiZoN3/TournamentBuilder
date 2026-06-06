@@ -2,12 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
-import { Tournament, type TournamentFormat } from "@/lib/models/Tournament";
+import {
+  Tournament,
+  type RoundRobinMatchFormat,
+  type TournamentFormat,
+} from "@/lib/models/Tournament";
 
 interface CreateTournamentBody {
   allowSelfJoin: boolean;
   format: TournamentFormat;
   name: string;
+  roundRobinMatchFormat: RoundRobinMatchFormat;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
@@ -18,7 +23,15 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     return null;
   }
 
-  const { allowSelfJoin, format, name, teamSize, courtsAvailable, inputMode } =
+  const {
+    allowSelfJoin,
+    format,
+    name,
+    roundRobinMatchFormat,
+    teamSize,
+    courtsAvailable,
+    inputMode,
+  } =
     body as Record<string, unknown>;
   const parsedAllowSelfJoin =
     typeof allowSelfJoin === "boolean" ? allowSelfJoin : false;
@@ -26,6 +39,10 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     format === undefined
       ? "double_elimination"
       : (format as TournamentFormat);
+  const parsedRoundRobinMatchFormat =
+    roundRobinMatchFormat === undefined
+      ? "bo1"
+      : (roundRobinMatchFormat as RoundRobinMatchFormat);
 
   if (
     typeof name !== "string" ||
@@ -39,9 +56,12 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     !["double_elimination", "team_round_robin", "individual_mixer"].includes(
       parsedFormat,
     ) ||
-    (parsedFormat === "team_round_robin" && inputMode !== "teams") ||
+    !["bo1", "bo3"].includes(parsedRoundRobinMatchFormat) ||
     (parsedFormat === "individual_mixer" && inputMode !== "players") ||
-    (parsedAllowSelfJoin && inputMode !== "players")
+    (parsedAllowSelfJoin && inputMode !== "players") ||
+    (parsedFormat !== "team_round_robin" &&
+      roundRobinMatchFormat !== undefined &&
+      parsedRoundRobinMatchFormat !== "bo1")
   ) {
     return null;
   }
@@ -50,6 +70,7 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     allowSelfJoin: parsedAllowSelfJoin,
     format: parsedFormat,
     name: name.trim(),
+    roundRobinMatchFormat: parsedRoundRobinMatchFormat,
     teamSize: teamSize as 2 | 3 | 4,
     courtsAvailable: courtsAvailable as number,
     inputMode: inputMode as "teams" | "players",
@@ -68,6 +89,7 @@ export async function GET() {
         name: tournament.name,
         status: tournament.status,
         format: tournament.format ?? "double_elimination",
+        roundRobinMatchFormat: tournament.roundRobinMatchFormat ?? "bo1",
         createdAt: tournament.createdAt.toISOString(),
         allowSelfJoin: tournament.allowSelfJoin,
         teamCount: tournament.teams.length,
@@ -113,6 +135,7 @@ export async function POST(request: NextRequest) {
         name: tournament.name,
         status: tournament.status,
         format: tournament.format,
+        roundRobinMatchFormat: tournament.roundRobinMatchFormat,
         teamSize: tournament.teamSize,
         courtsAvailable: tournament.courtsAvailable,
         inputMode: tournament.inputMode,

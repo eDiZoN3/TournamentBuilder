@@ -80,6 +80,45 @@ describe("POST /api/tournaments/[id]/join", () => {
     expect(updated?.joinedPlayers[0].userId.toString()).toBe(userId.toString());
   });
 
+  it("lets a player join a team round-robin player-entry tournament", async () => {
+    const userId = new Types.ObjectId();
+    const profile = await PlayerProfile.create({
+      userId,
+      firstName: "Alice",
+      surname: "Example",
+      displayName: "Alice Example",
+      email: "alice@example.com",
+    });
+    const tournament = await Tournament.create({
+      name: "Open League",
+      format: "team_round_robin",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "players",
+      allowSelfJoin: true,
+    });
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: userId.toString(),
+        playerProfileId: profile._id.toString(),
+        role: "player",
+      },
+    });
+
+    const response = await joinTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      joined: true,
+      player: expect.objectContaining({
+        displayName: "Alice Example",
+      }),
+    });
+  });
+
   it("rejects duplicate joins", async () => {
     const userId = new Types.ObjectId();
     const profile = await PlayerProfile.create({

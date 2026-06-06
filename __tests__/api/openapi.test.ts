@@ -69,4 +69,23 @@ describe("/api/openapi", () => {
     expect(body.components.schemas.PracticeMatch).toBeDefined();
     expect(body.components.schemas.PracticeMatchRequest).toBeDefined();
   });
+
+  it("documents team round-robin player entry and match format metadata", async () => {
+    const response = await GET();
+    const body = await response.json();
+
+    expect(body.components.schemas.RoundRobinMatchFormat).toMatchObject({
+      type: "string",
+      enum: ["bo1", "bo3"],
+    });
+    expect(
+      body.components.schemas.CreateTournamentRequest.properties.roundRobinMatchFormat,
+    ).toEqual({ $ref: "#/components/schemas/RoundRobinMatchFormat" });
+    expect(body.components.schemas.Tournament.properties.roundRobinMatchFormat).toEqual(
+      { $ref: "#/components/schemas/RoundRobinMatchFormat" },
+    );
+    expect(body.components.schemas.CreateTournamentRequest.properties.inputMode).toEqual(
+      { $ref: "#/components/schemas/InputMode" },
+    );
+  });
 });

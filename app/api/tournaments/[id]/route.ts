@@ -148,6 +148,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     const responseBody = tournament.toObject();
 
     responseBody.format ??= "double_elimination";
+    responseBody.roundRobinMatchFormat ??= "bo1";
 
     return NextResponse.json(responseBody);
   } catch {
@@ -204,6 +205,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const responseBody = tournament.toObject();
 
     responseBody.format ??= "double_elimination";
+    responseBody.roundRobinMatchFormat ??= "bo1";
 
     return NextResponse.json(responseBody);
   } catch {

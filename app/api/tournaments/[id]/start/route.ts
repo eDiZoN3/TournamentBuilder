@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { jsonError } from "@/lib/api";
+import { assignPlayersToEqualTeams } from "@/lib/bracket/playerAssign";
 import { generateBracket } from "@/lib/bracket/generate";
 import { autoAssignReadyMatches } from "@/lib/bracket/scheduler";
 import { connectDB } from "@/lib/db";
@@ -10,6 +11,7 @@ import {
   type IJoinedPlayer,
   type IMatch,
   type ITeam,
+  type RoundRobinMatchFormat,
 } from "@/lib/models/Tournament";
 import { generateIndividualMixerSchedule } from "@/lib/round-robin/individualMixer";
 import { generateTeamRoundRobinSchedule } from "@/lib/round-robin/teamSchedule";
@@ -30,6 +32,81 @@ function playerRoster(tournament: {
     ),
     ...tournament.joinedPlayers.map((player) => player.displayName),
   ];
+}
+
+function normalizeRosterName(name: string): string {
+  return name.trim().replace(/\s+/g, " ");
+}
+
+function uniquePlayerRoster(tournament: {
+  joinedPlayers: IJoinedPlayer[];
+  teams: ITeam[];
+}): string[] {
+  const seen = new Set<string>();
+  const roster: string[] = [];
+  const candidates = [
+    ...tournament.teams.flatMap((team) =>
+      team.players.length > 0 ? team.players : [team.name],
+    ),
+    ...tournament.joinedPlayers.map((player) => player.displayName),
+  ];
+
+  for (const candidate of candidates) {
+    const name = normalizeRosterName(candidate);
+    const key = name.toLowerCase();
+
+    if (!name || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    roster.push(name);
+  }
+
+  return roster;
+}
+
+function hasGeneratedEqualTeams(tournament: {
+  joinedPlayers: IJoinedPlayer[];
+  teamSize: 2 | 3 | 4;
+  teams: ITeam[];
+}): boolean {
+  if (
+    tournament.teams.length < 2 ||
+    tournament.teams.some(
+      (team) =>
+        !team.name.trim() ||
+        team.players.length !== tournament.teamSize ||
+        team.players.some((player) => !player.trim()),
+    )
+  ) {
+    return false;
+  }
+
+  const teamRosterKeys = new Set(
+    tournament.teams
+      .flatMap((team) => team.players)
+      .map((player) => normalizeRosterName(player).toLowerCase()),
+  );
+  const totalPlayerSlots = tournament.teams.length * tournament.teamSize;
+
+  if (teamRosterKeys.size !== totalPlayerSlots) {
+    return false;
+  }
+
+  return tournament.joinedPlayers.every((player) =>
+    teamRosterKeys.has(normalizeRosterName(player.displayName).toLowerCase()),
+  );
+}
+
+function generatedTeamDocuments(
+  players: string[],
+  teamSize: 2 | 3 | 4,
+): ITeam[] {
+  return assignPlayersToEqualTeams(players, teamSize).map((team) => ({
+    _id: new Types.ObjectId(),
+    ...team,
+  })) as ITeam[];
 }
 
 export async function POST(_request: NextRequest, context: RouteContext) {
@@ -57,9 +134,30 @@ export async function POST(_request: NextRequest, context: RouteContext) {
     }
 
     const format = tournament.format ?? "double_elimination";
+    const roundRobinMatchFormat =
+      (tournament.roundRobinMatchFormat ?? "bo1") as RoundRobinMatchFormat;
     let matches: IMatch[] = [];
 
     if (format === "team_round_robin") {
+      if (tournament.inputMode === "players") {
+        try {
+          if (!hasGeneratedEqualTeams(tournament)) {
+            tournament.teams = generatedTeamDocuments(
+              uniquePlayerRoster(tournament),
+              tournament.teamSize,
+            );
+          }
+        } catch (assignmentError) {
+          return jsonError(
+            assignmentError instanceof Error
+              ? assignmentError.message
+              : "Unable to generate teams",
+            "VALIDATION_ERROR",
+            422,
+          );
+        }
+      }
+
       if (tournament.teams.length < 2) {
         return jsonError(
           "At least two teams are required",
@@ -68,7 +166,10 @@ export async function POST(_request: NextRequest, context: RouteContext) {
         );
       }
 
-      matches = generateTeamRoundRobinSchedule(tournament.teams as ITeam[]);
+      matches = generateTeamRoundRobinSchedule(
+        tournament.teams as ITeam[],
+        roundRobinMatchFormat,
+      );
     } else if (format === "individual_mixer") {
       const players = playerRoster(tournament);
       const minimumPlayers = tournament.teamSize * 2;

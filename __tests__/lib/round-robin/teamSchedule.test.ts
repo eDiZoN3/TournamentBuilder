@@ -24,6 +24,14 @@ describe("generateTeamRoundRobinSchedule", () => {
     expect(matches[0].teamB?.teamId.toString()).toBe(teams[1]._id.toString());
   });
 
+  it("uses the requested round-robin match format", () => {
+    const teams = makeTeams(3);
+    const matches = generateTeamRoundRobinSchedule(teams, "bo3");
+
+    expect(matches).toHaveLength(3);
+    expect(matches.every((match) => match.format === "bo3")).toBe(true);
+  });
+
   it("creates every unique team pair once with stable rounds", () => {
     const teams = makeTeams(4);
     const matches = generateTeamRoundRobinSchedule(teams);

@@ -29,6 +29,29 @@ function shuffle<T>(values: T[]): T[] {
   return shuffled;
 }
 
+function normalizeUniquePlayers(players: string[]): string[] {
+  const seen = new Set<string>();
+  const normalizedPlayers: string[] = [];
+
+  for (const player of players) {
+    const normalizedPlayer = player.trim().replace(/\s+/g, " ");
+    const key = normalizedPlayer.toLowerCase();
+
+    if (!normalizedPlayer) {
+      throw new Error("Player names cannot be empty");
+    }
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    normalizedPlayers.push(normalizedPlayer);
+  }
+
+  return normalizedPlayers;
+}
+
 export function assignPlayersToTeams(
   players: string[],
   teamSize: 2 | 3 | 4,
@@ -68,4 +91,36 @@ export function assignPlayersToTeams(
     players: teamPlayers,
     seed: 0,
   }));
+}
+
+export function assignPlayersToEqualTeams(
+  players: string[],
+  teamSize: 2 | 3 | 4,
+): AssignedTeam[] {
+  const normalizedPlayers = normalizeUniquePlayers(players);
+
+  if (normalizedPlayers.length % teamSize !== 0) {
+    throw new Error("Player count must be divisible by team size");
+  }
+
+  const teamCount = normalizedPlayers.length / teamSize;
+
+  if (teamCount < 2) {
+    throw new Error("At least two teams are required");
+  }
+
+  const shuffledPlayers = shuffle(normalizedPlayers);
+
+  return Array.from({ length: teamCount }, (_, index) => {
+    const teamPlayers = shuffledPlayers.slice(
+      index * teamSize,
+      (index + 1) * teamSize,
+    );
+
+    return {
+      name: `Team ${teamSuffix(index)}`,
+      players: teamPlayers,
+      seed: 0,
+    };
+  });
 }

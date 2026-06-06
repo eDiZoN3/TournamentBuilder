@@ -13,6 +13,7 @@ describe("Tournament model", () => {
       name: "Summer Cup",
       status: "draft",
       format: "double_elimination",
+      roundRobinMatchFormat: "bo1",
       teamSize: 2,
       courtsAvailable: 3,
       inputMode: "teams",
@@ -36,6 +37,32 @@ describe("Tournament model", () => {
       expect(tournament.format).toBe(format);
     },
   );
+
+  it("accepts best-of-three as the persisted round-robin match format", async () => {
+    const tournament = await Tournament.create({
+      name: "League Cup",
+      format: "team_round_robin",
+      roundRobinMatchFormat: "bo3",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "teams",
+    });
+
+    expect(tournament.roundRobinMatchFormat).toBe("bo3");
+  });
+
+  it("rejects unknown round-robin match formats", async () => {
+    await expect(
+      Tournament.create({
+        name: "Bad Match Format Cup",
+        format: "team_round_robin",
+        roundRobinMatchFormat: "bo5",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      }),
+    ).rejects.toThrow();
+  });
 
   it("rejects unknown tournament formats", async () => {
     await expect(

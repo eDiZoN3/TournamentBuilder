@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { assignPlayersToTeams } from "@/lib/bracket/playerAssign";
+import {
+  assignPlayersToEqualTeams,
+  assignPlayersToTeams,
+} from "@/lib/bracket/playerAssign";
 import { useLocale } from "@/components/ui/LocaleProvider";
 
 export interface SetupTeam {
@@ -40,6 +43,25 @@ interface ApiError {
   error?: string;
 }
 
+function uniqueNames(names: string[]): string[] {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  for (const name of names) {
+    const normalizedName = name.trim().replace(/\s+/g, " ");
+    const key = normalizedName.toLowerCase();
+
+    if (!normalizedName || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    unique.push(normalizedName);
+  }
+
+  return unique;
+}
+
 export async function getApiErrorMessage(
   response: Response,
   fallback: string,
@@ -58,6 +80,7 @@ export function TournamentSetupForm({
   const router = useRouter();
   const { locale, t } = useLocale();
   const format = tournament.format ?? "double_elimination";
+  const isTeamRoundRobin = format === "team_round_robin";
   const isIndividualMixer = format === "individual_mixer";
   const joinedPlayerNames = (tournament.joinedPlayers ?? []).map(
     (player) => player.displayName,
@@ -100,10 +123,13 @@ export function TournamentSetupForm({
   const enteredPlayerNames = playerNames
     .map((player) => player.trim())
     .filter(Boolean);
+  const exactPlayerNames = uniqueNames(enteredPlayerNames);
   const hasPlayerRemainder =
     !isIndividualMixer &&
     enteredPlayerNames.length > 0 &&
-    enteredPlayerNames.length % tournament.teamSize !== 0;
+    (isTeamRoundRobin ? exactPlayerNames : enteredPlayerNames).length %
+      tournament.teamSize !==
+      0;
 
   function updateTeamName(index: number, name: string) {
     setTeamNames((current) =>
@@ -122,9 +148,9 @@ export function TournamentSetupForm({
 
     try {
       setPreviewTeams(
-        assignPlayersToTeams(
-          enteredPlayerNames,
-          tournament.teamSize,
+        (isTeamRoundRobin
+          ? assignPlayersToEqualTeams(enteredPlayerNames, tournament.teamSize)
+          : assignPlayersToTeams(enteredPlayerNames, tournament.teamSize)
         ).map((team) => ({
           name: team.name,
           players: team.players,
@@ -186,6 +212,28 @@ export function TournamentSetupForm({
     ) {
       setError(`Enter at least ${tournament.teamSize * 2} players.`);
       return;
+    }
+
+    if (isTeamRoundRobin) {
+      if (
+        exactPlayerNames.length === 0 ||
+        exactPlayerNames.length % tournament.teamSize !== 0
+      ) {
+        setError(t("exactPlayerCountRequirement"));
+        return;
+      }
+
+      if (
+        previewTeams.length < 2 ||
+        previewTeams.some(
+          (team) =>
+            team.name.trim().length === 0 ||
+            team.players.length !== tournament.teamSize,
+        )
+      ) {
+        setError("Generate at least two named teams.");
+        return;
+      }
     }
 
     if (teams.length < 2 || teams.some((team) => team.name.length === 0)) {
@@ -347,12 +395,12 @@ export function TournamentSetupForm({
                 onClick={generateTeams}
                 type="button"
               >
-                Generate teams
+                {t("generateTeams")}
               </button>
             ) : null}
           </div>
 
-          {hasPlayerRemainder ? (
+          {hasPlayerRemainder && !isTeamRoundRobin ? (
             <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
               Some players will be added to the last team.
             </p>
@@ -361,7 +409,7 @@ export function TournamentSetupForm({
           {!isIndividualMixer && previewTeams.length > 0 ? (
             <div className="mt-8 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Team preview</h2>
+                <h2 className="text-lg font-semibold">{t("teamPreview")}</h2>
                 <button
                   className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
                   onClick={generateTeams}

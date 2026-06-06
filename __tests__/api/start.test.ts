@@ -26,6 +26,27 @@ function context(id: string) {
   };
 }
 
+function playerEntries(names: string[]) {
+  return names.map((name, index) => ({
+    name,
+    players: [name],
+    seed: index + 1,
+  }));
+}
+
+function joinedPlayer(displayName: string) {
+  const firstName = displayName.split(" ")[0] ?? displayName;
+
+  return {
+    userId: new Types.ObjectId(),
+    playerProfileId: new Types.ObjectId(),
+    firstName,
+    displayName,
+    email: `${firstName.toLowerCase()}@example.com`,
+    joinedAt: new Date(),
+  };
+}
+
 describe("POST /api/tournaments/[id]/start", () => {
   beforeEach(() => {
     requireAdmin.mockReset();
@@ -123,6 +144,154 @@ describe("POST /api/tournaments/[id]/start", () => {
     expect(savedTournament?.matches).toHaveLength(6);
     expect(new Set(pairKeys).size).toBe(6);
     expect(savedTournament?.matches.some((match) => match.bracket === "loser")).toBe(false);
+  });
+
+  it("generates exact equal teams for a team round-robin player-entry tournament", async () => {
+    const tournament = await Tournament.create({
+      name: "Player League",
+      format: "team_round_robin",
+      teamSize: 2,
+      courtsAvailable: 3,
+      inputMode: "players",
+      teams: playerEntries([
+        "Alice",
+        "Bob",
+        "Charlie",
+        "Dana",
+        "Eli",
+        "Fran",
+        "Gus",
+        "Hana",
+      ]),
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+    const savedTournament = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      format: "team_round_robin",
+      matchesGenerated: 6,
+      byeCount: 0,
+    });
+    expect(savedTournament?.teams).toHaveLength(4);
+    expect(savedTournament?.teams.map((team) => team.players.length)).toEqual([
+      2,
+      2,
+      2,
+      2,
+    ]);
+    expect(savedTournament?.matches).toHaveLength(6);
+  });
+
+  it("rejects team round-robin player rosters that are not exactly divisible", async () => {
+    const tournament = await Tournament.create({
+      name: "Bad Player League",
+      format: "team_round_robin",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "players",
+      teams: playerEntries([
+        "Alice",
+        "Bob",
+        "Charlie",
+        "Dana",
+        "Eli",
+        "Fran",
+        "Gus",
+        "Hana",
+        "Iris",
+      ]),
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const savedTournament = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+    });
+    expect(savedTournament?.status).toBe("draft");
+  });
+
+  it("includes self-joined players in team round-robin player generation", async () => {
+    const tournament = await Tournament.create({
+      name: "Open Player League",
+      format: "team_round_robin",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "players",
+      allowSelfJoin: true,
+      teams: playerEntries(["Alice", "Bob"]),
+      joinedPlayers: [joinedPlayer("Charlie Example"), joinedPlayer("Dana Example")],
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const savedTournament = await Tournament.findById(tournament._id);
+    const generatedPlayers = savedTournament?.teams.flatMap((team) => team.players);
+
+    expect(response.status).toBe(200);
+    expect(generatedPlayers).toEqual(
+      expect.arrayContaining([
+        "Alice",
+        "Bob",
+        "Charlie Example",
+        "Dana Example",
+      ]),
+    );
+  });
+
+  it("deduplicates manual and self-joined player names before exact generation", async () => {
+    const tournament = await Tournament.create({
+      name: "Duplicate Player League",
+      format: "team_round_robin",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "players",
+      teams: playerEntries(["Alice Example", "Bob", "Charlie", "Dana"]),
+      joinedPlayers: [joinedPlayer("alice example")],
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const savedTournament = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(savedTournament?.teams.flatMap((team) => team.players)).toHaveLength(4);
+    expect(savedTournament?.matches).toHaveLength(1);
+  });
+
+  it("uses the persisted BO3 setting for generated team round-robin matches", async () => {
+    const tournament = await Tournament.create({
+      name: "Best Of Player League",
+      format: "team_round_robin",
+      roundRobinMatchFormat: "bo3",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "players",
+      teams: playerEntries(["Alice", "Bob", "Charlie", "Dana"]),
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const savedTournament = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(savedTournament?.matches.every((match) => match.format === "bo3")).toBe(true);
   });
 
   it("starts an individual mixer tournament with temporary match teams", async () => {

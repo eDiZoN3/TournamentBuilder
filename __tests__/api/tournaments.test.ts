@@ -79,6 +79,7 @@ describe("/api/tournaments", () => {
       expect.arrayContaining([
         expect.objectContaining({
           format: "double_elimination",
+          roundRobinMatchFormat: "bo1",
           name: "First Cup",
           status: "draft",
           teamCount: 2,
@@ -86,6 +87,7 @@ describe("/api/tournaments", () => {
         }),
         expect.objectContaining({
           format: "double_elimination",
+          roundRobinMatchFormat: "bo1",
           name: "Second Cup",
           status: "draft",
           teamCount: 0,
@@ -112,6 +114,7 @@ describe("/api/tournaments", () => {
       name: "Summer Cup",
       status: "draft",
       format: "double_elimination",
+      roundRobinMatchFormat: "bo1",
       teamSize: 3,
       courtsAvailable: 2,
     });
@@ -134,9 +137,71 @@ describe("/api/tournaments", () => {
       format: "team_round_robin",
       inputMode: "teams",
       name: "League Cup",
+      roundRobinMatchFormat: "bo1",
     });
     await expect(Tournament.findOne({ name: "League Cup" }).lean()).resolves.toMatchObject({
       format: "team_round_robin",
+      roundRobinMatchFormat: "bo1",
+    });
+  });
+
+  it("creates a team round-robin tournament with player entry", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Player League",
+        format: "team_round_robin",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "players",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      format: "team_round_robin",
+      inputMode: "players",
+      name: "Player League",
+      roundRobinMatchFormat: "bo1",
+    });
+  });
+
+  it("creates a self-joinable team round-robin player-entry tournament", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Open League",
+        format: "team_round_robin",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "players",
+        allowSelfJoin: true,
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      allowSelfJoin: true,
+      format: "team_round_robin",
+      inputMode: "players",
+      roundRobinMatchFormat: "bo1",
+    });
+  });
+
+  it("accepts best-of-three as the round-robin match format", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Best Of League",
+        format: "team_round_robin",
+        roundRobinMatchFormat: "bo3",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "teams",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    await expect(response.json()).resolves.toMatchObject({
+      format: "team_round_robin",
+      roundRobinMatchFormat: "bo3",
     });
   });
 
@@ -161,20 +226,32 @@ describe("/api/tournaments", () => {
 
   it.each([
     [
-      "team round-robin with players",
-      {
-        name: "Bad League",
-        format: "team_round_robin",
-        teamSize: 2,
-        courtsAvailable: 1,
-        inputMode: "players",
-      },
-    ],
-    [
       "individual mixer with teams",
       {
         name: "Bad Mixer",
         format: "individual_mixer",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      },
+    ],
+    [
+      "knockout with best-of-three round-robin format",
+      {
+        name: "Bad Knockout Format",
+        format: "double_elimination",
+        roundRobinMatchFormat: "bo3",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      },
+    ],
+    [
+      "invalid round-robin match format",
+      {
+        name: "Bad Match Format",
+        format: "team_round_robin",
+        roundRobinMatchFormat: "bo5",
         teamSize: 2,
         courtsAvailable: 1,
         inputMode: "teams",
@@ -309,6 +386,7 @@ describe("/api/tournaments/[id]", () => {
     expect(body).toMatchObject({
       _id: tournament._id.toString(),
       format: "double_elimination",
+      roundRobinMatchFormat: "bo1",
       inputMode: "teams",
       teams: expect.any(Array),
       matches: [expect.objectContaining({ label: "WB Final" })],

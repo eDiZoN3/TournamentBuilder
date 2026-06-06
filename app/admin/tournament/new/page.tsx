@@ -3,7 +3,10 @@
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/ui/LocaleProvider";
-import type { TournamentFormat } from "@/lib/models/Tournament";
+import type {
+  RoundRobinMatchFormat,
+  TournamentFormat,
+} from "@/lib/models/Tournament";
 
 interface ApiError {
   error?: string;
@@ -14,6 +17,8 @@ export default function NewTournamentPage() {
   const { t } = useLocale();
   const [name, setName] = useState("");
   const [format, setFormat] = useState<TournamentFormat>("double_elimination");
+  const [roundRobinMatchFormat, setRoundRobinMatchFormat] =
+    useState<RoundRobinMatchFormat>("bo1");
   const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
   const [courtsAvailable, setCourtsAvailable] = useState(1);
   const [inputMode, setInputMode] = useState<"teams" | "players">("teams");
@@ -24,14 +29,13 @@ export default function NewTournamentPage() {
   function updateFormat(nextFormat: TournamentFormat) {
     setFormat(nextFormat);
 
-    if (nextFormat === "team_round_robin") {
-      setInputMode("teams");
-      setAllowSelfJoin(false);
-    }
-
     if (nextFormat === "individual_mixer") {
       setInputMode("players");
       setAllowSelfJoin(false);
+    }
+
+    if (nextFormat !== "team_round_robin") {
+      setRoundRobinMatchFormat("bo1");
     }
   }
 
@@ -53,6 +57,7 @@ export default function NewTournamentPage() {
           courtsAvailable,
           inputMode,
           allowSelfJoin,
+          ...(format === "team_round_robin" ? { roundRobinMatchFormat } : {}),
         }),
       });
       const body = (await response.json()) as ApiError & { _id?: string };
@@ -160,7 +165,7 @@ export default function NewTournamentPage() {
 
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Team entry
+            {t("teamEntry")}
           </legend>
           <div className="mt-2 space-y-2">
             <label className="flex items-center gap-2">
@@ -182,13 +187,9 @@ export default function NewTournamentPage() {
             <label className="flex items-center gap-2">
               <input
                 checked={inputMode === "players"}
-                disabled={format === "team_round_robin"}
                 name="inputMode"
                 onChange={() => {
                   setInputMode("players");
-                  if (format === "team_round_robin") {
-                    setFormat("double_elimination");
-                  }
                 }}
                 type="radio"
               />
@@ -204,8 +205,32 @@ export default function NewTournamentPage() {
             onChange={(event) => setAllowSelfJoin(event.target.checked)}
             type="checkbox"
           />
-          Allow player account self-join
+          {t("allowPlayerSelfJoin")}
         </label>
+
+        {format === "team_round_robin" ? (
+          <fieldset>
+            <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("roundRobinMatchFormat")}
+            </legend>
+            <div className="mt-2 space-y-2">
+              {([
+                ["bo1", t("oneSetPerMatch")],
+                ["bo3", t("bestOfThree")],
+              ] as const).map(([value, label]) => (
+                <label className="flex items-center gap-2" key={value}>
+                  <input
+                    checked={roundRobinMatchFormat === value}
+                    name="roundRobinMatchFormat"
+                    onChange={() => setRoundRobinMatchFormat(value)}
+                    type="radio"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
 
         {error ? (
           <p className="text-sm font-medium text-red-600" role="alert">

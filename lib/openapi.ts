@@ -199,6 +199,10 @@ export const openApiDocument: OpenApiDocument = {
         type: "string",
         enum: ["teams", "players"],
       },
+      RoundRobinMatchFormat: {
+        type: "string",
+        enum: ["bo1", "bo3"],
+      },
       Team: {
         type: "object",
         required: ["_id", "name", "players"],
@@ -392,6 +396,7 @@ export const openApiDocument: OpenApiDocument = {
           "name",
           "status",
           "format",
+          "roundRobinMatchFormat",
           "createdAt",
           "allowSelfJoin",
           "teamCount",
@@ -405,6 +410,7 @@ export const openApiDocument: OpenApiDocument = {
           },
           status: ref("TournamentStatus"),
           format: ref("TournamentFormat"),
+          roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           createdAt: {
             type: "string",
             format: "date-time",
@@ -427,6 +433,7 @@ export const openApiDocument: OpenApiDocument = {
           "name",
           "status",
           "format",
+          "roundRobinMatchFormat",
           "teamSize",
           "courtsAvailable",
           "inputMode",
@@ -440,6 +447,7 @@ export const openApiDocument: OpenApiDocument = {
           },
           status: ref("TournamentStatus"),
           format: ref("TournamentFormat"),
+          roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           teamSize: {
             type: "integer",
             enum: [2, 3, 4],
@@ -473,6 +481,7 @@ export const openApiDocument: OpenApiDocument = {
             maxLength: 100,
           },
           format: ref("TournamentFormat"),
+          roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           teamSize: {
             type: "integer",
             enum: [2, 3, 4],

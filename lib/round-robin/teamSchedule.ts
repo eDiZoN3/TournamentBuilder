@@ -1,11 +1,16 @@
 import { Types } from "mongoose";
-import type { IMatch, ITeam } from "@/lib/models/Tournament";
+import type {
+  IMatch,
+  ITeam,
+  RoundRobinMatchFormat,
+} from "@/lib/models/Tournament";
 
 function createMatch(
   teamA: ITeam,
   teamB: ITeam,
   round: number,
   position: number,
+  format: RoundRobinMatchFormat,
 ): IMatch {
   return {
     _id: new Types.ObjectId(),
@@ -14,7 +19,7 @@ function createMatch(
     position,
     label: `Round ${round}`,
     placeRange: "",
-    format: "bo1",
+    format,
     teamA: {
       teamId: teamA._id,
       sets: [],
@@ -37,7 +42,10 @@ function createMatch(
   };
 }
 
-export function generateTeamRoundRobinSchedule(teams: ITeam[]): IMatch[] {
+export function generateTeamRoundRobinSchedule(
+  teams: ITeam[],
+  format: RoundRobinMatchFormat = "bo1",
+): IMatch[] {
   if (teams.length < 2) {
     return [];
   }
@@ -57,7 +65,7 @@ export function generateTeamRoundRobinSchedule(teams: ITeam[]): IMatch[] {
       const second = rotation[rotation.length - 1 - index];
 
       if (first && second) {
-        schedule.push(createMatch(first, second, round, position));
+        schedule.push(createMatch(first, second, round, position, format));
         position += 1;
       }
     }

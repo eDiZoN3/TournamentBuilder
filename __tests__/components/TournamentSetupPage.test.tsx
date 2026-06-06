@@ -145,6 +145,73 @@ describe("TournamentSetupForm", () => {
     expect(screen.getByLabelText("Preview team 2 name")).toHaveValue("Team B");
   });
 
+  it("blocks team round-robin player setup when the player count is not exact", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Player League",
+          format: "team_round_robin",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add player" }));
+    screen.getAllByLabelText(/Player \d+ name/).forEach((input, index) => {
+      fireEvent.change(input, {
+        target: {
+          value: ["Alice", "Bob", "Charlie"][index],
+        },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start tournament" }));
+
+    expect(
+      await screen.findByText("Player count must be divisible by team size."),
+    ).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("generates equal team previews for valid team round-robin player setup", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Player League",
+          format: "team_round_robin",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add player" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add player" }));
+    screen.getAllByLabelText(/Player \d+ name/).forEach((input, index) => {
+      fireEvent.change(input, {
+        target: {
+          value: ["Alice", "Bob", "Charlie", "Dana"][index],
+        },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Generate teams" }));
+
+    expect(screen.getByRole("heading", { name: "Team preview" })).toBeInTheDocument();
+    expect(screen.getByText("Alice, Bob")).toBeInTheDocument();
+    expect(screen.getByText("Charlie, Dana")).toBeInTheDocument();
+  });
+
   it("includes self-joined players in player-mode setup", () => {
     render(
       <TournamentSetupForm

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams, makeTournament } from "@/__tests__/helpers/factories";
 import NewTournamentPage from "@/app/admin/tournament/new/page";
@@ -81,6 +81,13 @@ describe("frontend localization", () => {
     expect(screen.getByText(de("tournamentFormat"))).toBeInTheDocument();
     expect(screen.getByText(de("teamRoundRobin"))).toBeInTheDocument();
     expect(screen.getByText(de("individualMixer"))).toBeInTheDocument();
+    expect(screen.getByText(de("teamEntry"))).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(de("teamRoundRobin")));
+
+    expect(screen.getByText(de("roundRobinMatchFormat"))).toBeInTheDocument();
+    expect(screen.getByText(de("oneSetPerMatch"))).toBeInTheDocument();
+    expect(screen.getByText(de("bestOfThree"))).toBeInTheDocument();
     expect(screen.getByText(de("completed"))).toBeInTheDocument();
   });
 

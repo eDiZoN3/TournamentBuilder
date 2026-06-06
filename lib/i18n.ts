@@ -8,6 +8,8 @@ export type TranslationKey =
   | "addPlayer"
   | "addTeam"
   | "adminLogin"
+  | "allowPlayerSelfJoin"
+  | "bestOfThree"
   | "completed"
   | "controls"
   | "courtsAvailable"
@@ -23,10 +25,12 @@ export type TranslationKey =
   | "email"
   | "enterPlayerNames"
   | "enterTeamNames"
+  | "exactPlayerCountRequirement"
   | "finalStandings"
   | "firstName"
   | "followCurrentTournaments"
   | "globalStats"
+  | "generateTeams"
   | "loading"
   | "lost"
   | "individualMixer"
@@ -45,6 +49,7 @@ export type TranslationKey =
   | "noPracticeStats"
   | "noTeamStats"
   | "noTournamentsYet"
+  | "oneSetPerMatch"
   | "opponentName"
   | "opponentScore"
   | "password"
@@ -61,6 +66,7 @@ export type TranslationKey =
   | "pointsAgainst"
   | "pointsFor"
   | "round"
+  | "roundRobinMatchFormat"
   | "saving"
   | "savePracticeMatch"
   | "schedule"
@@ -76,6 +82,8 @@ export type TranslationKey =
   | "setup"
   | "surname"
   | "team"
+  | "teamEntry"
+  | "teamPreview"
   | "teamRoundRobin"
   | "teams"
   | "teamSize"
@@ -103,6 +111,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     addPlayer: "Spieler hinzufugen",
     addTeam: "Team hinzufugen",
     adminLogin: "Admin-Login",
+    allowPlayerSelfJoin: "Spielerkonten selbst beitreten lassen",
+    bestOfThree: "Best of three",
     completed: "Abgeschlossen",
     controls: "Steuerung",
     courtsAvailable: "Verfügbare Felder",
@@ -118,11 +128,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     email: "E-Mail",
     enterPlayerNames: "Spielernamen eingeben",
     enterTeamNames: "Teamnamen eingeben",
+    exactPlayerCountRequirement:
+      "Spieleranzahl muss durch die Teamgroesse teilbar sein.",
     finalStandings: "Endstand",
     firstName: "Vorname",
     followCurrentTournaments:
       "Aktuelle Turniere verfolgen und abgeschlossene Spiele ansehen.",
     globalStats: "Globale Statistiken",
+    generateTeams: "Teams generieren",
     individualMixer: "Einzel-Mixer",
     languageSwitchToEnglish: "Sprache auf Englisch wechseln",
     languageSwitchToGerman: "Sprache auf Deutsch wechseln",
@@ -141,6 +154,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     noPracticeStats: "Noch keine Trainingsstatistiken",
     noTeamStats: "Noch keine Teamstatistiken",
     noTournamentsYet: "Noch keine Turniere.",
+    oneSetPerMatch: "Ein Satz pro Spiel",
     opponentName: "Gegnername",
     opponentScore: "Gegnerpunkte",
     password: "Passwort",
@@ -159,6 +173,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     pointsAgainst: "Punkte gegen",
     pointsFor: "Punkte für",
     round: "Runde",
+    roundRobinMatchFormat: "Round-Robin-Spielformat",
     schedule: "Spielplan",
     score: "Ergebnis",
     signIn: "Anmelden",
@@ -172,6 +187,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     status: "Status",
     surname: "Nachname",
     team: "Team",
+    teamEntry: "Teameingabe",
+    teamPreview: "Teamvorschau",
     teamRoundRobin: "Team-Round-Robin",
     teams: "Teams",
     teamSize: "Teamgröße",
@@ -198,6 +215,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     addPlayer: "Add player",
     addTeam: "Add team",
     adminLogin: "Admin login",
+    allowPlayerSelfJoin: "Allow player account self-join",
+    bestOfThree: "Best of three",
     completed: "Completed",
     controls: "Controls",
     courtsAvailable: "Courts available",
@@ -213,11 +232,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     email: "Email",
     enterPlayerNames: "Enter player names",
     enterTeamNames: "Enter team names",
+    exactPlayerCountRequirement:
+      "Player count must be divisible by team size.",
     finalStandings: "Final standings",
     firstName: "First name",
     followCurrentTournaments:
       "Follow current tournaments and review completed brackets.",
     globalStats: "Global stats",
+    generateTeams: "Generate teams",
     individualMixer: "Individual mixer",
     languageSwitchToEnglish: "Switch language to English",
     languageSwitchToGerman: "Switch language to German",
@@ -236,6 +258,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     noPracticeStats: "No practice stats yet",
     noTeamStats: "No team stats yet",
     noTournamentsYet: "No tournaments yet.",
+    oneSetPerMatch: "One set per match",
     opponentName: "Opponent name",
     opponentScore: "Opponent score",
     password: "Password",
@@ -254,6 +277,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     pointsAgainst: "Points Against",
     pointsFor: "Points For",
     round: "Round",
+    roundRobinMatchFormat: "Round-robin match format",
     schedule: "Schedule",
     score: "Score",
     signIn: "Sign in",
@@ -267,6 +291,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     status: "Status",
     surname: "Surname",
     team: "Team",
+    teamEntry: "Team entry",
+    teamPreview: "Team preview",
     teamRoundRobin: "Team round robin",
     teams: "Teams",
     teamSize: "Team size",

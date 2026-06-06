@@ -135,6 +135,82 @@ describe("NewTournamentPage", () => {
             courtsAvailable: 1,
             inputMode: "teams",
             allowSelfJoin: false,
+            roundRobinMatchFormat: "bo1",
+          }),
+        }),
+      );
+    });
+  });
+
+  it("allows team round-robin tournaments to use player entry and self-join", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Open League" },
+    });
+    fireEvent.click(screen.getByLabelText("Team round robin"));
+    fireEvent.click(screen.getByLabelText("Enter player names"));
+    fireEvent.click(screen.getByLabelText("Allow player account self-join"));
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: "Open League",
+            format: "team_round_robin",
+            teamSize: 2,
+            courtsAvailable: 1,
+            inputMode: "players",
+            allowSelfJoin: true,
+            roundRobinMatchFormat: "bo1",
+          }),
+        }),
+      );
+    });
+  });
+
+  it("submits best-of-three for team round-robin tournaments", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Best Of League" },
+    });
+    fireEvent.click(screen.getByLabelText("Team round robin"));
+    fireEvent.click(screen.getByLabelText("Best of three"));
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: "Best Of League",
+            format: "team_round_robin",
+            teamSize: 2,
+            courtsAvailable: 1,
+            inputMode: "teams",
+            allowSelfJoin: false,
+            roundRobinMatchFormat: "bo3",
           }),
         }),
       );

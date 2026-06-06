@@ -7,6 +7,7 @@ import {
   assignPlayersToTeams,
 } from "@/lib/bracket/playerAssign";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { formatTranslation } from "@/lib/i18n";
 
 export interface SetupTeam {
   name: string;
@@ -162,7 +163,7 @@ export function TournamentSetupForm({
       setError(
         assignmentError instanceof Error
           ? assignmentError.message
-          : "Unable to generate teams.",
+          : t("unableToGenerateTeams"),
       );
     }
   }
@@ -210,7 +211,11 @@ export function TournamentSetupForm({
       isIndividualMixer &&
       enteredPlayerNames.length < tournament.teamSize * 2
     ) {
-      setError(`Enter at least ${tournament.teamSize * 2} players.`);
+      setError(
+        formatTranslation(locale, "enterMinPlayers", {
+          n: tournament.teamSize * 2,
+        }),
+      );
       return;
     }
 
@@ -231,7 +236,7 @@ export function TournamentSetupForm({
             team.players.length !== tournament.teamSize,
         )
       ) {
-        setError("Generate at least two named teams.");
+        setError(t("generateMinTeams"));
         return;
       }
     }
@@ -239,8 +244,8 @@ export function TournamentSetupForm({
     if (teams.length < 2 || teams.some((team) => team.name.length === 0)) {
       setError(
         tournament.inputMode === "teams"
-          ? "Enter at least two team names."
-          : "Generate at least two named teams.",
+          ? t("enterAtLeastTwoTeamNames")
+          : t("generateMinTeams"),
       );
       return;
     }
@@ -260,7 +265,7 @@ export function TournamentSetupForm({
         setError(
           await getApiErrorMessage(
             updateResponse,
-            "Unable to save tournament teams.",
+            t("unableToSaveTournamentTeams"),
           ),
         );
         return;
@@ -275,7 +280,7 @@ export function TournamentSetupForm({
 
       if (!startResponse.ok) {
         setError(
-          await getApiErrorMessage(startResponse, "Unable to start tournament."),
+          await getApiErrorMessage(startResponse, t("unableToStartTournament")),
         );
         return;
       }
@@ -283,7 +288,7 @@ export function TournamentSetupForm({
       router.push(`/admin/tournament/${tournament._id}/manage`);
       router.refresh();
     } catch {
-      setError("Unable to start tournament.");
+      setError(t("unableToStartTournament"));
     } finally {
       setIsSubmitting(false);
     }
@@ -292,10 +297,10 @@ export function TournamentSetupForm({
   return (
     <section className="max-w-3xl">
       <h1 className="text-3xl font-bold tracking-tight">
-        {locale === "de" ? `${tournament.name} ${t("setup")}` : `Set up ${tournament.name}`}
+        {formatTranslation(locale, "setupTournamentTitle", { name: tournament.name })}
       </h1>
       <p className="mt-2 text-slate-600 dark:text-slate-300">
-        Add participants and confirm the teams before starting the tournament.
+        {t("addParticipantsNote")}
       </p>
 
       {tournament.inputMode === "teams" ? (
@@ -303,9 +308,13 @@ export function TournamentSetupForm({
           {teamNames.map((teamName, index) => (
             <div className="flex gap-2" key={index}>
               <label className="flex-1">
-                <span className="sr-only">Team {index + 1} name</span>
+                <span className="sr-only">
+                  {formatTranslation(locale, "teamNameField", { n: index + 1 })}
+                </span>
                 <input
-                  aria-label={`Team ${index + 1} name`}
+                  aria-label={formatTranslation(locale, "teamNameField", {
+                    n: index + 1,
+                  })}
                   className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                   maxLength={50}
                   onChange={(event) => updateTeamName(index, event.target.value)}
@@ -323,7 +332,7 @@ export function TournamentSetupForm({
                 }
                 type="button"
               >
-                Remove
+                {t("remove")}
               </button>
             </div>
           ))}
@@ -340,7 +349,7 @@ export function TournamentSetupForm({
           {tournament.allowSelfJoin && (tournament.joinedPlayers ?? []).length > 0 ? (
             <section className="mb-6 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Joined players
+                {t("joinedPlayers")}
               </h2>
               <ul className="mt-3 space-y-1 text-sm text-slate-600 dark:text-slate-300">
                 {(tournament.joinedPlayers ?? []).map((player) => (
@@ -353,9 +362,15 @@ export function TournamentSetupForm({
             {playerNames.map((playerName, index) => (
               <div className="flex gap-2" key={index}>
                 <label className="flex-1">
-                  <span className="sr-only">{t("player")} {index + 1} {t("name")}</span>
+                  <span className="sr-only">
+                    {formatTranslation(locale, "playerNameField", {
+                      n: index + 1,
+                    })}
+                  </span>
                   <input
-                    aria-label={`Player ${index + 1} name`}
+                    aria-label={formatTranslation(locale, "playerNameField", {
+                      n: index + 1,
+                    })}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                     onChange={(event) =>
                       updatePlayerName(index, event.target.value)
@@ -376,7 +391,7 @@ export function TournamentSetupForm({
                   }
                   type="button"
                 >
-                  Remove
+                  {t("remove")}
                 </button>
               </div>
             ))}
@@ -402,7 +417,7 @@ export function TournamentSetupForm({
 
           {hasPlayerRemainder && !isTeamRoundRobin ? (
             <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
-              Some players will be added to the last team.
+              {t("playerRemainderWarning")}
             </p>
           ) : null}
 
@@ -415,7 +430,7 @@ export function TournamentSetupForm({
                   onClick={generateTeams}
                   type="button"
                 >
-                  Shuffle teams
+                  {t("shuffleTeams")}
                 </button>
               </div>
               {previewTeams.map((team, index) => (
@@ -424,7 +439,9 @@ export function TournamentSetupForm({
                   key={index}
                 >
                   <input
-                    aria-label={`Preview team ${index + 1} name`}
+                    aria-label={formatTranslation(locale, "teamPreviewNameField", {
+                      n: index + 1,
+                    })}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 font-medium dark:border-slate-600"
                     maxLength={50}
                     onChange={(event) =>
@@ -454,7 +471,7 @@ export function TournamentSetupForm({
         onClick={startTournament}
         type="button"
       >
-        {isSubmitting ? "Starting..." : t("startTournament")}
+        {isSubmitting ? t("saving") : t("startTournament")}
       </button>
     </section>
   );

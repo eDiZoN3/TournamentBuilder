@@ -10,7 +10,9 @@ import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { FinalStandings } from "@/components/bracket/PublicTournamentView";
 import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { formatTranslation } from "@/lib/i18n";
 import type { ITournament } from "@/lib/models/Tournament";
 import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
 
@@ -31,6 +33,7 @@ async function fetchTournament(url: string): Promise<ITournament> {
 export function TournamentManageView({
   initialTournament,
 }: TournamentManageViewProps) {
+  const { locale, t } = useLocale();
   const router = useRouter();
   const refreshFailures = useRef(0);
   const [pinnedMatchId, setPinnedMatchId] = useState<string | null>(null);
@@ -63,14 +66,16 @@ export function TournamentManageView({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Tournament management
+            {t("tournamentManagement")}
           </p>
           <h1 className="mt-1 text-3xl font-bold tracking-tight">
             {tournament.name}
           </h1>
           <p className="mt-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-            {tournament.currentMatchIds.length}/{tournament.courtsAvailable} courts
-            in use
+            {formatTranslation(locale, "courtsInUse", {
+              current: tournament.currentMatchIds.length,
+              total: tournament.courtsAvailable,
+            })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -83,7 +88,7 @@ export function TournamentManageView({
       </header>
       {unableToRefresh ? (
         <ErrorBanner
-          message="Unable to refresh"
+          message={t("unableToRefresh")}
           onDismiss={() => setUnableToRefresh(false)}
         />
       ) : null}

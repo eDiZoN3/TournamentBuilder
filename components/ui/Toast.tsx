@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -41,6 +42,7 @@ const toastStyles: Record<ToastType, string> = {
 let nextToastId = 1;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useLocale();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const dismiss = useCallback((id: number) => {
@@ -82,7 +84,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 ) : null}
               </div>
               <button
-                aria-label={`Dismiss ${toast.title}`}
+                aria-label={`${t("dismiss")} ${toast.title}`}
                 className="rounded px-1 text-sm font-semibold opacity-70 hover:opacity-100"
                 onClick={() => dismiss(toast.id)}
                 type="button"

@@ -1,35 +1,41 @@
+"use client";
+
 import type { AdminDashboardMetrics } from "@/lib/admin/dashboardMetrics";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface DashboardMetricsProps {
   metrics: AdminDashboardMetrics;
 }
 
 export function DashboardMetrics({ metrics }: DashboardMetricsProps) {
+  const { locale, t } = useLocale();
+  const statusDetailLabel = (key: "draft" | "active" | "completed") =>
+    locale === "en" ? t(key).toLowerCase() : t(key);
   const cards = [
     {
-      label: "Registered players",
+      label: t("registeredPlayers"),
       value: metrics.registeredPlayers,
-      detail: "Player accounts",
+      detail: t("playerAccount"),
     },
     {
-      label: "Registered admins",
+      label: t("registeredAdmins"),
       value: metrics.registeredAdmins,
-      detail: "Admin accounts",
+      detail: t("account"),
     },
     {
-      label: "Registered tournaments",
+      label: t("registeredTournaments"),
       value: metrics.registeredTournaments,
-      detail: `${metrics.tournamentsByStatus.draft} draft / ${metrics.tournamentsByStatus.active} active / ${metrics.tournamentsByStatus.completed} completed`,
+      detail: `${metrics.tournamentsByStatus.draft} ${statusDetailLabel("draft")} / ${metrics.tournamentsByStatus.active} ${statusDetailLabel("active")} / ${metrics.tournamentsByStatus.completed} ${statusDetailLabel("completed")}`,
     },
     {
-      label: "Played matches",
+      label: t("playedMatches"),
       value: metrics.playedMatches,
-      detail: "Completed non-bye matches",
+      detail: t("completedNonByeMatches"),
     },
   ];
 
   return (
-    <section aria-label="Dashboard overview">
+    <section aria-label={t("dashboardOverview")}>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => (
           <article

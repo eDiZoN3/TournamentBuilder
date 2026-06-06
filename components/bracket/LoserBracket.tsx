@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { MatchCard } from "@/components/bracket/MatchCard";
 import { RoundTabs } from "@/components/bracket/RoundTabs";
 import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface LoserBracketProps {
@@ -46,14 +47,15 @@ export function LoserBracket({
   renderMatchControls,
   teams,
 }: LoserBracketProps) {
+  const { t } = useLocale();
   const rounds = roundsFor(matches, "loser");
   const [activeRound, setActiveRound] = useState(rounds[0]?.[0] ?? 1);
   const roundTabs = rounds.map(([round, roundMatches]) => ({
     label: roundMatches.some((match) => match.isLBFinal)
       ? rounds.length > 2
-        ? "LB Final"
-        : "Final"
-      : `Round ${round}`,
+        ? t("lbFinal")
+        : t("final")
+      : `${t("round")} ${round}`,
     round,
   }));
 
@@ -67,11 +69,11 @@ export function LoserBracket({
         className="mb-4 text-lg font-bold tracking-tight text-slate-900 dark:text-white"
         id="loser-bracket-title"
       >
-        Loser bracket
+        {t("loserBracket")}
       </h2>
       <RoundTabs
         activeRound={activeRound}
-        ariaLabel="Loser bracket rounds"
+        ariaLabel={t("loserBracketRounds")}
         onChange={setActiveRound}
         rounds={roundTabs}
       />
@@ -92,14 +94,14 @@ export function LoserBracket({
                   : "text-slate-600 dark:text-slate-300"
               }`}
             >
-              {roundMatches[0]?.label ?? `LB Round ${round}`}
+              {roundMatches[0]?.label ?? `${t("loserBracket")} ${t("round")} ${round}`}
             </h3>
             <div className="flex flex-col gap-6">
               {roundMatches.map((match) => {
                 const teamAName =
-                  resolveTeamName(teams, match.teamA?.teamId ?? null) ?? "TBD";
+                  resolveTeamName(teams, match.teamA?.teamId ?? null) ?? t("toBeDetermined");
                 const teamBName =
-                  resolveTeamName(teams, match.teamB?.teamId ?? null) ?? "TBD";
+                  resolveTeamName(teams, match.teamB?.teamId ?? null) ?? t("toBeDetermined");
 
                 return (
                   <MatchCard

@@ -52,7 +52,7 @@ export function AdminSidebar() {
         </Link>
         <button
           aria-expanded={isOpen}
-          aria-label={isOpen ? "Close admin navigation" : "Open admin navigation"}
+          aria-label={isOpen ? t("closeAdminNavigation") : t("openAdminNavigation")}
           className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-600 text-slate-200 md:hidden"
           onClick={() => setIsOpen((current) => !current)}
           type="button"
@@ -63,7 +63,7 @@ export function AdminSidebar() {
         </button>
       </div>
       <nav
-        aria-label="Admin navigation"
+        aria-label={t("adminNavigation")}
         className={`${
           isOpen ? "flex" : "hidden"
         } flex-1 flex-col gap-4 md:flex`}
@@ -80,7 +80,7 @@ export function AdminSidebar() {
           href="/"
           onClick={() => setIsOpen(false)}
         >
-          Public tournaments
+          {t("publicTournaments")}
         </Link>
       </nav>
       <div

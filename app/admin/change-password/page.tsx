@@ -2,9 +2,11 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const { t } = useLocale();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -16,7 +18,7 @@ export default function ChangePasswordPage() {
     setError(null);
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      setError(t("passwordsDoNotMatch"));
       return;
     }
 
@@ -40,14 +42,14 @@ export default function ChangePasswordPage() {
       };
 
       if (!response.ok) {
-        setError(body.error ?? "Unable to change password.");
+        setError(body.error ?? t("unableToChangePassword"));
         return;
       }
 
       router.push(body.role === "player" ? "/account" : "/admin/dashboard");
       router.refresh();
     } catch {
-      setError("Unable to change password.");
+      setError(t("unableToChangePassword"));
     } finally {
       setIsSubmitting(false);
     }
@@ -56,9 +58,9 @@ export default function ChangePasswordPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
       <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-        <h1 className="text-2xl font-bold tracking-tight">Change password</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("changePassword")}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Set your own password before continuing.
+          {t("setOwnPassword")}
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>
@@ -66,7 +68,7 @@ export default function ChangePasswordPage() {
               className="block text-sm font-medium text-slate-700 dark:text-slate-300"
               htmlFor="current-password"
             >
-              Current password
+              {t("currentPassword")}
             </label>
             <input
               autoComplete="current-password"
@@ -83,7 +85,7 @@ export default function ChangePasswordPage() {
               className="block text-sm font-medium text-slate-700 dark:text-slate-300"
               htmlFor="new-password"
             >
-              New password
+              {t("newPassword")}
             </label>
             <input
               autoComplete="new-password"
@@ -101,7 +103,7 @@ export default function ChangePasswordPage() {
               className="block text-sm font-medium text-slate-700 dark:text-slate-300"
               htmlFor="confirm-password"
             >
-              Confirm new password
+              {t("confirmNewPassword")}
             </label>
             <input
               autoComplete="new-password"
@@ -124,7 +126,7 @@ export default function ChangePasswordPage() {
             disabled={isSubmitting}
             type="submit"
           >
-            {isSubmitting ? "Changing..." : "Change password"}
+            {isSubmitting ? t("changing") : t("changePassword")}
           </button>
         </form>
       </section>

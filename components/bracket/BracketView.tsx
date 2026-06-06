@@ -5,6 +5,7 @@ import { ConnectorLines } from "@/components/bracket/ConnectorLines";
 import { LoserBracket } from "@/components/bracket/LoserBracket";
 import { UpNextBanner } from "@/components/bracket/UpNextBanner";
 import { WinnerBracket } from "@/components/bracket/WinnerBracket";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface BracketViewProps {
@@ -26,6 +27,7 @@ export function BracketView({
   renderMatchControls,
   teams,
 }: BracketViewProps) {
+  const { t } = useLocale();
   const [activeBracket, setActiveBracket] = useState<"winner" | "loser">(
     "winner",
   );
@@ -44,7 +46,7 @@ export function BracketView({
       <UpNextBanner matches={matches} teams={teams} />
       {hasLoserBracket ? (
         <div
-          aria-label="Bracket selection"
+          aria-label={t("bracketSelection")}
           className="flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800 md:hidden"
           role="group"
         >
@@ -60,7 +62,7 @@ export function BracketView({
               onClick={() => setActiveBracket(bracket)}
               type="button"
             >
-              {bracket === "winner" ? "Winner" : "Loser"} bracket
+              {bracket === "winner" ? t("winnerBracket") : t("loserBracket")}
             </button>
           ))}
         </div>

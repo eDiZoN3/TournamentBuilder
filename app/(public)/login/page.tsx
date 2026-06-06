@@ -54,7 +54,7 @@ function LoginForm() {
       });
 
       if (!result?.ok) {
-        setError("Invalid email or password.");
+        setError(t("invalidCredentials"));
         return;
       }
 
@@ -64,7 +64,7 @@ function LoginForm() {
       router.push(destinationForRole(role, searchParams.get("callbackUrl")));
       router.refresh();
     } catch {
-      setError("Unable to sign in. Please try again.");
+      setError(t("unableToSignIn"));
     } finally {
       setIsSubmitting(false);
     }
@@ -82,7 +82,7 @@ function LoginForm() {
       >
         <h1 className="text-2xl font-bold tracking-tight">{t("signIn")}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Sign in with your tournament or player account.
+          {t("signInDescription")}
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <div>

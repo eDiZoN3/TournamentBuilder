@@ -10,6 +10,7 @@ import { TournamentStats } from "@/components/stats/TournamentStats";
 import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { formatTranslation } from "@/lib/i18n";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
 import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
@@ -51,7 +52,7 @@ export function PublicTournamentView({
   currentPlayerName = null,
   initialTournament,
 }: PublicTournamentViewProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const refreshFailures = useRef(0);
   const [unableToRefresh, setUnableToRefresh] = useState(false);
   const { data, isLoading } = useSWR<ITournament>(
@@ -100,10 +101,7 @@ export function PublicTournamentView({
         <StatusBadge status={tournament.status} />
       </header>
       {unableToRefresh ? (
-        <ErrorBanner
-          message="Unable to refresh"
-          onDismiss={() => setUnableToRefresh(false)}
-        />
+        <ErrorBanner message={t("unableToRefresh")} onDismiss={() => setUnableToRefresh(false)} />
       ) : null}
       {tournament.status === "completed" ? (
         <FinalStandings tournament={tournament} />
@@ -114,9 +112,12 @@ export function PublicTournamentView({
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Join phase</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t("joinPhase")}</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                {joinedPlayers.length} player{joinedPlayers.length === 1 ? "" : "s"} joined
+                {formatTranslation(locale, "playerJoined", {
+                  n: joinedPlayers.length,
+                  s: joinedPlayers.length === 1 ? "" : "s",
+                })}
               </p>
             </div>
             <JoinTournamentButton

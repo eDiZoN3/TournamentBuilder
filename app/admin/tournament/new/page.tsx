@@ -63,14 +63,14 @@ export default function NewTournamentPage() {
       const body = (await response.json()) as ApiError & { _id?: string };
 
       if (!response.ok || !body._id) {
-        setError(body.error ?? "Unable to create tournament.");
+        setError(body.error ?? t("unableToCreateTournament"));
         return;
       }
 
       router.push(`/admin/tournament/${body._id}/setup`);
       router.refresh();
     } catch {
-      setError("Unable to create tournament.");
+      setError(t("unableToCreateTournament"));
     } finally {
       setIsSubmitting(false);
     }
@@ -80,7 +80,7 @@ export default function NewTournamentPage() {
     <section className="max-w-2xl">
       <h1 className="text-3xl font-bold tracking-tight">{t("newTournament")}</h1>
       <p className="mt-2 text-slate-600 dark:text-slate-300">
-        Configure the tournament before entering teams or players.
+        {t("configureTournamentDescription")}
       </p>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         <div>
@@ -136,7 +136,7 @@ export default function NewTournamentPage() {
                   onChange={() => setTeamSize(size)}
                   type="radio"
                 />
-                {size} players
+                {size} {t("players")}
               </label>
             ))}
           </div>
@@ -243,7 +243,7 @@ export default function NewTournamentPage() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Creating..." : t("createTournament")}
+          {isSubmitting ? t("creating") : t("createTournament")}
         </button>
       </form>
     </section>

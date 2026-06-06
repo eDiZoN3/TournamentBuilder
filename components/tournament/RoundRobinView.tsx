@@ -5,6 +5,8 @@ import { StandingsTable } from "@/components/bracket/StandingsTable";
 import { UpNextBanner } from "@/components/bracket/UpNextBanner";
 import { resolveTeamName } from "@/components/bracket/utils";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { formatTranslation } from "@/lib/i18n";
+import type { Locale, TranslationKey } from "@/lib/i18n";
 import type { IMatch, ITournament } from "@/lib/models/Tournament";
 
 interface RoundRobinViewProps {
@@ -46,12 +48,26 @@ function scoreFor(match: IMatch): string {
   return sets.map((set) => `${set.scoreA}-${set.scoreB}`).join(", ");
 }
 
-function statusLabel(match: IMatch): string {
+function statusLabel(
+  match: IMatch,
+  locale: Locale,
+  t: (key: TranslationKey) => string,
+): string {
   if (match.status === "in_progress") {
-    return match.courtNumber ? `Live, court ${match.courtNumber}` : "Live";
+    return match.courtNumber
+      ? formatTranslation(locale, "liveCourt", { court: match.courtNumber })
+      : t("live");
   }
 
-  return match.status.replace("_", " ");
+  if (match.status === "completed") {
+    return t("completed");
+  }
+
+  if (match.status === "ready") {
+    return t("ready");
+  }
+
+  return t("pending");
 }
 
 function isActiveRound(matches: IMatch[]): boolean {
@@ -73,7 +89,7 @@ export function RoundRobinView({
   renderMatchControls,
   tournament,
 }: RoundRobinViewProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const rounds = groupedRounds(tournament.matches);
 
   return (
@@ -127,12 +143,12 @@ export function RoundRobinView({
                         resolveTeamName(
                           tournament.teams,
                           match.teamA?.teamId ?? null,
-                        ) ?? "TBD";
+                        ) ?? t("toBeDetermined");
                       const teamBName =
                         resolveTeamName(
                           tournament.teams,
                           match.teamB?.teamId ?? null,
-                        ) ?? "TBD";
+                        ) ?? t("toBeDetermined");
 
                       return (
                         <tr
@@ -144,13 +160,13 @@ export function RoundRobinView({
                             {match.position}
                           </td>
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
-                            {teamAName} vs {teamBName}
+                            {teamAName} {t("versus")} {teamBName}
                           </td>
                           <td className="px-4 py-3 font-mono text-slate-700 dark:text-slate-200">
                             {scoreFor(match)}
                           </td>
                           <td className="px-4 py-3 capitalize text-slate-600 dark:text-slate-300">
-                            {statusLabel(match)}
+                            {statusLabel(match, locale, t)}
                           </td>
                           {renderMatchControls ? (
                             <td className="py-3 pl-4 align-top">

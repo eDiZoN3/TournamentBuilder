@@ -38,19 +38,25 @@ export default async function StatsPage() {
       </header>
       <div className="grid gap-6 xl:grid-cols-2">
         <StatsTable
-          emptyTitle="No team stats yet"
+          emptyTitle=""
+          emptyTitleKey="noTeamStats"
           rows={stats.teams}
-          title="Team stats"
+          title=""
+          titleKey="teamStats"
         />
         <StatsTable
-          emptyTitle="No player stats yet"
+          emptyTitle=""
+          emptyTitleKey="noPlayerStats"
           rows={stats.players}
-          title="Player stats"
+          title=""
+          titleKey="playerStats"
         />
         <StatsTable
-          emptyTitle="No practice stats yet"
+          emptyTitle=""
+          emptyTitleKey="noPracticeStats"
           rows={practiceStats}
-          title="Practice player stats"
+          title=""
+          titleKey="practicePlayerStats"
         />
       </div>
     </section>

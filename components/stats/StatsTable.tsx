@@ -3,13 +3,16 @@
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import type { TranslationKey } from "@/lib/i18n";
 import type { StatsRow } from "@/lib/stats";
 
 interface StatsTableProps {
   emptyTitle: string;
+  emptyTitleKey?: TranslationKey;
   isLoading?: boolean;
   rows: StatsRow[];
   title: string;
+  titleKey?: TranslationKey;
 }
 
 function formatWinRate(winRate: number): string {
@@ -18,27 +21,15 @@ function formatWinRate(winRate: number): string {
 
 export function StatsTable({
   emptyTitle,
+  emptyTitleKey,
   isLoading = false,
   rows,
   title,
+  titleKey,
 }: StatsTableProps) {
   const { t } = useLocale();
-  const displayTitle =
-    title === "Team stats"
-      ? t("teamStats")
-      : title === "Player stats"
-        ? t("playerStats")
-        : title === "Practice player stats"
-          ? t("practicePlayerStats")
-          : title;
-  const displayEmptyTitle =
-    emptyTitle === "No team stats yet"
-      ? t("noTeamStats")
-      : emptyTitle === "No player stats yet"
-        ? t("noPlayerStats")
-        : emptyTitle === "No practice stats yet"
-          ? t("noPracticeStats")
-          : emptyTitle;
+  const displayTitle = titleKey ? t(titleKey) : title;
+  const displayEmptyTitle = emptyTitleKey ? t(emptyTitleKey) : emptyTitle;
 
   if (isLoading) {
     return (
@@ -91,7 +82,7 @@ export function StatsTable({
                 {t("pointsAgainst")}
               </th>
               <th className="px-3 py-3 text-right" scope="col">
-                Points +/-
+                {t("pointsDiff")}
               </th>
               <th className="px-3 py-3 text-right" scope="col">
                 {t("winRate")}

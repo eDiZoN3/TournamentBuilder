@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { IMatch, ITeamSlot } from "@/lib/models/Tournament";
 
 interface MatchCardProps {
@@ -75,10 +78,12 @@ export function MatchCard({
   isPinned = false,
   match,
   teamAIsCurrentPlayerTeam = false,
-  teamAName = "TBD",
+  teamAName,
   teamBIsCurrentPlayerTeam = false,
-  teamBName = "TBD",
+  teamBName,
 }: MatchCardProps) {
+  const { t } = useLocale();
+  const fallbackTeamName = t("toBeDetermined");
   const isCompleted = match.status === "completed" || match.isBye;
   const isLive = match.status === "in_progress" && !match.isBye;
   const sets =
@@ -90,13 +95,13 @@ export function MatchCard({
   const teams: [DisplayTeam, DisplayTeam] = match.isBye
     ? [
         match.teamA
-          ? { name: teamAName, slot: match.teamA }
-          : { name: teamBName, slot: match.teamB },
+          ? { name: teamAName ?? fallbackTeamName, slot: match.teamA }
+          : { name: teamBName ?? fallbackTeamName, slot: match.teamB },
         { name: "—", slot: null },
       ]
     : [
-        { name: match.teamA ? teamAName : "TBD", slot: match.teamA },
-        { name: match.teamB ? teamBName : "TBD", slot: match.teamB },
+        { name: match.teamA ? (teamAName ?? fallbackTeamName) : fallbackTeamName, slot: match.teamA },
+        { name: match.teamB ? (teamBName ?? fallbackTeamName) : fallbackTeamName, slot: match.teamB },
       ];
   const cardClasses = [
     "group relative w-64 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-slate-900",
@@ -134,7 +139,7 @@ export function MatchCard({
       </header>
       {isLive && match.courtNumber !== null ? (
         <span className="absolute right-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-900 dark:text-amber-100">
-          Court {match.courtNumber}
+          {t("court")} {match.courtNumber}
         </span>
       ) : null}
       <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -157,12 +162,12 @@ export function MatchCard({
       </div>
       <footer className="border-t border-slate-100 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-slate-800">
         {isLive
-          ? "LIVE"
+          ? t("live")
           : isCompleted
-            ? "Completed"
+            ? t("completed")
             : match.status === "ready"
-              ? "Ready"
-              : "Pending"}
+              ? t("ready")
+              : t("pending")}
       </footer>
       {children ? (
         <div className={controlsLayerClasses}>

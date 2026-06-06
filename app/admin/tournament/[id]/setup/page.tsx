@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import {
   getApiErrorMessage,
   TournamentSetupForm,
@@ -12,6 +13,7 @@ const JOINED_PLAYERS_REFRESH_INTERVAL_MS = 750;
 
 export default function TournamentSetupPage() {
   const params = useParams<{ id: string }>();
+  const { t } = useLocale();
   const [tournament, setTournament] = useState<SetupTournament | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +27,7 @@ export default function TournamentSetupPage() {
         if (!response.ok) {
           if (isActive) {
             setError(
-              await getApiErrorMessage(response, "Unable to load tournament."),
+              await getApiErrorMessage(response, t("unableToLoadTournament")),
             );
           }
           return;
@@ -36,7 +38,7 @@ export default function TournamentSetupPage() {
         }
       } catch {
         if (isActive) {
-          setError("Unable to load tournament.");
+          setError(t("unableToLoadTournament"));
         }
       }
     }
@@ -51,14 +53,14 @@ export default function TournamentSetupPage() {
       isActive = false;
       window.clearInterval(refreshInterval);
     };
-  }, [params.id]);
+  }, [params.id, t]);
 
   if (error) {
     return <p className="text-sm font-medium text-red-600">{error}</p>;
   }
 
   if (!tournament) {
-    return <p className="text-slate-600 dark:text-slate-300">Loading tournament...</p>;
+    return <p className="text-slate-600 dark:text-slate-300">{t("loadingTournament")}</p>;
   }
 
   return <TournamentSetupForm tournament={tournament} />;

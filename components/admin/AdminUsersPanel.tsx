@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 export interface AdminUserSummary {
   _id: string;
@@ -25,6 +26,7 @@ export function AdminUsersPanel({
   canManageTournamentLeads = true,
   initialAdmins,
 }: AdminUsersPanelProps) {
+  const { t } = useLocale();
   const [admins, setAdmins] = useState(initialAdmins);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +37,7 @@ export function AdminUsersPanel({
   );
 
   function roleLabel(admin: AdminUserSummary) {
-    return (
-      admin.displayRole ??
-      (admin.role === "admin" ? "Admin" : "Tournament Lead")
-    );
+    return admin.role === "admin" ? t("admin") : t("tournamentLead");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -65,7 +64,7 @@ export function AdminUsersPanel({
         setError(
           "error" in body && body.error
             ? body.error
-            : "Unable to create admin account.",
+            : t("unableToCreateAdminAccount"),
         );
         return;
       }
@@ -76,7 +75,7 @@ export function AdminUsersPanel({
       setCreatedAdmin(result);
       setEmail("");
     } catch {
-      setError("Unable to create admin account.");
+      setError(t("unableToCreateAdminAccount"));
     } finally {
       setIsSubmitting(false);
     }
@@ -92,7 +91,7 @@ export function AdminUsersPanel({
       });
 
       if (!response.ok) {
-        let message = "Unable to remove tournament lead.";
+        let message = t("unableToRemoveTournamentLead");
 
         try {
           const body = (await response.json()) as { error?: string };
@@ -110,7 +109,7 @@ export function AdminUsersPanel({
         current.filter((candidate) => candidate._id !== admin._id),
       );
     } catch {
-      setError("Unable to remove tournament lead.");
+      setError(t("unableToRemoveTournamentLead"));
     } finally {
       setRemovingId(null);
     }
@@ -127,10 +126,10 @@ export function AdminUsersPanel({
             className="text-lg font-semibold text-slate-900 dark:text-white"
             id="admin-accounts-title"
           >
-            Tournament lead accounts
+            {t("tournamentLeadAccounts")}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Create tournament leads with a one-time temporary password.
+            {t("manageTournamentLeadsNote")}
           </p>
         </div>
       </div>
@@ -145,7 +144,7 @@ export function AdminUsersPanel({
               className="block text-sm font-medium text-slate-700 dark:text-slate-300"
               htmlFor="new-admin-email"
             >
-              New tournament lead email
+              {t("newTournamentLeadEmail")}
             </label>
             <input
               autoComplete="email"
@@ -163,7 +162,7 @@ export function AdminUsersPanel({
               disabled={isSubmitting}
               type="submit"
             >
-              {isSubmitting ? "Creating..." : "Create tournament lead"}
+              {isSubmitting ? t("saving") : t("createTournamentLead")}
             </button>
           </div>
         </form>
@@ -179,21 +178,21 @@ export function AdminUsersPanel({
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold">Temporary password</p>
+              <p className="text-sm font-semibold">{t("tempPassword")}</p>
               <p className="mt-1 font-mono text-lg">
                 {createdAdmin.temporaryPassword}
               </p>
               <p className="mt-1 text-sm">
-                Share it once. This tournament lead must change it on first login.
+                {t("temporaryPasswordHelp")}
               </p>
             </div>
             <button
-              aria-label="Dismiss temporary password"
+              aria-label={t("dismissTemporaryPassword")}
               className="rounded-md border border-amber-300 px-3 py-2 text-sm font-semibold dark:border-amber-600"
               onClick={() => setCreatedAdmin(null)}
               type="button"
             >
-              Dismiss
+              {t("dismiss")}
             </button>
           </div>
         </div>
@@ -202,18 +201,18 @@ export function AdminUsersPanel({
       <div className="mt-5 w-full max-w-full overflow-x-auto">
         {admins.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            No tournament lead accounts yet.
+            {t("noTournamentLeadAccounts")}
           </p>
         ) : (
           <table className="w-full min-w-max text-left text-sm">
             <thead className="text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
-                <th className="py-2 pr-4 font-semibold">Email</th>
-                <th className="py-2 pr-4 font-semibold">Role</th>
-                <th className="py-2 pr-4 font-semibold">Status</th>
-                <th className="py-2 pr-4 font-semibold">Created</th>
+                <th className="py-2 pr-4 font-semibold">{t("email")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("tournamentLeadRole")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("status")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("tournamentLeadCreated")}</th>
                 {canManageTournamentLeads ? (
-                  <th className="py-2 font-semibold">Actions</th>
+                  <th className="py-2 font-semibold">{t("tournamentLeadActions")}</th>
                 ) : null}
               </tr>
             </thead>
@@ -228,8 +227,8 @@ export function AdminUsersPanel({
                   </td>
                   <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
                     {admin.mustChangePassword
-                      ? "Password change required"
-                      : "Active"}
+                      ? t("passwordChangeRequired")
+                      : t("active")}
                   </td>
                   <td className="py-3 pr-4 text-slate-500 dark:text-slate-400">
                     {new Date(admin.createdAt).toLocaleDateString()}
@@ -238,13 +237,13 @@ export function AdminUsersPanel({
                     <td className="py-3">
                       {admin.role === "tournament_lead" ? (
                         <button
-                          aria-label={`Remove ${admin.email}`}
+                          aria-label={`${t("remove")} ${admin.email}`}
                           className="rounded-md border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950"
                           disabled={removingId === admin._id}
                           onClick={() => void handleRemove(admin)}
                           type="button"
                         >
-                          {removingId === admin._id ? "Removing..." : "Remove"}
+                          {removingId === admin._id ? t("saving") : t("remove")}
                         </button>
                       ) : (
                         <span className="text-sm text-slate-400">-</span>

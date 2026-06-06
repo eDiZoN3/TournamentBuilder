@@ -41,13 +41,13 @@ export function PracticeMatchList({
       });
 
       if (!response.ok) {
-        setError("Unable to delete practice match.");
+        setError(t("unableToDeletePracticeMatch"));
         return;
       }
 
       onDeleted(match._id);
     } catch {
-      setError("Unable to delete practice match.");
+      setError(t("unableToDeletePracticeMatch"));
     } finally {
       setDeletingId(null);
     }
@@ -75,7 +75,7 @@ export function PracticeMatchList({
             >
               <div>
                 <p className="font-semibold text-slate-900 dark:text-white">
-                  {sideNames(match.sideA)} vs {sideNames(match.sideB)}
+                  {sideNames(match.sideA)} {t("versus")} {sideNames(match.sideB)}
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                   {scoreLabel(match)}

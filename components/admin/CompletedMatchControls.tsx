@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { IMatch } from "@/lib/models/Tournament";
 
 interface CompletedMatchControlsProps {
@@ -23,6 +24,7 @@ export function CompletedMatchControls({
   teamBName,
   tournamentId,
 }: CompletedMatchControlsProps) {
+  const { t } = useLocale();
   const [showOverride, setShowOverride] = useState(false);
   const scoreEntryOpenRef = useRef(false);
   const onScoreEntryCloseRef = useRef(onScoreEntryClose);
@@ -71,7 +73,7 @@ export function CompletedMatchControls({
         onClick={openOverride}
         type="button"
       >
-        Override result
+        {t("overrideResult")}
       </button>
       {showOverride ? (
         <ScoreEntry

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { useToast } from "@/components/ui/Toast";
+import { formatTranslation } from "@/lib/i18n";
 import type { IMatch } from "@/lib/models/Tournament";
 
 interface CourtOverrideControlsProps {
@@ -36,6 +38,7 @@ export function CourtOverrideControls({
   onUpdated,
   tournamentId,
 }: CourtOverrideControlsProps) {
+  const { locale, t } = useLocale();
   const { showToast } = useToast();
   const [courtNumber, setCourtNumber] = useState(match.courtNumber ?? 1);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -64,11 +67,11 @@ export function CourtOverrideControls({
       );
 
       if (!response.ok) {
-        const message = await apiError(response, "Unable to assign court.");
+        const message = await apiError(response, t("unableToAssignCourt"));
 
         showToast({
           message,
-          title: "Court override failed",
+          title: t("courtOverrideFailed"),
           type: "error",
         });
         return;
@@ -76,19 +79,23 @@ export function CourtOverrideControls({
 
       const result = (await response.json()) as CourtResponse;
       const message = result.replacedMatchId
-        ? `Court ${result.courtNumber} assigned; previous match returned to ready.`
-        : `Court ${result.courtNumber} assigned.`;
+        ? formatTranslation(locale, "courtAssignedWithReplacement", {
+            court: result.courtNumber,
+          })
+        : formatTranslation(locale, "courtAssignedMessage", {
+            court: result.courtNumber,
+          });
 
       await onUpdated();
       showToast({
         message,
-        title: "Court assigned",
+        title: t("courtAssigned"),
         type: "success",
       });
     } catch {
       showToast({
-        message: "Unable to assign court.",
-        title: "Court override failed",
+        message: t("unableToAssignCourt"),
+        title: t("courtOverrideFailed"),
         type: "error",
       });
     } finally {
@@ -99,9 +106,9 @@ export function CourtOverrideControls({
   return (
     <div className="mt-2 flex gap-2" data-testid="court-override">
       <label className="flex-1 text-xs font-medium text-slate-600 dark:text-slate-300">
-        <span className="sr-only">Court override</span>
+        <span className="sr-only">{t("courtOverride")}</span>
         <select
-          aria-label="Court override"
+          aria-label={t("courtOverride")}
           className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 dark:border-slate-600 dark:bg-slate-900"
           onChange={(event) => setCourtNumber(Number(event.target.value))}
           value={courtNumber}
@@ -109,7 +116,7 @@ export function CourtOverrideControls({
           {Array.from({ length: courtsAvailable }, (_, index) => index + 1).map(
             (candidate) => (
               <option key={candidate} value={candidate}>
-                Court {candidate}
+                {t("court")} {candidate}
               </option>
             ),
           )}
@@ -121,7 +128,7 @@ export function CourtOverrideControls({
         onClick={() => void assignSelectedCourt()}
         type="button"
       >
-        {isAssigning ? "Assigning..." : "Assign court"}
+        {isAssigning ? t("assigning") : t("assignCourt")}
       </button>
     </div>
   );

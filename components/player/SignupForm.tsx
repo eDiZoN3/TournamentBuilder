@@ -40,7 +40,7 @@ export function SignupForm() {
       const body = (await response.json()) as ApiError;
 
       if (!response.ok) {
-        setError(body.error ?? "Unable to create player account.");
+        setError(body.error ?? t("unableToCreatePlayerAccount"));
         return;
       }
 
@@ -51,14 +51,14 @@ export function SignupForm() {
       });
 
       if (!signInResult?.ok) {
-        setError("Account created, but sign in failed.");
+        setError(t("createdAccountSignInFailed"));
         return;
       }
 
       router.push("/account");
       router.refresh();
     } catch {
-      setError("Unable to create player account.");
+      setError(t("unableToCreatePlayerAccount"));
     } finally {
       setIsSubmitting(false);
     }
@@ -71,7 +71,7 @@ export function SignupForm() {
     >
       <h1 className="text-2xl font-bold tracking-tight">{t("playerSignUp")}</h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-        Create an account to join open tournaments and track your stats.
+        {t("createAccountDescription")}
       </p>
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
         <div>
@@ -138,7 +138,7 @@ export function SignupForm() {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Creating..." : t("createAccount")}
+          {isSubmitting ? t("creating") : t("createAccount")}
         </button>
       </form>
     </section>

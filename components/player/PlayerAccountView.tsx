@@ -141,7 +141,7 @@ export function PlayerAccountView({
         <h2 className="text-xl font-bold tracking-tight">
           {t("tournamentStats")}
         </h2>
-        <StatsSummary emptyTitle="No completed matches yet." stats={stats} />
+        <StatsSummary emptyTitle={t("noCompletedMatches")} stats={stats} />
       </section>
 
       <section className="space-y-3">

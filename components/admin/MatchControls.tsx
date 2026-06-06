@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { CompletedMatchControls } from "@/components/admin/CompletedMatchControls";
 import { CourtOverrideControls } from "@/components/admin/CourtOverrideControls";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { useToast } from "@/components/ui/Toast";
+import { formatTranslation } from "@/lib/i18n";
 import type { IMatch } from "@/lib/models/Tournament";
 
 interface MatchControlsProps {
@@ -44,6 +46,7 @@ export function MatchControls({
   teamBName,
   tournamentId,
 }: MatchControlsProps) {
+  const { locale, t } = useLocale();
   const { showToast } = useToast();
   const [showScores, setShowScores] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -121,11 +124,11 @@ export function MatchControls({
       );
 
       if (!response.ok) {
-        const message = await apiError(response, "Unable to update match.");
+        const message = await apiError(response, t("unableToUpdateMatch"));
 
         showToast({
           message,
-          title: "Unable to update match",
+          title: t("unableToUpdateMatch"),
           type: "error",
         });
         return;
@@ -133,16 +136,18 @@ export function MatchControls({
 
       await onUpdated();
       showToast({
-        message: `${match.label} is now in progress.`,
-        title: "Match updated",
+        message: formatTranslation(locale, "matchInProgress", {
+          match: match.label,
+        }),
+        title: t("matchUpdated"),
         type: "success",
       });
     } catch {
-      const message = "Unable to update match.";
+      const message = t("unableToUpdateMatch");
 
       showToast({
         message,
-        title: "Unable to update match",
+        title: t("unableToUpdateMatch"),
         type: "error",
       });
     } finally {
@@ -160,10 +165,10 @@ export function MatchControls({
           className="w-full rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
           disabled={courtsFull || isUpdating}
           onClick={() => void markInProgress()}
-          title={courtsFull ? "All courts occupied" : undefined}
+          title={courtsFull ? t("allCourtsOccupied") : undefined}
           type="button"
         >
-          {isUpdating ? "Updating..." : "Mark as in progress"}
+          {isUpdating ? t("updating") : t("markAsInProgress")}
         </button>
       ) : (
         <button
@@ -171,7 +176,7 @@ export function MatchControls({
           onClick={openScoreEntry}
           type="button"
         >
-          Enter scores
+          {t("enterScores")}
         </button>
       )}
       {courtsAvailable > 1 ? (

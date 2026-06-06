@@ -94,7 +94,7 @@ export function PracticeMatchForm({
     const scoreB = Number(opponentScore);
 
     if (!trimmedOpponentName) {
-      setError("Opponent name is required.");
+      setError(t("opponentNameRequired"));
       return;
     }
 
@@ -144,7 +144,7 @@ export function PracticeMatchForm({
       const body = await response.json();
 
       if (!response.ok) {
-        setError(body.error ?? "Unable to save practice match.");
+        setError(body.error ?? t("unableToSavePracticeMatch"));
         return;
       }
 
@@ -156,7 +156,7 @@ export function PracticeMatchForm({
         setOpponentScore("");
       }
     } catch {
-      setError("Unable to save practice match.");
+      setError(t("unableToSavePracticeMatch"));
     } finally {
       setIsSaving(false);
     }
@@ -230,7 +230,7 @@ export function PracticeMatchForm({
             onClick={onCancelEdit}
             type="button"
           >
-            Cancel
+            {t("cancel")}
           </button>
         ) : null}
       </div>

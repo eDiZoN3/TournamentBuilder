@@ -37,7 +37,6 @@ export default async function AdminDashboardPage() {
   const initialAdmins: AdminUserSummary[] = admins.map((admin) => ({
     _id: admin._id.toString(),
     createdAt: admin.createdAt.toISOString(),
-    displayRole: admin.role === "admin" ? "Admin" : "Tournament Lead",
     email: admin.email,
     mustChangePassword: admin.mustChangePassword,
     role: admin.role === "admin" ? "admin" : "tournament_lead",

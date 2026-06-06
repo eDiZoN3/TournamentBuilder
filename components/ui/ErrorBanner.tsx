@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface ErrorBannerProps {
   message: string;
@@ -8,6 +9,7 @@ interface ErrorBannerProps {
 }
 
 export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
+  const { t } = useLocale();
   const [isVisible, setIsVisible] = useState(true);
 
   if (!isVisible) {
@@ -21,7 +23,7 @@ export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
     >
       <span>{message}</span>
       <button
-        aria-label="Dismiss error"
+        aria-label={t("dismissError")}
         className="rounded-md border border-amber-300 px-2 py-1 text-xs font-semibold dark:border-amber-600"
         onClick={() => {
           setIsVisible(false);
@@ -29,7 +31,7 @@ export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
         }}
         type="button"
       >
-        Dismiss
+        {t("dismiss")}
       </button>
     </div>
   );

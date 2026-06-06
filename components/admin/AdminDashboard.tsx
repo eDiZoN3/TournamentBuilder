@@ -74,15 +74,15 @@ export function AdminDashboard({
   const tabs: Array<{ id: DashboardTab; label: string }> = [
     {
       id: "tournaments",
-      label: "Tournaments",
+      label: t("tournaments"),
     },
     {
       id: "accounts",
-      label: "Accounts",
+      label: t("accounts"),
     },
     {
       id: "stats-reset",
-      label: "Stats reset",
+      label: t("statsReset"),
     },
   ];
 
@@ -106,7 +106,7 @@ export function AdminDashboard({
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-600 dark:text-slate-200"
             href="/"
           >
-            Public tournament list
+            {t("publicTournamentList")}
           </Link>
         </div>
       </header>
@@ -114,7 +114,7 @@ export function AdminDashboard({
         <DashboardMetrics metrics={initialMetrics} />
       </div>
       <div className="mt-8 border-b border-slate-200 dark:border-slate-700">
-        <div aria-label="Dashboard sections" className="flex flex-wrap gap-2" role="tablist">
+        <div aria-label={t("dashboardSections")} className="flex flex-wrap gap-2" role="tablist">
           {tabs.map((tab) => (
             <button
               aria-selected={activeTab === tab.id}
@@ -164,7 +164,7 @@ export function AdminDashboard({
                   {t("createNewTournament")}
                 </Link>
               }
-              description="Create one to start scheduling matches."
+              description={t("emptyTournamentDescription")}
               title={t("noTournamentsYet")}
             />
           </div>
@@ -181,8 +181,8 @@ export function AdminDashboard({
                       {tournament.name}
                     </h2>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                      {tournament.teamCount} {t("teams").toLowerCase()} /{" "}
-                      {tournament.matchCount} {t("matches").toLowerCase()}
+                      {tournament.teamCount} {t("teams")} /{" "}
+                      {tournament.matchCount} {t("matches")}
                     </p>
                   </div>
                   <StatusBadge status={tournament.status} />
@@ -207,11 +207,11 @@ export function AdminDashboard({
                     </Link>
                   ) : null}
                   <Link
-                    aria-label={`Public View ${tournament.name}`}
+                    aria-label={`${t("publicView")} ${tournament.name}`}
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium"
                     href={`/tournament/${tournament._id}`}
                   >
-                    Public View
+                    {t("publicView")}
                   </Link>
                   <TournamentDeleteControl
                     onDeleted={() =>

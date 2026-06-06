@@ -18,6 +18,7 @@ function tournamentWithTeams(teamCount: number, courtsAvailable = 2) {
     name: "Test Tournament",
     status: "active",
     format: "double_elimination",
+    roundRobinMatchFormat: "bo1",
     teamSize: 2,
     courtsAvailable,
     inputMode: "teams",

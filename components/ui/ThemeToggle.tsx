@@ -9,14 +9,10 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className = "" }: ThemeToggleProps) {
   const { theme, toggleTheme } = useTheme();
-  const { locale } = useLocale();
+  const { t } = useLocale();
   const nextTheme = theme === "dark" ? "light" : "dark";
   const label =
-    locale === "de"
-      ? nextTheme === "dark"
-        ? "In den Dunkelmodus wechseln"
-        : "In den Hellmodus wechseln"
-      : `Switch to ${nextTheme} mode`;
+    nextTheme === "dark" ? t("switchToDarkMode") : t("switchToLightMode");
 
   return (
     <button

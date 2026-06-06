@@ -2,6 +2,8 @@
 
 import { type FormEvent, useState } from "react";
 import type { PlayerUserSummary } from "@/lib/admin/playerAccounts";
+import { useLocale } from "@/components/ui/LocaleProvider";
+import { formatTranslation } from "@/lib/i18n";
 
 interface PlayerUsersPanelProps {
   initialPlayers: PlayerUserSummary[];
@@ -19,6 +21,7 @@ function errorMessage(body: PlayerResponse | { error?: string }, fallback: strin
 }
 
 export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
+  const { locale, t } = useLocale();
   const [players, setPlayers] = useState(initialPlayers);
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
@@ -60,7 +63,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
       const body = (await response.json()) as PlayerResponse | { error?: string };
 
       if (!response.ok) {
-        setError(errorMessage(body, "Unable to create player account."));
+        setError(errorMessage(body, t("unableToCreatePlayerAccount")));
         return;
       }
 
@@ -72,7 +75,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
       setSurname("");
       setEmail("");
     } catch {
-      setError("Unable to create player account.");
+      setError(t("unableToCreatePlayerAccount"));
     } finally {
       setIsSubmitting(false);
     }
@@ -92,7 +95,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
       const body = (await response.json()) as PlayerResponse | { error?: string };
 
       if (!response.ok) {
-        setError(errorMessage(body, "Unable to reset player password."));
+        setError(errorMessage(body, t("unableToResetPlayerPassword")));
         return;
       }
 
@@ -105,7 +108,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
       );
       showTemporaryPassword(result, "reset");
     } catch {
-      setError("Unable to reset player password.");
+      setError(t("unableToResetPlayerPassword"));
     } finally {
       setResettingPlayerId(null);
     }
@@ -123,10 +126,10 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
           className="text-lg font-semibold text-slate-900 dark:text-white"
           id="player-accounts-title"
         >
-          Player accounts
+          {t("playerAccounts")}
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Register players and reset account passwords.
+          {t("registerPlayersNote")}
         </p>
       </div>
 
@@ -139,7 +142,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-player-first-name"
           >
-            Player first name
+            {t("playerFirstName")}
           </label>
           <input
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:focus:ring-slate-700"
@@ -155,7 +158,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-player-surname"
           >
-            Player surname
+            {t("playerSurname")}
           </label>
           <input
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:focus:ring-slate-700"
@@ -170,7 +173,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
             className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             htmlFor="new-player-email"
           >
-            Player email
+            {t("playerEmail")}
           </label>
           <input
             autoComplete="email"
@@ -188,7 +191,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
             disabled={isSubmitting}
             type="submit"
           >
-            {isSubmitting ? "Creating..." : "Create player"}
+            {isSubmitting ? t("saving") : t("createPlayer")}
           </button>
         </div>
       </form>
@@ -203,16 +206,16 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold">Temporary password</p>
+              <p className="text-sm font-semibold">{t("tempPassword")}</p>
               <p className="mt-1 font-mono text-lg">
                 {temporaryPassword.temporaryPassword}
               </p>
               <p className="mt-1 text-sm">
-                Share it once. This player must change it on next login.
+                {t("temporaryPasswordHelp")}
               </p>
             </div>
             <button
-              aria-label="Dismiss temporary password"
+              aria-label={t("dismissTemporaryPassword")}
               className="rounded-md border border-amber-300 px-3 py-2 text-sm font-semibold dark:border-amber-600"
               onClick={() => {
                 setCreatedPlayer(null);
@@ -220,7 +223,7 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
               }}
               type="button"
             >
-              Dismiss
+              {t("dismiss")}
             </button>
           </div>
         </div>
@@ -229,16 +232,16 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
       <div className="mt-5 w-full max-w-full overflow-x-auto">
         {players.length === 0 ? (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            No player accounts yet.
+            {t("noPlayerAccounts")}
           </p>
         ) : (
           <table className="w-full min-w-max text-left text-sm">
             <thead className="text-xs uppercase text-slate-500 dark:text-slate-400">
               <tr>
-                <th className="py-2 pr-4 font-semibold">Name</th>
-                <th className="py-2 pr-4 font-semibold">Email</th>
-                <th className="py-2 pr-4 font-semibold">Status</th>
-                <th className="py-2 font-semibold">Actions</th>
+                <th className="py-2 pr-4 font-semibold">{t("playerName")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("email")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("status")}</th>
+                <th className="py-2 font-semibold">{t("tournamentLeadActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -252,18 +255,24 @@ export function PlayerUsersPanel({ initialPlayers }: PlayerUsersPanelProps) {
                   </td>
                   <td className="py-3 pr-4 text-slate-600 dark:text-slate-300">
                     {player.mustChangePassword
-                      ? "Password change required"
-                      : "Active"}
+                      ? t("passwordChangeRequired")
+                      : t("active")}
                   </td>
                   <td className="py-3">
                     <button
-                      aria-label={`Reset ${player.displayName} password`}
+                      aria-label={formatTranslation(
+                        locale,
+                        "resetPlayerPasswordAction",
+                        { name: player.displayName },
+                      )}
                       className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
                       disabled={resettingPlayerId === player._id}
                       onClick={() => void resetPassword(player)}
                       type="button"
                     >
-                      {resettingPlayerId === player._id ? "Resetting..." : "Reset password"}
+                      {resettingPlayerId === player._id
+                        ? t("saving")
+                        : t("resetPlayerPassword")}
                     </button>
                   </td>
                 </tr>

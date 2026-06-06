@@ -1,5 +1,8 @@
 "use client";
 
+import { useLocale } from "@/components/ui/LocaleProvider";
+import type { TranslationKey } from "@/lib/i18n";
+
 interface RoundTabsProps {
   activeRound: number;
   ariaLabel: string;
@@ -10,24 +13,28 @@ interface RoundTabsProps {
   }>;
 }
 
-export function roundTabLabel(label: string, round: number): string {
+function localizedRoundTabLabel(
+  label: string,
+  round: number,
+  t: (key: TranslationKey) => string,
+): string {
   if (/^lb final$/i.test(label.trim())) {
-    return "LB Final";
+    return t("lbFinal");
   }
 
   if (/final/i.test(label)) {
-    return "Final";
+    return t("final");
   }
 
   if (/semi/i.test(label)) {
-    return "Semi-Final";
+    return t("semiFinal");
   }
 
   if (/quarter/i.test(label)) {
-    return "Quarter-Final";
+    return t("quarterFinal");
   }
 
-  return `Round ${round}`;
+  return `${t("round")} ${round}`;
 }
 
 export function RoundTabs({
@@ -36,6 +43,8 @@ export function RoundTabs({
   onChange,
   rounds,
 }: RoundTabsProps) {
+  const { t } = useLocale();
+
   if (rounds.length <= 1) {
     return null;
   }
@@ -58,7 +67,7 @@ export function RoundTabs({
           onClick={() => onChange(round)}
           type="button"
         >
-          {roundTabLabel(label, round)}
+          {localizedRoundTabLabel(label, round, t)}
         </button>
       ))}
     </div>

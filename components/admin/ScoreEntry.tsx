@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { useToast } from "@/components/ui/Toast";
+import { formatTranslation } from "@/lib/i18n";
 import type { IMatch, ISetScore } from "@/lib/models/Tournament";
 import {
   determineMatchWinner,
@@ -71,6 +73,7 @@ export function ScoreEntry({
   teamBName,
   tournamentId,
 }: ScoreEntryProps) {
+  const { locale, t } = useLocale();
   const { showToast } = useToast();
   const isOverride = mode === "override";
   const setCount = match.format === "bo1" ? 1 : 3;
@@ -157,11 +160,11 @@ export function ScoreEntry({
       );
 
       if (!response.ok) {
-        const message = await apiError(response, "Unable to save score.");
+        const message = await apiError(response, t("unableToSaveScore"));
 
         showToast({
           message,
-          title: "Unable to save score",
+          title: t("unableToSaveScore"),
           type: "error",
         });
         return;
@@ -174,16 +177,16 @@ export function ScoreEntry({
       setMatchWinner(result.matchWinner);
       await onUpdated();
       showToast({
-        message: `Set ${index + 1} was saved.`,
-        title: "Score saved",
+        message: formatTranslation(locale, "setSaved", { set: index + 1 }),
+        title: t("scoreSaved"),
         type: "success",
       });
     } catch {
-      const message = "Unable to save score.";
+      const message = t("unableToSaveScore");
 
       showToast({
         message,
-        title: "Unable to save score",
+        title: t("unableToSaveScore"),
         type: "error",
       });
     } finally {
@@ -193,7 +196,7 @@ export function ScoreEntry({
 
   async function submitOverride() {
     if (!matchWinner) {
-      setError("Match winner has not been determined");
+      setError(t("matchWinnerNotDetermined"));
       return;
     }
 
@@ -220,11 +223,11 @@ export function ScoreEntry({
       );
 
       if (!response.ok) {
-        const message = await apiError(response, "Unable to override match.");
+        const message = await apiError(response, t("unableToOverrideMatch"));
 
         showToast({
           message,
-          title: "Unable to override match",
+          title: t("unableToOverrideMatch"),
           type: "error",
         });
         return;
@@ -233,20 +236,22 @@ export function ScoreEntry({
       const result = (await response.json()) as OverrideResponse;
       const resetMessage =
         result.winnerChanged && result.affectedMatchIds.length > 0
-          ? `Result updated and ${result.affectedMatchIds.length} downstream match reset.`
-          : "Result updated.";
+          ? formatTranslation(locale, "resultUpdatedWithDownstreamReset", {
+              count: result.affectedMatchIds.length,
+            })
+          : t("resultUpdated");
 
       await onUpdated();
       showToast({
         message: resetMessage,
-        title: "Match overridden",
+        title: t("matchOverridden"),
         type: "success",
       });
       onClose();
     } catch {
       showToast({
-        message: "Unable to override match.",
-        title: "Unable to override match",
+        message: t("unableToOverrideMatch"),
+        title: t("unableToOverrideMatch"),
         type: "error",
       });
     } finally {
@@ -273,11 +278,11 @@ export function ScoreEntry({
       );
 
       if (!response.ok) {
-        const message = await apiError(response, "Unable to confirm match.");
+        const message = await apiError(response, t("unableToConfirmMatch"));
 
         showToast({
           message,
-          title: "Unable to confirm match",
+          title: t("unableToConfirmMatch"),
           type: "error",
         });
         return;
@@ -285,17 +290,19 @@ export function ScoreEntry({
 
       await onUpdated();
       showToast({
-        message: `${match.label} was completed.`,
-        title: "Match confirmed",
+        message: formatTranslation(locale, "matchCompleted", {
+          match: match.label,
+        }),
+        title: t("matchConfirmed"),
         type: "success",
       });
       onClose();
     } catch {
-      const message = "Unable to confirm match.";
+      const message = t("unableToConfirmMatch");
 
       showToast({
         message,
-        title: "Unable to confirm match",
+        title: t("unableToConfirmMatch"),
         type: "error",
       });
     } finally {
@@ -314,10 +321,10 @@ export function ScoreEntry({
         <header className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold" id="score-entry-title">
-              {isOverride ? "Override result" : "Enter scores"}
+              {isOverride ? t("overrideResult") : t("enterScores")}
             </h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {match.label} / {match.format === "bo1" ? "Best of 1" : "Best of 3"}
+              {match.label} / {match.format === "bo1" ? t("bestOfOne") : t("bestOfThree")}
             </p>
           </div>
           <button
@@ -325,7 +332,7 @@ export function ScoreEntry({
             onClick={onClose}
             type="button"
           >
-            Close
+            {t("close")}
           </button>
         </header>
         <div className="mt-5 space-y-4">
@@ -339,13 +346,13 @@ export function ScoreEntry({
                 key={index}
               >
                 <legend className="px-1 text-sm font-semibold">
-                  Set {index + 1}
+                  {t("set")} {index + 1}
                 </legend>
                 <div className="grid grid-cols-2 gap-3">
                   <label className="text-sm">
                     <span className="mb-1 block text-slate-600 dark:text-slate-300">{teamAName}</span>
                     <input
-                      aria-label={`Set ${index + 1} Team A`}
+                      aria-label={`${t("set")} ${index + 1} ${t("team")} A`}
                       className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                       disabled={isLocked}
                       min="0"
@@ -359,7 +366,7 @@ export function ScoreEntry({
                   <label className="text-sm">
                     <span className="mb-1 block text-slate-600 dark:text-slate-300">{teamBName}</span>
                     <input
-                      aria-label={`Set ${index + 1} Team B`}
+                      aria-label={`${t("set")} ${index + 1} ${t("team")} B`}
                       className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                       disabled={isLocked}
                       min="0"
@@ -377,7 +384,7 @@ export function ScoreEntry({
                   onClick={() => void saveSet(index)}
                   type="button"
                 >
-                  {savingSet === index ? "Saving..." : `Save set ${index + 1}`}
+                  {savingSet === index ? t("saving") : `${t("saveSet")} ${index + 1}`}
                 </button>
               </fieldset>
             );
@@ -395,12 +402,12 @@ export function ScoreEntry({
                 className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
                 role="alert"
               >
-                Changing the winner will reset downstream matches.
+                {t("changingWinnerWarning")}
               </p>
             ) : null}
             <div className="mt-5 flex items-center justify-between gap-4 border-t border-slate-200 pt-4 dark:border-slate-700">
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                Winner: {matchWinner === "A" ? teamAName : teamBName}
+                {t("winner")}: {matchWinner === "A" ? teamAName : teamBName}
               </p>
               <button
                 className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
@@ -412,13 +419,13 @@ export function ScoreEntry({
               >
                 {isConfirming
                   ? isOverride
-                    ? "Submitting..."
-                    : "Confirming..."
+                    ? t("submitting")
+                    : t("confirming")
                   : isOverride
                     ? requiresOverrideConfirmation
-                      ? "Confirm override"
-                      : "Submit override"
-                    : "Confirm match"}
+                      ? t("confirmOverride")
+                      : t("submitOverride")
+                    : t("confirmMatch")}
               </button>
             </div>
           </>

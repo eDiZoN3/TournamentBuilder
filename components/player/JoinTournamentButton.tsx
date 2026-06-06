@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
+import { formatTranslation } from "@/lib/i18n";
 
 interface JoinTournamentButtonProps {
   currentPlayerName: string | null;
@@ -14,6 +16,7 @@ export function JoinTournamentButton({
   initiallyJoined,
   tournamentId,
 }: JoinTournamentButtonProps) {
+  const { locale, t } = useLocale();
   const [isJoined, setIsJoined] = useState(initiallyJoined);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,7 +27,7 @@ export function JoinTournamentButton({
         className="inline-flex rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white dark:bg-white dark:text-slate-950"
         href="/signup"
       >
-        Sign up to join
+        {t("signUpToJoin")}
       </Link>
     );
   }
@@ -32,7 +35,7 @@ export function JoinTournamentButton({
   if (isJoined) {
     return (
       <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-        Joined as {currentPlayerName}
+        {formatTranslation(locale, "joinedAs", { name: currentPlayerName })}
       </p>
     );
   }
@@ -48,13 +51,13 @@ export function JoinTournamentButton({
       const body = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        setError(body.error ?? "Unable to join tournament.");
+        setError(body.error ?? t("unableToJoinTournament"));
         return;
       }
 
       setIsJoined(true);
     } catch {
-      setError("Unable to join tournament.");
+      setError(t("unableToJoinTournament"));
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +71,7 @@ export function JoinTournamentButton({
         onClick={joinTournament}
         type="button"
       >
-        {isSubmitting ? "Joining..." : "Join tournament"}
+        {isSubmitting ? t("joining") : t("joinTournament")}
       </button>
       {error ? (
         <p className="mt-2 text-sm font-medium text-red-600" role="alert">

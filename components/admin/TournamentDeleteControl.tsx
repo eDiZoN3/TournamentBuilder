@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useLocale } from "@/components/ui/LocaleProvider";
+import { translate } from "@/lib/i18n";
 import type { ITournament } from "@/lib/models/Tournament";
 
 interface TournamentDeleteTarget {
@@ -34,12 +36,15 @@ export function TournamentDeleteControl({
   tournament,
 }: TournamentDeleteControlProps) {
   const { showToast } = useToast();
+  const { locale } = useLocale();
   const [confirmationName, setConfirmationName] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const tournamentId = tournament._id.toString();
   const requiresTypedConfirmation = tournament.status !== "draft";
   const confirmationMatches = confirmationName === tournament.name;
+  const typedConfirmationMessage = translate(locale, 'deleteIncorrectName').replace('{name}', tournament.name);
+  const typedConfirmationLabel = typedConfirmationMessage.replace(/\.$/, "");
 
   async function confirmDelete() {
     if (!isConfirming) {
@@ -50,8 +55,8 @@ export function TournamentDeleteControl({
 
     if (requiresTypedConfirmation && !confirmationMatches) {
       showToast({
-        message: `Type ${tournament.name} to confirm deletion.`,
-        title: "Delete confirmation required",
+        message: typedConfirmationMessage,
+        title: translate(locale, 'deleteConfirmationRequired'),
         type: "error",
       });
       return;
@@ -75,11 +80,14 @@ export function TournamentDeleteControl({
       });
 
       if (!response.ok) {
-        const message = await apiError(response, "Unable to delete tournament.");
+        const message = await apiError(
+          response,
+          translate(locale, "unableToDeleteTournament"),
+        );
 
         showToast({
           message,
-          title: "Delete failed",
+          title: translate(locale, 'deleteFailed'),
           type: "error",
         });
         return;
@@ -89,14 +97,14 @@ export function TournamentDeleteControl({
       setIsConfirming(false);
       setConfirmationName("");
       showToast({
-        message: `${tournament.name} was deleted.`,
-        title: "Tournament deleted",
+        message: `${tournament.name} ${translate(locale, 'tournamentDeleted')}.`,
+        title: translate(locale, 'tournamentDeleted'),
         type: "success",
       });
     } catch {
       showToast({
-        message: "Unable to delete tournament.",
-        title: "Delete failed",
+        message: translate(locale, "unableToDeleteTournament"),
+        title: translate(locale, 'deleteFailed'),
         type: "error",
       });
     } finally {
@@ -107,12 +115,12 @@ export function TournamentDeleteControl({
   if (!isConfirming) {
     return (
       <button
-        aria-label={`Delete ${tournament.name}`}
+        aria-label={`${translate(locale, 'delete')} ${tournament.name}`}
         className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-700 dark:text-red-300"
         onClick={() => void confirmDelete()}
         type="button"
       >
-        Delete
+        {translate(locale, 'delete')}
       </button>
     );
   }
@@ -120,35 +128,35 @@ export function TournamentDeleteControl({
   if (!requiresTypedConfirmation) {
     return (
       <button
-        aria-label={`Confirm Delete ${tournament.name}`}
+        aria-label={`${translate(locale, 'confirmDeleteButton')} ${tournament.name}`}
         className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 disabled:opacity-50 dark:border-red-700 dark:bg-red-950 dark:text-red-200"
         disabled={isDeleting}
         onClick={() => void confirmDelete()}
         type="button"
       >
-        {isDeleting ? "Deleting..." : "Confirm Delete"}
+        {isDeleting ? translate(locale, 'saving') : translate(locale, 'confirmDeleteButton')}
       </button>
     );
   }
 
   return (
     <div className="w-full rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100">
-      <p className="font-medium">Type {tournament.name} to confirm deletion.</p>
+      <p className="font-medium">{typedConfirmationMessage}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <input
-          aria-label={`Type ${tournament.name} to confirm deletion`}
+          aria-label={typedConfirmationLabel}
           className="min-w-0 flex-1 rounded-md border border-red-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-red-700 dark:bg-slate-950 dark:text-white"
           onChange={(event) => setConfirmationName(event.target.value)}
           value={confirmationName}
         />
         <button
-          aria-label={`Confirm Delete ${tournament.name}`}
+          aria-label={`${translate(locale, 'confirmDeleteButton')} ${tournament.name}`}
           className="rounded-md bg-red-700 px-3 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
           disabled={!confirmationMatches || isDeleting}
           onClick={() => void confirmDelete()}
           type="button"
         >
-          {isDeleting ? "Deleting..." : "Confirm Delete"}
+          {isDeleting ? translate(locale, 'saving') : translate(locale, 'confirmDeleteButton')}
         </button>
         <button
           className="rounded-md border border-red-300 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-700 dark:text-red-300"
@@ -156,7 +164,7 @@ export function TournamentDeleteControl({
           onClick={() => setIsConfirming(false)}
           type="button"
         >
-          Cancel
+          {translate(locale, 'cancel')}
         </button>
       </div>
     </div>

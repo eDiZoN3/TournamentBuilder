@@ -149,10 +149,13 @@ export function buildStandings(tournament: ITournament): StandingRow[] {
 
 export function StandingsTable({
   currentPlayerName = null,
-  title = "Final standings",
+  title,
   tournament,
 }: StandingsTableProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
+  const displayTitle = title ?? t("finalStandings");
+  const formatPlace = (place: number) =>
+    locale === "de" ? `${place}.` : ordinal(place);
 
   if (isNonKnockoutFormat(tournament.format)) {
     const standings = buildNonKnockoutStandings(tournament);
@@ -163,7 +166,7 @@ export function StandingsTable({
     return (
       <section>
         <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
-          {title}
+          {displayTitle}
         </h2>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[34rem] border-collapse text-left text-sm">
@@ -196,7 +199,7 @@ export function StandingsTable({
                     key={`${row.entity}-${row.name}`}
                   >
                     <td className="py-3 pr-4 font-bold text-emerald-800 dark:text-emerald-200">
-                      {ordinal(row.rank)}
+                      {formatPlace(row.rank)}
                     </td>
                     <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
                       {row.name}
@@ -227,7 +230,7 @@ export function StandingsTable({
 
   return (
     <section>
-      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">{title === "Final standings" ? t("finalStandings") : title}</h2>
+      <h2 className="text-xl font-bold text-emerald-900 dark:text-emerald-100">{displayTitle}</h2>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
           <thead>
@@ -241,7 +244,7 @@ export function StandingsTable({
             {standings.map(({ place, team }) => (
               <tr key={idString(team._id)}>
                 <td className="py-3 pr-4 font-bold text-emerald-800 dark:text-emerald-200">
-                  {ordinal(place)}
+                  {formatPlace(place)}
                 </td>
                 <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">
                   {team.name}
@@ -249,7 +252,7 @@ export function StandingsTable({
                 <td className="py-3 pl-4 text-slate-600 dark:text-slate-300">
                   {team.players.length > 0
                     ? team.players.join(", ")
-                    : "No players listed"}
+                    : t("noPlayersListed")}
                 </td>
               </tr>
             ))}

@@ -4,7 +4,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams, makeTournament } from "@/__tests__/helpers/factories";
 import NewTournamentPage from "@/app/admin/tournament/new/page";
+import { AdminDashboard, type TournamentSummary } from "@/components/admin/AdminDashboard";
+import { ScoreEntry } from "@/components/admin/ScoreEntry";
+import { JoinTournamentButton } from "@/components/player/JoinTournamentButton";
 import { PlayerAccountView } from "@/components/player/PlayerAccountView";
+import { StatsTable } from "@/components/stats/StatsTable";
 import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { LocaleProvider, LOCALE_STORAGE_KEY } from "@/components/ui/LocaleProvider";
 import { Navbar } from "@/components/ui/Navbar";
@@ -89,6 +93,90 @@ describe("frontend localization", () => {
     expect(screen.getByText(de("oneSetPerMatch"))).toBeInTheDocument();
     expect(screen.getByText(de("bestOfThree"))).toBeInTheDocument();
     expect(screen.getByText(de("completed"))).toBeInTheDocument();
+  });
+
+  it("translates admin dashboard labels and actions", async () => {
+    const tournaments: TournamentSummary[] = [
+      {
+        _id: "draft-id",
+        createdAt: "2026-06-01T12:00:00.000Z",
+        matchCount: 0,
+        name: "Draft Cup",
+        status: "draft",
+        teamCount: 4,
+      },
+    ];
+
+    renderGerman(<AdminDashboard initialTournaments={tournaments} />);
+
+    expect(
+      await screen.findByRole("link", { name: de("publicTournamentList") }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: de("tournaments") })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: de("accounts") })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: de("statsReset") })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: `${de("publicView")} Draft Cup` }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: de("accounts") }));
+
+    expect(screen.getByRole("heading", { name: de("playerAccounts") })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: de("tournamentLeadAccounts") }),
+    ).toBeInTheDocument();
+  });
+
+  it("translates join controls, score entry actions, and stats columns", async () => {
+    const teams = makeTeams(2);
+    const match = makeMatch({
+      status: "in_progress",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+
+    renderGerman(
+      <>
+        <JoinTournamentButton
+          currentPlayerName={null}
+          initiallyJoined={false}
+          tournamentId="tournament-id"
+        />
+        <ScoreEntry
+          match={match}
+          onClose={vi.fn()}
+          onUpdated={vi.fn()}
+          teamAName="Alpha"
+          teamBName="Beta"
+          tournamentId="tournament-id"
+        />
+        <StatsTable
+          emptyTitle={de("noTeamStats")}
+          rows={[
+            {
+              matchesLost: 0,
+              matchesPlayed: 1,
+              matchesWon: 1,
+              name: "Alpha",
+              pointDiff: 4,
+              pointsAgainst: 7,
+              pointsFor: 11,
+              setsLost: 0,
+              setsWon: 1,
+              winRate: 1,
+            },
+          ]}
+          title={de("teamStats")}
+        />
+      </>,
+    );
+
+    expect(await screen.findByRole("link", { name: de("signUpToJoin") })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: de("enterScores") })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: de("close") })).toBeInTheDocument();
+    expect(screen.getByText(`${de("set")} 1`)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: `${de("saveSet")} 1` })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: de("pointsDiff") })).toBeInTheDocument();
   });
 
   it("translates non-knockout standings and schedule headings", async () => {

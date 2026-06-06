@@ -31,14 +31,18 @@ export function TournamentStats({
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
         <StatsTable
-          emptyTitle={t("noTeamStats")}
+          emptyTitle=""
+          emptyTitleKey="noTeamStats"
           rows={resolvedStats.teams}
-          title={t("teamStats")}
+          title=""
+          titleKey="teamStats"
         />
         <StatsTable
-          emptyTitle={t("noPlayerStats")}
+          emptyTitle=""
+          emptyTitleKey="noPlayerStats"
           rows={resolvedStats.players}
-          title={t("playerStats")}
+          title=""
+          titleKey="playerStats"
         />
       </div>
     </section>

@@ -110,17 +110,17 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
   return (
     <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
       <nav
-        aria-label="Primary navigation"
+        aria-label={t("primaryNavigation")}
         className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4"
         ref={navRef}
       >
         <Link className="font-semibold text-slate-900 dark:text-white" href="/">
-          Raro Volleyball
+          {t("raroVolleyball")}
         </Link>
         <button
           aria-expanded={isMenuOpen}
           aria-label={
-            isMenuOpen ? "Close navigation menu" : "Open navigation menu"
+            isMenuOpen ? t("closeNavigationMenu") : t("openNavigationMenu")
           }
           className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-300 text-slate-700 md:hidden dark:border-slate-600 dark:text-slate-200"
           onClick={() => setIsMenuOpen((current) => !current)}
@@ -138,7 +138,7 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
         </div>
         {isMenuOpen ? (
           <nav
-            aria-label="Mobile navigation"
+            aria-label={t("mobileNavigation")}
             className="flex w-full flex-col gap-3 border-t border-slate-200 pt-4 text-sm font-medium md:hidden dark:border-slate-800"
           >
             {publicLinks}

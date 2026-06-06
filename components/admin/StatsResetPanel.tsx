@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
+import { translate } from "@/lib/i18n";
 import type { TournamentSummary } from "@/components/admin/AdminDashboard";
 import type { PlayerUserSummary } from "@/components/admin/PlayerUsersPanel";
 
@@ -27,6 +29,7 @@ export function StatsResetPanel({
   seasons,
   tournaments,
 }: StatsResetPanelProps) {
+  const { locale } = useLocale();
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,10 +53,10 @@ export function StatsResetPanel({
           className="text-lg font-semibold text-slate-900 dark:text-white"
           id="stats-reset-title"
         >
-          Stats reset
+          {translate(locale, 'statsReset')}
         </h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          Only admins can reset stats.
+          {translate(locale, 'onlyAdminsCanReset')}
         </p>
       </section>
     );
@@ -148,16 +151,16 @@ export function StatsResetPanel({
       };
 
       if (!response.ok) {
-        throw new Error(body.error ?? "Unable to reset stats.");
+        throw new Error(body.error ?? translate(locale, 'unableToUpdateMatch'));
       }
 
-      setMessage("Stats reset complete.");
+      setMessage(translate(locale, "statsResetComplete"));
       onResetComplete?.();
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : "Unable to reset stats.",
+          : translate(locale, 'unableToUpdateMatch'),
       );
     } finally {
       setIsSubmitting(false);
@@ -176,15 +179,15 @@ export function StatsResetPanel({
         className="text-lg font-semibold text-slate-900 dark:text-white"
         id="stats-reset-title"
       >
-        Stats reset
+        {translate(locale, 'statsReset')}
       </h2>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        Reset calculated stats without deleting tournaments, matches, or scores.
+        {translate(locale, 'onlyAdminsCanReset')}
       </p>
 
       <form className="mt-5 grid gap-4" onSubmit={handleSubmit}>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-          Reset scope
+          {translate(locale, 'resetScope')}
           <select
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950 dark:focus:ring-slate-700"
             onChange={(event) =>
@@ -192,16 +195,16 @@ export function StatsResetPanel({
             }
             value={scope}
           >
-            <option value="player">Player</option>
-            <option value="tournament">Tournament</option>
-            <option value="season">Season</option>
-            <option value="all">All stats</option>
+            <option value="player">{translate(locale, 'resetScopePlayer')}</option>
+            <option value="tournament">{translate(locale, 'resetScopeTournament')}</option>
+            <option value="season">{translate(locale, 'resetScopeSeason')}</option>
+            <option value="all">{translate(locale, 'resetScopeAll')}</option>
           </select>
         </label>
 
         {scope === "player" ? (
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Player
+            {translate(locale, 'resetScopePlayer')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950 dark:focus:ring-slate-700"
               onChange={(event) => setSelectedPlayerId(event.target.value)}
@@ -218,7 +221,7 @@ export function StatsResetPanel({
 
         {scope === "tournament" ? (
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Tournament
+            {translate(locale, 'resetScopeTournament')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950 dark:focus:ring-slate-700"
               onChange={(event) => setSelectedTournamentId(event.target.value)}
@@ -235,7 +238,7 @@ export function StatsResetPanel({
 
         {scope === "season" ? (
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Season
+            {translate(locale, 'resetScopeSeason')}
             <select
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950 dark:focus:ring-slate-700"
               onChange={(event) => setSelectedSeason(event.target.value)}
@@ -254,7 +257,7 @@ export function StatsResetPanel({
           className="block text-sm font-medium text-slate-700 dark:text-slate-300"
           htmlFor="stats-reset-confirmation"
         >
-          Type RESET STATS to confirm
+          {translate(locale, 'confirmResetStats')}
         </label>
         <input
           className="rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:bg-slate-950 dark:focus:ring-slate-700"
@@ -279,7 +282,7 @@ export function StatsResetPanel({
           disabled={!canSubmit}
           type="submit"
         >
-          {isSubmitting ? "Resetting..." : "Reset stats"}
+          {isSubmitting ? translate(locale, 'saving') : translate(locale, 'resetStats')}
         </button>
       </form>
     </section>

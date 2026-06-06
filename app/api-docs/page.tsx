@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LocalizedText } from "@/components/ui/LocalizedText";
 
 export const metadata: Metadata = {
   title: "Swagger API Docs | Raro Volleyball Tournament",
@@ -18,25 +19,24 @@ export default function ApiDocsPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              Swagger API Docs
+              <LocalizedText k="apiDocsTitle" />
             </h1>
             <p className="mt-1 text-sm text-slate-600">
-              Interactive documentation generated from the OpenAPI document.
+              <LocalizedText k="apiDocsDescription" />
             </p>
           </div>
           <a
             className="text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-950"
             href="/api/openapi"
           >
-            OpenAPI JSON
+            <LocalizedText k="openApiJson" />
           </a>
         </div>
       </section>
       <div id="swagger-ui" />
       <noscript>
         <p className="p-6 text-sm text-slate-700">
-          Enable JavaScript to view Swagger UI. The OpenAPI JSON is available at
-          /api/openapi.
+          <LocalizedText k="enableJavaScriptApiDocs" />
         </p>
       </noscript>
       <script

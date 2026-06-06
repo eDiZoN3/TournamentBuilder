@@ -42,8 +42,11 @@ export function UpNextBanner({ matches, teams }: UpNextBannerProps) {
               {match.label}
             </h3>
             <p className="mt-1 truncate text-sm text-slate-600 dark:text-slate-300">
-              {resolveTeamName(teams, match.teamA?.teamId ?? null) ?? "TBD"} vs{" "}
-              {resolveTeamName(teams, match.teamB?.teamId ?? null) ?? "TBD"}
+              {resolveTeamName(teams, match.teamA?.teamId ?? null) ??
+                t("toBeDetermined")}{" "}
+              {t("versus")}{" "}
+              {resolveTeamName(teams, match.teamB?.teamId ?? null) ??
+                t("toBeDetermined")}
             </p>
           </article>
         ))}

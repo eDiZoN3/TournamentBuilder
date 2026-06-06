@@ -1170,3 +1170,103 @@ Tests: stats reset tab renders, scope selector changes required target controls,
 Tests: active tournament row has public view link, completed tournament row has public view link, general public link renders, link hrefs are correct, draft handling matches supported behavior.
 
 ---
+
+## Phase 11 - Roadmap Feature 7: Player Practice Matches
+
+Archived from `task.md` after roadmap feature 7 was implemented.
+
+Roadmap feature 7: players can create small practice matches that do not belong to a tournament. Practice matches count toward personal practice stats, but tournament stats and practice stats stay separated in the global stats view and player account view.
+
+### T86 - Practice Match Model and Validation (TDD First)
+**Files**: `lib/models/PracticeMatch.ts`, `lib/practiceMatches.ts`, `__tests__/lib/models/PracticeMatch.test.ts`, `__tests__/lib/practiceMatches.test.ts`
+**Depends on**: T12, T61
+**TDD**: Write tests before implementation
+**Description**: Added a separate practice-match domain model for player-created non-tournament matches:
+- Store practice matches separately from tournaments so tournament history and bracket stats are not mixed with practice data.
+- Link each match to a creator `playerProfileId`; the creator must appear on one side of the match.
+- Support two sides with equal side sizes from 1 to 4 players per side.
+- Participants can reference registered `playerProfileId` values and include display names for snapshot/history stability.
+- Store played date, set scores, winner side, and timestamps.
+- Reuse existing scoring validation rules for set validity and match winner calculation.
+- Reject invalid player IDs, duplicate participants in one match, uneven side sizes, empty sides, invalid set scores, and matches without a winner.
+
+Tests cover model requirements, creator participation, duplicate rejection, equal side sizes, valid matches, invalid scores, and winner derivation.
+
+---
+
+### T87 - Player Practice Match API (TDD First)
+**Files**: `app/api/practice-matches/route.ts`, `app/api/practice-matches/[id]/route.ts`, `lib/practiceMatches.ts`, `__tests__/api/practice-matches.test.ts`
+**Depends on**: T80, T86
+**TDD**: Write tests before implementation
+**Description**: Added authenticated player APIs to manage their own practice matches:
+- `GET /api/practice-matches` returns practice matches visible to the signed-in player, sorted by newest first.
+- `POST /api/practice-matches` creates a completed practice match for the signed-in player.
+- `PUT /api/practice-matches/[id]` updates a practice match created by the signed-in player.
+- `DELETE /api/practice-matches/[id]` removes a practice match created by the signed-in player.
+- Players can only mutate practice matches they created.
+- Non-player sessions and anonymous requests are rejected.
+- API responses serialize stable player display names and omit internal Mongoose fields.
+
+Tests cover authorization, create/list, invalid payloads, owner-only mutation, winner recalculation, and deletion.
+
+---
+
+### T88 - Separate Practice Stats Aggregation (TDD First)
+**Files**: `lib/practiceStats.ts`, `lib/stats.ts`, `app/api/stats/route.ts`, `__tests__/lib/practiceStats.test.ts`, `__tests__/api/stats.test.ts`
+**Depends on**: T83, T86, T87
+**TDD**: Write tests before implementation
+**Description**: Added practice-match stats separately from tournament stats:
+- Aggregate practice stats by stable `playerProfileId` where possible, using stored display-name snapshots for rendering.
+- Count matches played, matches won/lost, sets won/lost, points for/against, point diff, and win rate.
+- Do not merge practice matches into tournament team stats or tournament player stats.
+- Existing `/api/stats` keeps tournament stats and adds a separate `practicePlayers` collection.
+- Apply existing `player` and `all` stats reset rules to practice stats; tournament and season resets only affect tournament-derived stats.
+
+Tests cover practice aggregation, guest exclusion, tournament/practice separation, `/api/stats` practice rows, player reset, and all reset.
+
+---
+
+### T89 - Player Account Practice Match UI (TDD First)
+**Files**: `app/(public)/account/page.tsx`, `components/player/PlayerAccountView.tsx`, `components/player/PracticeMatchForm.tsx`, `components/player/PracticeMatchList.tsx`, `__tests__/components/PlayerAccountView.test.tsx`, `__tests__/components/PracticeMatchForm.test.tsx`, `__tests__/components/PracticeMatchList.test.tsx`
+**Depends on**: T62, T87, T88
+**TDD**: Write tests before implementation
+**Description**: Added player account practice-match creation and review:
+- Show tournament stats and practice stats as separate account sections.
+- Add a practice-match form that defaults the signed-in player into one side.
+- Validate set scores client-side before submitting.
+- Show a list of the player's practice matches with participants and score.
+- Allow the creator to edit or delete a practice match.
+- Show empty and error states with responsive/dark-mode-compatible styling.
+
+Tests cover separate account stat summaries, current-player defaults, invalid score blocking, API submit, result rendering, edit, and delete.
+
+---
+
+### T90 - Global Stats Practice Tables (TDD First)
+**Files**: `app/(public)/stats/page.tsx`, `components/stats/StatsTable.tsx`, `__tests__/components/PublicPages.test.tsx`
+**Depends on**: T75, T88
+**TDD**: Write tests before implementation
+**Description**: Updated the global stats page so tournament and practice stats are visibly separate:
+- Keep existing team stats and tournament player stats tables.
+- Add a separate practice player stats table using the practice aggregation output.
+- Label tables clearly so users can distinguish tournament player stats from practice match stats.
+- Preserve empty states for each stats category independently.
+- Do not show practice data inside per-tournament stats pages.
+
+Tests cover independent empty states and practice-player rendering separate from tournament stats.
+
+---
+
+### T91 - Practice Match Polish, Localization, and API Docs (TDD First)
+**Files**: `lib/i18n.ts`, `lib/openapi.ts`, `__tests__/components/Localization.test.tsx`, `__tests__/api/openapi.test.ts`, `__tests__/components/ApiDocsPage.test.tsx`
+**Depends on**: T87, T89, T90
+**TDD**: Write tests before implementation
+**Description**: Finished cross-cutting pieces for the practice-match feature:
+- Add German and English translations for practice-match labels, empty states, and form controls.
+- Document the new practice-match endpoints and schemas in the OpenAPI document.
+- Keep Swagger UI pointed at the updated `/api/openapi` document.
+- Keep wording tests tied to translation keys where applicable.
+
+Tests cover German account UI practice labels and OpenAPI practice-match routes/schemas.
+
+---

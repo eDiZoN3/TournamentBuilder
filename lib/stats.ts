@@ -22,6 +22,7 @@ export type StatsResetScope = "player" | "tournament" | "season" | "all";
 
 export interface StatsResetRule {
   scope: StatsResetScope;
+  playerProfileId?: { toString(): string } | string | null;
   playerNameKey?: string | null;
   tournamentId?: { toString(): string } | string | null;
   season?: number | null;

@@ -59,6 +59,49 @@ describe("PlayerAccountView", () => {
     expect(screen.getByText("No completed matches yet.")).toBeInTheDocument();
   });
 
+  it("shows tournament stats and practice stats as separate account sections", () => {
+    render(
+      <PlayerAccountView
+        practiceMatches={[
+          {
+            _id: "practice-id",
+            createdBy: "profile-id",
+            playedAt: "2026-06-06T12:00:00.000Z",
+            sideA: [{ playerProfileId: "profile-id", displayName: "Alice Example" }],
+            sideB: [{ displayName: "Bob" }],
+            sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+            winnerSide: "A",
+          },
+        ]}
+        practiceStats={{
+          matchesPlayed: 1,
+          matchesWon: 1,
+          pointsFor: 11,
+          winRate: 1,
+        }}
+        profile={{
+          _id: "profile-id",
+          displayName: "Alice Example",
+          email: "alice@example.com",
+          firstName: "Alice",
+          surname: "Example",
+          userId: "user-id",
+        }}
+        stats={{
+          matchesPlayed: 4,
+          matchesWon: 3,
+          pointsFor: 88,
+          winRate: 0.75,
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Tournament stats" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Practice stats" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Practice matches" })).toBeInTheDocument();
+    expect(screen.getByText("Alice Example vs Bob")).toBeInTheDocument();
+  });
+
   it("shows a player logout button that redirects to the shared login page", () => {
     render(
       <PlayerAccountView

@@ -4,5 +4,5 @@
 4. [implemented] admin dashboard with : registered player, registered admins, registered tournament, sum played matches, player registration, abbility to reset password of player accounts
 5. [implemented] support for not only ko phase tournaments -> everyone(individual) vs everyone(individual) with new teams each match, each team vs each team, winner is team or indivual with most wins, decided by points if same amount of wins
 6. [implemented] add german translation to frontend, can be toggled like dark mode but requires reload probably?
-7. feature for each players to create little matches on their own that do not belong to any tournament so they can enter pratice matches that count to their personal stats, but are seperated from tournament matches. overall stats should then show the personal stats of player and their match stats seperate in two tables.
+7. [implemented] feature for each players to create little matches on their own that do not belong to any tournament so they can enter pratice matches that count to their personal stats, but are seperated from tournament matches. overall stats should then show the personal stats of player and their match stats seperate in two tables.
 8. [implemented] add swagger api documentation

@@ -28,13 +28,17 @@ export function StatsTable({
       ? t("teamStats")
       : title === "Player stats"
         ? t("playerStats")
-        : title;
+        : title === "Practice player stats"
+          ? t("practicePlayerStats")
+          : title;
   const displayEmptyTitle =
     emptyTitle === "No team stats yet"
       ? t("noTeamStats")
       : emptyTitle === "No player stats yet"
         ? t("noPlayerStats")
-        : emptyTitle;
+        : emptyTitle === "No practice stats yet"
+          ? t("noPracticeStats")
+          : emptyTitle;
 
   if (isLoading) {
     return (

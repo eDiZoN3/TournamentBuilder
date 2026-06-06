@@ -1,17 +1,32 @@
 import { StatsTable } from "@/components/stats/StatsTable";
 import { LocalizedText } from "@/components/ui/LocalizedText";
 import { connectDB } from "@/lib/db";
+import { PracticeMatch } from "@/lib/models/PracticeMatch";
+import { StatsReset } from "@/lib/models/StatsReset";
 import { Tournament, type ITournament } from "@/lib/models/Tournament";
-import { aggregateStats } from "@/lib/stats";
+import { aggregatePracticeStats } from "@/lib/practiceStats";
+import { aggregateStats, type StatsResetRule } from "@/lib/stats";
 
 export const dynamic = "force-dynamic";
 
 export default async function StatsPage() {
   await connectDB();
 
-  const tournaments = await Tournament.find().lean();
+  const [tournaments, practiceMatches, resetRules] = await Promise.all([
+    Tournament.find().lean(),
+    PracticeMatch.find().lean(),
+    StatsReset.find().lean(),
+  ]);
+  const serializedResetRules = JSON.parse(
+    JSON.stringify(resetRules),
+  ) as StatsResetRule[];
   const stats = aggregateStats(
     JSON.parse(JSON.stringify(tournaments)) as ITournament[],
+    serializedResetRules,
+  );
+  const practiceStats = aggregatePracticeStats(
+    JSON.parse(JSON.stringify(practiceMatches)),
+    serializedResetRules,
   );
 
   return (
@@ -31,6 +46,11 @@ export default async function StatsPage() {
           emptyTitle="No player stats yet"
           rows={stats.players}
           title="Player stats"
+        />
+        <StatsTable
+          emptyTitle="No practice stats yet"
+          rows={practiceStats}
+          title="Practice player stats"
         />
       </div>
     </section>

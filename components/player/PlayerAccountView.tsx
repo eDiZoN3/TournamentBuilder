@@ -1,7 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
+import { PracticeMatchForm } from "@/components/player/PracticeMatchForm";
+import { PracticeMatchList } from "@/components/player/PracticeMatchList";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import type { SerializedPracticeMatch } from "@/lib/practiceMatches";
 
 export interface PlayerAccountProfile {
   _id: string;
@@ -20,12 +24,95 @@ export interface PlayerAccountStats {
 }
 
 interface PlayerAccountViewProps {
+  practiceMatches?: SerializedPracticeMatch[];
+  practiceStats?: PlayerAccountStats | null;
   profile: PlayerAccountProfile;
   stats: PlayerAccountStats | null;
 }
 
-export function PlayerAccountView({ profile, stats }: PlayerAccountViewProps) {
+function StatsSummary({
+  emptyTitle,
+  stats,
+}: {
+  emptyTitle: string;
+  stats: PlayerAccountStats | null;
+}) {
   const { t } = useLocale();
+
+  if (!stats) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-900">
+        <p className="font-semibold text-slate-900 dark:text-white">
+          {emptyTitle}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 sm:grid-cols-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t("matches")}
+        </p>
+        <p className="mt-1 text-2xl font-bold">{stats.matchesPlayed}</p>
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t("wins")}
+        </p>
+        <p className="mt-1 text-2xl font-bold">{stats.matchesWon}</p>
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t("points")}
+        </p>
+        <p className="mt-1 text-2xl font-bold">{stats.pointsFor}</p>
+      </div>
+      <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {t("winRate")}
+        </p>
+        <p className="mt-1 text-2xl font-bold">
+          {Math.round(stats.winRate * 100)}%
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function PlayerAccountView({
+  practiceMatches = [],
+  practiceStats = null,
+  profile,
+  stats,
+}: PlayerAccountViewProps) {
+  const { t } = useLocale();
+  const [practiceMatchRows, setPracticeMatchRows] =
+    useState(practiceMatches);
+  const [editingMatch, setEditingMatch] =
+    useState<SerializedPracticeMatch | null>(null);
+
+  useEffect(() => {
+    setPracticeMatchRows(practiceMatches);
+  }, [practiceMatches]);
+
+  function savePracticeMatch(match: SerializedPracticeMatch) {
+    setPracticeMatchRows((currentMatches) => {
+      const hasExistingMatch = currentMatches.some(
+        (currentMatch) => currentMatch._id === match._id,
+      );
+
+      if (!hasExistingMatch) {
+        return [match, ...currentMatches];
+      }
+
+      return currentMatches.map((currentMatch) =>
+        currentMatch._id === match._id ? match : currentMatch,
+      );
+    });
+    setEditingMatch(null);
+  }
 
   return (
     <section className="space-y-6">
@@ -50,32 +137,44 @@ export function PlayerAccountView({ profile, stats }: PlayerAccountViewProps) {
         </button>
       </header>
 
-      {stats ? (
-        <div className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t("matches")}</p>
-            <p className="mt-1 text-2xl font-bold">{stats.matchesPlayed}</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t("wins")}</p>
-            <p className="mt-1 text-2xl font-bold">{stats.matchesWon}</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t("points")}</p>
-            <p className="mt-1 text-2xl font-bold">{stats.pointsFor}</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t("winRate")}</p>
-            <p className="mt-1 text-2xl font-bold">
-              {Math.round(stats.winRate * 100)}%
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-900">
-          <p className="font-semibold text-slate-900 dark:text-white">No completed matches yet.</p>
-        </div>
-      )}
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold tracking-tight">
+          {t("tournamentStats")}
+        </h2>
+        <StatsSummary emptyTitle="No completed matches yet." stats={stats} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold tracking-tight">
+          {t("practiceStats")}
+        </h2>
+        <StatsSummary emptyTitle={t("noPracticeStats")} stats={practiceStats} />
+      </section>
+
+      <section className="space-y-3" id="practice-matches">
+        <h2 className="text-xl font-bold tracking-tight">
+          {t("practiceMatches")}
+        </h2>
+        <PracticeMatchForm
+          currentPlayer={{
+            displayName: profile.displayName,
+            playerProfileId: profile._id,
+          }}
+          editingMatch={editingMatch}
+          onCancelEdit={() => setEditingMatch(null)}
+          onSaved={savePracticeMatch}
+        />
+        <PracticeMatchList
+          currentPlayerProfileId={profile._id}
+          matches={practiceMatchRows}
+          onDeleted={(id) =>
+            setPracticeMatchRows((currentMatches) =>
+              currentMatches.filter((match) => match._id !== id),
+            )
+          }
+          onEdit={setEditingMatch}
+        />
+      </section>
     </section>
   );
 }

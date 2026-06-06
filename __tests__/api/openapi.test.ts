@@ -3,6 +3,8 @@ import { GET } from "@/app/api/openapi/route";
 
 const documentedPaths = [
   "/api/auth/signup",
+  "/api/practice-matches",
+  "/api/practice-matches/{id}",
   "/api/stats",
   "/api/tournaments",
   "/api/tournaments/{id}",
@@ -58,5 +60,13 @@ describe("/api/openapi", () => {
     expect(body.paths["/api/admin/stats/reset"].post.requestBody.content).toHaveProperty(
       "application/json",
     );
+    expect(body.paths["/api/practice-matches"].post).toMatchObject({
+      security: [{ cookieAuth: [] }],
+      requestBody: {
+        required: true,
+      },
+    });
+    expect(body.components.schemas.PracticeMatch).toBeDefined();
+    expect(body.components.schemas.PracticeMatchRequest).toBeDefined();
   });
 });

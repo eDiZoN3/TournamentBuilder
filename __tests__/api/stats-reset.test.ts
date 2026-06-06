@@ -279,6 +279,7 @@ describe("POST /api/admin/stats/reset", () => {
     await expect(statsResponse.json()).resolves.toEqual({
       teams: [],
       players: [],
+      practicePlayers: [],
     });
     await expect(Tournament.findById(tournament._id).lean()).resolves.toMatchObject({
       name: "Complete Reset Cup",

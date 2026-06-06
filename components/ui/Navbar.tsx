@@ -86,6 +86,15 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
       >
         {isAuthenticated ? accountLabel : loginLabel}
       </Link>
+      {isAuthenticated && role === "player" ? (
+        <Link
+          className="inline-flex text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+          href="/account#practice-matches"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          {t("practiceMatches")}
+        </Link>
+      ) : null}
       {isAuthenticated ? (
         <button
           className="inline-flex rounded-md border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"

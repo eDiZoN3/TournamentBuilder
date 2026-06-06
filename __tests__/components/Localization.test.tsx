@@ -4,6 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams, makeTournament } from "@/__tests__/helpers/factories";
 import NewTournamentPage from "@/app/admin/tournament/new/page";
+import { PlayerAccountView } from "@/components/player/PlayerAccountView";
 import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { LocaleProvider, LOCALE_STORAGE_KEY } from "@/components/ui/LocaleProvider";
 import { Navbar } from "@/components/ui/Navbar";
@@ -114,5 +115,30 @@ describe("frontend localization", () => {
     expect(
       screen.getByRole("columnheader", { name: de("wins") }),
     ).toBeInTheDocument();
+  });
+
+  it("translates player practice match account sections", async () => {
+    renderGerman(
+      <PlayerAccountView
+        practiceMatches={[]}
+        practiceStats={null}
+        profile={{
+          _id: "profile-id",
+          displayName: "Alice Example",
+          email: "alice@example.com",
+          firstName: "Alice",
+          userId: "user-id",
+        }}
+        stats={null}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: de("practiceStats") }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: de("practiceMatches") }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(de("noPracticeStats"))).toBeInTheDocument();
   });
 });

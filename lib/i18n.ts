@@ -15,9 +15,11 @@ export type TranslationKey =
   | "createNewTournament"
   | "createTournament"
   | "dashboard"
+  | "delete"
   | "diff"
   | "doubleElimination"
   | "draft"
+  | "edit"
   | "email"
   | "enterPlayerNames"
   | "enterTeamNames"
@@ -39,8 +41,12 @@ export type TranslationKey =
   | "name"
   | "newTournament"
   | "noPlayerStats"
+  | "noPracticeMatches"
+  | "noPracticeStats"
   | "noTeamStats"
   | "noTournamentsYet"
+  | "opponentName"
+  | "opponentScore"
   | "password"
   | "place"
   | "played"
@@ -48,10 +54,15 @@ export type TranslationKey =
   | "playerAccount"
   | "playerSignUp"
   | "playerStats"
+  | "practiceMatches"
+  | "practicePlayerStats"
+  | "practiceStats"
   | "points"
   | "pointsAgainst"
   | "pointsFor"
   | "round"
+  | "saving"
+  | "savePracticeMatch"
   | "schedule"
   | "score"
   | "signIn"
@@ -75,13 +86,15 @@ export type TranslationKey =
   | "tournamentFormat"
   | "tournamentManagement"
   | "tournamentName"
+  | "tournamentStats"
   | "tournaments"
   | "upNext"
   | "view"
   | "volleyballTournaments"
   | "winRate"
   | "won"
-  | "wins";
+  | "wins"
+  | "yourScore";
 
 const translations: Record<Locale, Record<TranslationKey, string>> = {
   de: {
@@ -97,9 +110,11 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     createNewTournament: "Neues Turnier erstellen",
     createTournament: "Turnier erstellen",
     dashboard: "Dashboard",
+    delete: "Loeschen",
     diff: "Diff",
     doubleElimination: "Double Elimination",
     draft: "Entwurf",
+    edit: "Bearbeiten",
     email: "E-Mail",
     enterPlayerNames: "Spielernamen eingeben",
     enterTeamNames: "Teamnamen eingeben",
@@ -122,8 +137,12 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     name: "Name",
     newTournament: "Neues Turnier",
     noPlayerStats: "Noch keine Spielerstatistiken",
+    noPracticeMatches: "Noch keine Trainingsspiele",
+    noPracticeStats: "Noch keine Trainingsstatistiken",
     noTeamStats: "Noch keine Teamstatistiken",
     noTournamentsYet: "Noch keine Turniere.",
+    opponentName: "Gegnername",
+    opponentScore: "Gegnerpunkte",
     password: "Passwort",
     place: "Platz",
     played: "Gespielt",
@@ -131,6 +150,11 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     playerAccount: "Spielerkonto",
     playerSignUp: "Spielerregistrierung",
     playerStats: "Spielerstatistiken",
+    practiceMatches: "Trainingsspiele",
+    practicePlayerStats: "Trainingsspielerstatistiken",
+    practiceStats: "Trainingsstatistiken",
+    saving: "Speichern...",
+    savePracticeMatch: "Trainingsspiel speichern",
     points: "Punkte",
     pointsAgainst: "Punkte gegen",
     pointsFor: "Punkte für",
@@ -158,6 +182,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     tournamentFormat: "Turnierformat",
     tournamentManagement: "Turnierverwaltung",
     tournamentName: "Turniername",
+    tournamentStats: "Turnierstatistiken",
     tournaments: "Turniere",
     upNext: "Als Nachstes",
     view: "Ansehen",
@@ -165,6 +190,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     winRate: "Siegquote",
     won: "Gewonnen",
     wins: "Siege",
+    yourScore: "Deine Punkte",
   },
   en: {
     account: "Account",
@@ -179,9 +205,11 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     createNewTournament: "Create New Tournament",
     createTournament: "Create tournament",
     dashboard: "Dashboard",
+    delete: "Delete",
     diff: "Diff",
     doubleElimination: "Double elimination",
     draft: "Draft",
+    edit: "Edit",
     email: "Email",
     enterPlayerNames: "Enter player names",
     enterTeamNames: "Enter team names",
@@ -204,8 +232,12 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     name: "Name",
     newTournament: "New tournament",
     noPlayerStats: "No player stats yet",
+    noPracticeMatches: "No practice matches yet",
+    noPracticeStats: "No practice stats yet",
     noTeamStats: "No team stats yet",
     noTournamentsYet: "No tournaments yet.",
+    opponentName: "Opponent name",
+    opponentScore: "Opponent score",
     password: "Password",
     place: "Place",
     played: "Played",
@@ -213,6 +245,11 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     playerAccount: "Player account",
     playerSignUp: "Player sign up",
     playerStats: "Player stats",
+    practiceMatches: "Practice matches",
+    practicePlayerStats: "Practice player stats",
+    practiceStats: "Practice stats",
+    saving: "Saving...",
+    savePracticeMatch: "Save practice match",
     points: "Points",
     pointsAgainst: "Points Against",
     pointsFor: "Points For",
@@ -240,6 +277,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     tournamentFormat: "Tournament format",
     tournamentManagement: "Tournament management",
     tournamentName: "Tournament name",
+    tournamentStats: "Tournament stats",
     tournaments: "Tournaments",
     upNext: "Up next",
     view: "View",
@@ -247,6 +285,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     winRate: "Win rate",
     won: "Won",
     wins: "Wins",
+    yourScore: "Your score",
   },
 };
 

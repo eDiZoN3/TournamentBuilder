@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { makeMatch, makeSet, makeTeams } from "@/__tests__/helpers/factories";
 import { GET as globalStats } from "@/app/api/stats/route";
 import { GET as tournamentStats } from "@/app/api/tournaments/[id]/stats/route";
+import { PracticeMatch } from "@/lib/models/PracticeMatch";
 import { Tournament } from "@/lib/models/Tournament";
 
 function request(url: string) {
@@ -121,6 +122,37 @@ describe("stats API", () => {
     });
   });
 
+  it("returns practice stats separately from tournament player stats", async () => {
+    const aliceId = new Types.ObjectId();
+    const bobId = new Types.ObjectId();
+    await PracticeMatch.create({
+      createdBy: aliceId,
+      playedAt: new Date("2026-06-06T12:00:00.000Z"),
+      sideA: [{ playerProfileId: aliceId, displayName: "Practice Alice" }],
+      sideB: [{ playerProfileId: bobId, displayName: "Practice Bob" }],
+      sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+      winnerSide: "A",
+    });
+
+    const response = await globalStats();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.players).toEqual([]);
+    expect(body.practicePlayers).toEqual([
+      expect.objectContaining({
+        playerProfileId: aliceId.toString(),
+        name: "Practice Alice",
+        matchesWon: 1,
+      }),
+      expect.objectContaining({
+        playerProfileId: bobId.toString(),
+        name: "Practice Bob",
+        matchesLost: 1,
+      }),
+    ]);
+  });
+
   it("returns empty arrays when no tournaments exist", async () => {
     const response = await globalStats();
 
@@ -128,6 +160,7 @@ describe("stats API", () => {
     await expect(response.json()).resolves.toEqual({
       teams: [],
       players: [],
+      practicePlayers: [],
     });
   });
 

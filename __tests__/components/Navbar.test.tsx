@@ -123,10 +123,16 @@ describe("Navbar", () => {
     const { rerender } = render(<Navbar isAuthenticated={false} />);
 
     expect(screen.queryByRole("button", { name: "Log out" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Practice matches" }),
+    ).not.toBeInTheDocument();
 
     rerender(<Navbar isAuthenticated role="player" />);
 
     expect(linkHrefs("Account")).toContain("/account");
+    expect(linkHrefs("Practice matches")).toContain(
+      "/account#practice-matches",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 

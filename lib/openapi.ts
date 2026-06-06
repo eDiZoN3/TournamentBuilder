@@ -105,6 +105,10 @@ export const openApiDocument: OpenApiDocument = {
       description: "Match scoring, status, court, and manual override operations.",
     },
     {
+      name: "Practice Matches",
+      description: "Player-owned practice matches outside tournament brackets.",
+    },
+    {
       name: "Admin",
       description: "Administrative dashboard, account, and stats reset operations.",
     },
@@ -146,6 +150,13 @@ export const openApiDocument: OpenApiDocument = {
         in: "path",
         required: true,
         description: "MongoDB ObjectId of the player user account.",
+        schema: ref("ObjectId"),
+      },
+      PracticeMatchId: {
+        name: "id",
+        in: "path",
+        required: true,
+        description: "MongoDB ObjectId of the practice match.",
         schema: ref("ObjectId"),
       },
     },
@@ -260,6 +271,117 @@ export const openApiDocument: OpenApiDocument = {
           },
           isBye: {
             type: "boolean",
+          },
+        },
+      },
+      PracticeParticipant: {
+        type: "object",
+        required: ["displayName"],
+        properties: {
+          playerProfileId: {
+            oneOf: [ref("ObjectId"), { type: "null" }],
+          },
+          displayName: {
+            type: "string",
+            minLength: 1,
+            maxLength: 120,
+            example: "Alice Example",
+          },
+        },
+      },
+      PracticeSetRequest: {
+        type: "object",
+        required: ["scoreA", "scoreB"],
+        properties: {
+          scoreA: {
+            type: "integer",
+            minimum: 0,
+          },
+          scoreB: {
+            type: "integer",
+            minimum: 0,
+          },
+        },
+      },
+      PracticeSet: {
+        type: "object",
+        required: ["scoreA", "scoreB", "pointsToWin"],
+        properties: {
+          scoreA: {
+            type: "integer",
+            minimum: 0,
+          },
+          scoreB: {
+            type: "integer",
+            minimum: 0,
+          },
+          pointsToWin: {
+            type: "integer",
+            enum: [11, 21],
+          },
+        },
+      },
+      PracticeMatchRequest: {
+        type: "object",
+        required: ["sideA", "sideB", "sets"],
+        properties: {
+          playedAt: {
+            type: "string",
+            format: "date-time",
+          },
+          sideA: {
+            type: "array",
+            minItems: 1,
+            maxItems: 4,
+            items: ref("PracticeParticipant"),
+          },
+          sideB: {
+            type: "array",
+            minItems: 1,
+            maxItems: 4,
+            items: ref("PracticeParticipant"),
+          },
+          sets: {
+            type: "array",
+            minItems: 1,
+            maxItems: 3,
+            items: ref("PracticeSetRequest"),
+          },
+        },
+      },
+      PracticeMatch: {
+        type: "object",
+        required: [
+          "_id",
+          "createdBy",
+          "playedAt",
+          "sideA",
+          "sideB",
+          "sets",
+          "winnerSide",
+        ],
+        properties: {
+          _id: ref("ObjectId"),
+          createdBy: ref("ObjectId"),
+          playedAt: {
+            type: "string",
+            format: "date-time",
+          },
+          sideA: {
+            type: "array",
+            items: ref("PracticeParticipant"),
+          },
+          sideB: {
+            type: "array",
+            items: ref("PracticeParticipant"),
+          },
+          sets: {
+            type: "array",
+            items: ref("PracticeSet"),
+          },
+          winnerSide: {
+            type: "string",
+            enum: ["A", "B"],
           },
         },
       },
@@ -480,6 +602,10 @@ export const openApiDocument: OpenApiDocument = {
             type: "array",
             items: ref("StatsRow"),
           },
+          practicePlayers: {
+            type: "array",
+            items: ref("StatsRow"),
+          },
         },
       },
       SignupRequest: {
@@ -636,10 +762,97 @@ export const openApiDocument: OpenApiDocument = {
     "/api/stats": {
       get: {
         tags: ["Public"],
-        summary: "List global team and player statistics",
+        summary: "List global tournament and practice statistics",
         operationId: "getGlobalStats",
         responses: {
           "200": jsonResponse("Global statistics.", ref("StatsResponse")),
+          "500": responseRef("InternalError"),
+        },
+      },
+    },
+    "/api/practice-matches": {
+      get: {
+        tags: ["Practice Matches"],
+        summary: "List practice matches for the signed-in player",
+        operationId: "listPracticeMatches",
+        security: cookieSecurity,
+        responses: {
+          "200": jsonResponse("Practice matches.", {
+            type: "object",
+            required: ["practiceMatches"],
+            properties: {
+              practiceMatches: {
+                type: "array",
+                items: ref("PracticeMatch"),
+              },
+            },
+          }),
+          "401": responseRef("Unauthorized"),
+          "500": responseRef("InternalError"),
+        },
+      },
+      post: {
+        tags: ["Practice Matches"],
+        summary: "Create a practice match",
+        operationId: "createPracticeMatch",
+        security: cookieSecurity,
+        requestBody: jsonBody(ref("PracticeMatchRequest")),
+        responses: {
+          "201": jsonResponse("Practice match created.", {
+            type: "object",
+            required: ["match"],
+            properties: {
+              match: ref("PracticeMatch"),
+            },
+          }),
+          "401": responseRef("Unauthorized"),
+          "422": responseRef("ValidationError"),
+          "500": responseRef("InternalError"),
+        },
+      },
+    },
+    "/api/practice-matches/{id}": {
+      put: {
+        tags: ["Practice Matches"],
+        summary: "Update a creator-owned practice match",
+        operationId: "updatePracticeMatch",
+        security: cookieSecurity,
+        parameters: [parameterRef("PracticeMatchId")],
+        requestBody: jsonBody(ref("PracticeMatchRequest")),
+        responses: {
+          "200": jsonResponse("Practice match updated.", {
+            type: "object",
+            required: ["match"],
+            properties: {
+              match: ref("PracticeMatch"),
+            },
+          }),
+          "401": responseRef("Unauthorized"),
+          "403": responseRef("Forbidden"),
+          "404": responseRef("NotFound"),
+          "422": responseRef("ValidationError"),
+          "500": responseRef("InternalError"),
+        },
+      },
+      delete: {
+        tags: ["Practice Matches"],
+        summary: "Delete a creator-owned practice match",
+        operationId: "deletePracticeMatch",
+        security: cookieSecurity,
+        parameters: [parameterRef("PracticeMatchId")],
+        responses: {
+          "200": jsonResponse("Practice match deleted.", {
+            type: "object",
+            required: ["deleted"],
+            properties: {
+              deleted: {
+                type: "boolean",
+              },
+            },
+          }),
+          "401": responseRef("Unauthorized"),
+          "403": responseRef("Forbidden"),
+          "404": responseRef("NotFound"),
           "500": responseRef("InternalError"),
         },
       },

@@ -5,6 +5,7 @@ import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
 import HomePage from "@/app/(public)/page";
 import StatsPage from "@/app/(public)/stats/page";
 import TournamentPage from "@/app/(public)/tournament/[id]/page";
+import { PracticeMatch } from "@/lib/models/PracticeMatch";
 import { Tournament } from "@/lib/models/Tournament";
 
 const { notFound } = vi.hoisted(() => ({
@@ -78,6 +79,24 @@ describe("public global stats page", () => {
 
     expect(markup).toContain("No team stats yet");
     expect(markup).toContain("No player stats yet");
+    expect(markup).toContain("No practice stats yet");
+  });
+
+  it("renders practice player stats separately from tournament stats", async () => {
+    const playerProfileId = new Types.ObjectId();
+    await PracticeMatch.create({
+      createdBy: playerProfileId,
+      playedAt: new Date("2026-06-06T12:00:00.000Z"),
+      sideA: [{ playerProfileId, displayName: "Practice Alice" }],
+      sideB: [{ displayName: "Guest Bob" }],
+      sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+      winnerSide: "A",
+    });
+
+    const markup = renderToStaticMarkup(await StatsPage());
+
+    expect(markup).toContain("Practice player stats");
+    expect(markup).toContain("Practice Alice");
   });
 });
 

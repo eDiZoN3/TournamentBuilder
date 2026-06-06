@@ -65,7 +65,10 @@ export function SignupForm() {
   }
 
   return (
-    <section className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <section
+      className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      data-testid="signup-auth-card"
+    >
       <h1 className="text-2xl font-bold tracking-tight">{t("playerSignUp")}</h1>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         Create an account to join open tournaments and track your stats.

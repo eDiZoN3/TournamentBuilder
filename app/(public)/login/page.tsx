@@ -71,12 +71,15 @@ function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="absolute right-4 top-4 flex gap-2">
+    <section className="mx-auto max-w-md" data-testid="login-page">
+      <div className="mb-4 flex justify-end gap-2">
         <LocaleToggle />
         <ThemeToggle />
       </div>
-      <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <section
+        className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+        data-testid="login-auth-card"
+      >
         <h1 className="text-2xl font-bold tracking-tight">{t("signIn")}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           Sign in with your tournament or player account.
@@ -130,7 +133,7 @@ function LoginForm() {
           </button>
         </form>
       </section>
-    </main>
+    </section>
   );
 }
 

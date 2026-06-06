@@ -1270,3 +1270,47 @@ Tests cover independent empty states and practice-player rendering separate from
 Tests cover German account UI practice labels and OpenAPI practice-match routes/schemas.
 
 ---
+
+## Phase 12 - Open Issues 21-23
+
+Archived from `task.md` after issues 21, 22, and 23 were implemented.
+
+### T95 - Fixed Round-Robin Match Table Columns and Active-Round Highlight (TDD First)
+**Files**: `components/tournament/RoundRobinView.tsx`, `components/admin/TournamentManageView.tsx`, `components/bracket/PublicTournamentView.tsx`, `__tests__/components/PublicTournamentView.test.tsx`, `__tests__/components/TournamentManageView.test.tsx`
+**Depends on**: T74
+**TDD**: Tests written before implementation
+**Description**: Fixed round-robin table layout in admin and public views:
+- Round tables now use fixed table layout and stable column width percentages.
+- Active/in-progress rows use a light green background instead of width changes.
+- Public and admin round-robin views share the same schedule table treatment.
+- Small screens keep the table inside the existing horizontal scroll container.
+
+Tests cover fixed table classes, active-round metadata, active-row highlight, and public/admin parity.
+
+---
+
+### T96 - Align Login Card Spacing with Signup Card (TDD First)
+**Files**: `app/(public)/login/page.tsx`, `components/player/SignupForm.tsx`, `__tests__/components/LoginPage.test.tsx`, `__tests__/components/SignupForm.test.tsx`
+**Depends on**: T80
+**TDD**: Tests written before implementation
+**Description**: Normalized public auth page spacing:
+- Login now uses the same public auth card rhythm as signup.
+- Removed the full-screen centered login wrapper.
+- Locale and theme controls remain accessible without overlapping the card.
+
+Tests cover login layout classes, signup card layout metadata, and accessible controls.
+
+---
+
+### T97 - Hide Court Override for One-Court Tournaments (TDD First)
+**Files**: `components/admin/MatchControls.tsx`, `components/admin/CourtOverrideControls.tsx`, `__tests__/components/MatchControls.test.tsx`, `__tests__/components/CourtOverrideControls.test.tsx`
+**Depends on**: T34
+**TDD**: Tests written before implementation
+**Description**: Simplified match controls when only one court exists:
+- Ready one-court matches show only "Mark as in progress".
+- One-court in-progress matches hide the manual court selector.
+- Multi-court tournaments keep the manual court override control.
+
+Tests cover one-court hidden states, status endpoint usage, and preserved multi-court override behavior.
+
+---

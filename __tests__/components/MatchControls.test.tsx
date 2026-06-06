@@ -73,8 +73,8 @@ describe("MatchControls", () => {
 
     render(
       <MatchControls
-        courtsAvailable={1}
-        currentMatchIds={[makeMatch()._id]}
+        courtsAvailable={2}
+        currentMatchIds={[makeMatch()._id, makeMatch()._id]}
         match={match}
         onUpdated={vi.fn()}
         teamAName="Alpha"
@@ -90,6 +90,25 @@ describe("MatchControls", () => {
       screen.getByRole("button", { name: "Mark as in progress" }),
     ).toHaveAttribute("title", "All courts occupied");
     expect(screen.getByTestId("court-override")).toBeInTheDocument();
+  });
+
+  it("hides manual court override for one-court ready matches", () => {
+    render(
+      <MatchControls
+        courtsAvailable={1}
+        currentMatchIds={[]}
+        match={makeMatch({ status: "ready" })}
+        onUpdated={vi.fn()}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Mark as in progress" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("court-override")).not.toBeInTheDocument();
   });
 
   it("marks a ready match in progress", async () => {
@@ -152,6 +171,29 @@ describe("MatchControls", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enter scores" }));
 
     expect(screen.getByTestId("score-entry")).toBeInTheDocument();
+  });
+
+  it("hides manual court override for one-court in-progress matches", () => {
+    const teams = makeTeams(2);
+
+    render(
+      <MatchControls
+        courtsAvailable={1}
+        currentMatchIds={[]}
+        match={makeMatch({
+          status: "in_progress",
+          teamA: { teamId: teams[0]._id, sets: [] },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        })}
+        onUpdated={vi.fn()}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Enter scores" })).toBeInTheDocument();
+    expect(screen.queryByTestId("court-override")).not.toBeInTheDocument();
   });
 
   it("notifies the parent while score entry is pinned and when it closes", () => {

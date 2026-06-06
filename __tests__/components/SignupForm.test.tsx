@@ -104,4 +104,14 @@ describe("SignupForm", () => {
 
     expect(await screen.findByText("Email already registered")).toBeInTheDocument();
   });
+
+  it("uses the shared public auth card spacing", () => {
+    render(<SignupForm />);
+
+    expect(screen.getByTestId("signup-auth-card")).toHaveClass(
+      "mx-auto",
+      "max-w-md",
+      "p-8",
+    );
+  });
 });

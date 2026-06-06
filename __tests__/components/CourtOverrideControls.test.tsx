@@ -78,7 +78,7 @@ describe("CourtOverrideControls", () => {
     render(
       <ToastProvider>
         <CourtOverrideControls
-          courtsAvailable={1}
+          courtsAvailable={2}
           match={makeMatch({ status: "ready" })}
           onUpdated={vi.fn()}
           tournamentId="tournament-id"
@@ -91,5 +91,23 @@ describe("CourtOverrideControls", () => {
     expect(
       await screen.findByText("Court 1 assigned; previous match returned to ready."),
     ).toBeInTheDocument();
+  });
+
+  it("is hidden when there is only one court", () => {
+    render(
+      <ToastProvider>
+        <CourtOverrideControls
+          courtsAvailable={1}
+          match={makeMatch({ status: "ready" })}
+          onUpdated={vi.fn()}
+          tournamentId="tournament-id"
+        />
+      </ToastProvider>,
+    );
+
+    expect(screen.queryByTestId("court-override")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Assign court" }),
+    ).not.toBeInTheDocument();
   });
 });

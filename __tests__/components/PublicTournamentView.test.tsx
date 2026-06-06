@@ -189,6 +189,56 @@ describe("PublicTournamentView", () => {
     expect(screen.queryByRole("heading", { name: "Winner bracket" })).not.toBeInTheDocument();
   });
 
+  it("keeps round-robin table columns fixed and highlights the active round", () => {
+    const teams = makeTeams(3);
+    const initialTournament = tournament({
+      format: "team_round_robin",
+      name: "League Cup",
+      status: "active",
+      teams,
+      matches: [
+        makeMatch({
+          label: "Round 1",
+          round: 1,
+          status: "completed",
+          winnerId: teams[0]._id,
+          loserId: teams[1]._id,
+          teamA: {
+            teamId: teams[0]._id,
+            sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+          },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        }),
+        makeMatch({
+          label: "Round 2",
+          round: 2,
+          status: "in_progress",
+          courtNumber: 1,
+          teamA: { teamId: teams[0]._id, sets: [] },
+          teamB: { teamId: teams[2]._id, sets: [] },
+        }),
+      ],
+    });
+
+    render(<PublicTournamentView initialTournament={initialTournament} />);
+
+    const tables = screen.getAllByTestId("round-robin-table");
+    const activeRound = screen.getByTestId("round-robin-round-2");
+    const activeRow = within(activeRound).getByTestId("round-robin-match-row");
+
+    expect(tables).toHaveLength(2);
+    for (const table of tables) {
+      expect(table).toHaveClass("table-fixed");
+      expect(table).toHaveClass("min-w-[42rem]");
+    }
+    expect(activeRound).toHaveAttribute("data-active-round", "true");
+    expect(screen.getByTestId("round-robin-round-1")).toHaveAttribute(
+      "data-active-round",
+      "false",
+    );
+    expect(activeRow).toHaveClass("bg-emerald-50");
+  });
+
   it("highlights the current player in individual mixer standings", () => {
     const teams = makeTeams(2);
     teams[0].name = "Round 1 Team A";

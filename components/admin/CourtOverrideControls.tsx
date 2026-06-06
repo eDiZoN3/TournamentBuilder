@@ -41,6 +41,7 @@ export function CourtOverrideControls({
   const [isAssigning, setIsAssigning] = useState(false);
 
   if (
+    courtsAvailable <= 1 ||
     match.isBye ||
     (match.status !== "ready" && match.status !== "in_progress")
   ) {

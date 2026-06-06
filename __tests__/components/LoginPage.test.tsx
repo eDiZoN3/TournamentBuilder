@@ -143,4 +143,14 @@ describe("shared login page", () => {
       await screen.findByText("Invalid email or password."),
     ).toBeInTheDocument();
   });
+
+  it("uses the same public auth card spacing as signup", async () => {
+    await renderSharedLoginPage();
+
+    expect(screen.getByTestId("login-page")).toHaveClass("mx-auto", "max-w-md");
+    expect(screen.getByTestId("login-auth-card")).toHaveClass("p-8");
+    expect(screen.getByTestId("login-page")).not.toHaveClass("min-h-screen");
+    expect(screen.getByRole("button", { name: "Switch language to German" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Switch to dark mode" })).toBeInTheDocument();
+  });
 });

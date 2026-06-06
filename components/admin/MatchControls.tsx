@@ -174,12 +174,14 @@ export function MatchControls({
           Enter scores
         </button>
       )}
-      <CourtOverrideControls
-        courtsAvailable={courtsAvailable}
-        match={match}
-        onUpdated={onUpdated}
-        tournamentId={tournamentId}
-      />
+      {courtsAvailable > 1 ? (
+        <CourtOverrideControls
+          courtsAvailable={courtsAvailable}
+          match={match}
+          onUpdated={onUpdated}
+          tournamentId={tournamentId}
+        />
+      ) : null}
       {showScores ? (
         <ScoreEntry
           match={match}

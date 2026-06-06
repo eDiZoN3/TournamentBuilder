@@ -54,6 +54,20 @@ function statusLabel(match: IMatch): string {
   return match.status.replace("_", " ");
 }
 
+function isActiveRound(matches: IMatch[]): boolean {
+  return matches.some((match) => match.status === "in_progress");
+}
+
+function matchRowClass(match: IMatch): string {
+  const base = "transition-colors";
+
+  if (match.status === "in_progress") {
+    return `${base} bg-emerald-50 dark:bg-emerald-950/40`;
+  }
+
+  return base;
+}
+
 export function RoundRobinView({
   currentPlayerName = null,
   renderMatchControls,
@@ -76,12 +90,26 @@ export function RoundRobinView({
         </h2>
         <div className="mt-4 space-y-5">
           {rounds.map(([round, matches]) => (
-            <section key={round}>
+            <section
+              data-active-round={isActiveRound(matches) ? "true" : "false"}
+              data-testid={`round-robin-round-${round}`}
+              key={round}
+            >
               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {t("round")} {round}
               </h3>
               <div className="mt-2 overflow-x-auto">
-                <table className="w-full min-w-[42rem] border-collapse text-left text-sm">
+                <table
+                  className="w-full min-w-[42rem] table-fixed border-collapse text-left text-sm"
+                  data-testid="round-robin-table"
+                >
+                  <colgroup>
+                    <col className="w-[10%]" />
+                    <col className="w-[38%]" />
+                    <col className="w-[18%]" />
+                    <col className={renderMatchControls ? "w-[16%]" : "w-[34%]"} />
+                    {renderMatchControls ? <col className="w-[18%]" /> : null}
+                  </colgroup>
                   <thead>
                     <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:text-slate-400">
                       <th className="py-2 pr-4 font-semibold">{t("match")}</th>
@@ -107,7 +135,11 @@ export function RoundRobinView({
                         ) ?? "TBD";
 
                       return (
-                        <tr key={match._id.toString()}>
+                        <tr
+                          className={matchRowClass(match)}
+                          data-testid="round-robin-match-row"
+                          key={match._id.toString()}
+                        >
                           <td className="py-3 pr-4 font-medium text-slate-900 dark:text-white">
                             {match.position}
                           </td>
@@ -121,7 +153,7 @@ export function RoundRobinView({
                             {statusLabel(match)}
                           </td>
                           {renderMatchControls ? (
-                            <td className="min-w-64 py-3 pl-4">
+                            <td className="py-3 pl-4 align-top">
                               {renderMatchControls(match, teamAName, teamBName)}
                             </td>
                           ) : null}

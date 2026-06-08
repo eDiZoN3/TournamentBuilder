@@ -150,6 +150,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     responseBody.format ??= "double_elimination";
     responseBody.roundRobinMatchFormat ??= "bo1";
 
+    if (Array.isArray(responseBody.joinedPlayers)) {
+      responseBody.joinedPlayers = responseBody.joinedPlayers.map(
+        ({ email: _email, ...rest }: { email: string; [key: string]: unknown }) => rest,
+      );
+    }
+
     return NextResponse.json(responseBody);
   } catch {
     return jsonError("Unable to load tournament", "INTERNAL_ERROR", 500);

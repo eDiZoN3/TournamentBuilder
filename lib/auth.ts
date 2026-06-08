@@ -83,7 +83,7 @@ export const authOptions: NextAuthOptions = {
         session.user.mustChangePassword = token.mustChangePassword ?? false;
         session.user.playerDisplayName = token.playerDisplayName;
         session.user.playerProfileId = token.playerProfileId;
-        session.user.role = token.role ?? "admin";
+        session.user.role = token.role ?? "player";
       }
 
       return session;

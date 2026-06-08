@@ -77,6 +77,9 @@ export function PublicTournamentView({
   );
   const tournament = data ?? initialTournament;
   const showSkeleton = isLoading && !data;
+  const isDraft = tournament.status === "draft";
+  const canSelfJoin =
+    isDraft && tournament.allowSelfJoin && tournament.inputMode === "players";
   const joinedPlayers = tournament.joinedPlayers ?? [];
   const currentPlayerJoined = Boolean(
     currentPlayerName &&
@@ -106,25 +109,33 @@ export function PublicTournamentView({
       {tournament.status === "completed" ? (
         <FinalStandings tournament={tournament} />
       ) : null}
-      {tournament.status === "draft" &&
-      tournament.allowSelfJoin &&
-      tournament.inputMode === "players" ? (
+      {isDraft ? (
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t("joinPhase")}</h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                {formatTranslation(locale, "playerJoined", {
-                  n: joinedPlayers.length,
-                  s: joinedPlayers.length === 1 ? "" : "s",
-                })}
-              </p>
+              {tournament.inputMode === "players" ? (
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {formatTranslation(locale, "playerJoined", {
+                    n: joinedPlayers.length,
+                    s: joinedPlayers.length === 1 ? "" : "s",
+                  })}
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {formatTranslation(locale, "teamsConfigured", {
+                    n: tournament.teams.length,
+                  })}
+                </p>
+              )}
             </div>
-            <JoinTournamentButton
-              currentPlayerName={currentPlayerName}
-              initiallyJoined={currentPlayerJoined}
-              tournamentId={tournament._id.toString()}
-            />
+            {canSelfJoin ? (
+              <JoinTournamentButton
+                currentPlayerName={currentPlayerName}
+                initiallyJoined={currentPlayerJoined}
+                tournamentId={tournament._id.toString()}
+              />
+            ) : null}
           </div>
           {joinedPlayers.length > 0 ? (
             <ul className="mt-4 flex flex-wrap gap-2 text-sm">
@@ -140,21 +151,23 @@ export function PublicTournamentView({
           ) : null}
         </section>
       ) : null}
-      {showSkeleton ? (
-        <BracketSkeleton />
-      ) : isNonKnockoutFormat(tournament.format) ? (
-        <RoundRobinView
-          currentPlayerName={currentPlayerName}
-          tournament={tournament}
-        />
-      ) : (
-        <BracketView
-          currentPlayerName={currentPlayerName}
-          matches={tournament.matches}
-          teams={tournament.teams}
-        />
-      )}
-      <TournamentStats tournament={tournament} />
+      {!isDraft ? (
+        showSkeleton ? (
+          <BracketSkeleton />
+        ) : isNonKnockoutFormat(tournament.format) ? (
+          <RoundRobinView
+            currentPlayerName={currentPlayerName}
+            tournament={tournament}
+          />
+        ) : (
+          <BracketView
+            currentPlayerName={currentPlayerName}
+            matches={tournament.matches}
+            teams={tournament.teams}
+          />
+        )
+      ) : null}
+      {!isDraft ? <TournamentStats tournament={tournament} /> : null}
     </section>
   );
 }

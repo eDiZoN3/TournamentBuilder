@@ -1462,3 +1462,49 @@ Tests cover search/select behavior, generated-team payloads with profile IDs, se
 Tests cover registered-player aggregation across tournaments, display-name changes, profile-based reset filtering, manual fallback rows, and practice/tournament separation through existing stats coverage.
 
 ---
+
+## Phase 13 - Issue 25
+
+Archived from `task.md` after issue 25 was implemented.
+
+### T104 - Draft Tournament Roster Lifecycle API (TDD First)
+**Files**: `app/api/tournaments/route.ts`, `app/api/tournaments/[id]/route.ts`, `app/api/tournaments/[id]/join/route.ts`, `app/api/tournaments/[id]/start/route.ts`, `lib/models/Tournament.ts`, `__tests__/api/tournaments.test.ts`, `__tests__/api/join.test.ts`, `__tests__/api/start.test.ts`
+**Depends on**: T101
+**TDD**: Tests written before implementation
+**Description**: Made the draft create/save/start lifecycle explicit:
+- Tournament creation returns and stores an empty draft without requiring teams, players, or matches.
+- Draft roster updates can persist empty rosters without starting the tournament.
+- Existing start, join, and update guards keep roster mutation and self-join locked after start.
+- Existing start-time validation and match generation remain the only path from draft to active.
+
+Tests cover empty draft creation, empty draft roster saves, start-time validation, generated starts, active join blocking, active edit blocking, and repeated-start conflicts.
+
+---
+
+### T105 - Separate Save Draft and Start Tournament Controls (TDD First)
+**Files**: `components/admin/TournamentSetupForm.tsx`, `components/admin/AdminDashboard.tsx`, `app/admin/tournament/new/page.tsx`, `lib/i18n.ts`, `__tests__/components/NewTournamentPage.test.tsx`, `__tests__/components/TournamentSetupPage.test.tsx`, `__tests__/components/AdminDashboard.test.tsx`, `__tests__/components/Localization.test.tsx`
+**Depends on**: T102, T104
+**TDD**: Tests written before implementation
+**Description**: Updated setup so tournament leads can fill rosters over time:
+- Added a localized "Save roster" action that PUTs draft participants without calling start or redirecting.
+- Kept "Start tournament" as the validated action that saves the final roster, starts the tournament, and redirects to manage.
+- Draft player-entry saves can persist partial player rosters, while start still requires generated/valid teams except for individual mixer.
+- New tournament creation and dashboard draft setup links continue to route managers into setup.
+
+Tests cover saving without start, existing separate start redirect behavior, readiness validation, draft creation routing, and dashboard draft setup links.
+
+---
+
+### T106 - Draft Public Join Phase and Lock UI (TDD First)
+**Files**: `components/bracket/PublicTournamentView.tsx`, `components/player/JoinTournamentButton.tsx`, `components/admin/TournamentSetupForm.tsx`, `lib/i18n.ts`, `__tests__/components/PublicTournamentView.test.tsx`, `__tests__/components/JoinTournamentButton.test.tsx`, `__tests__/components/TournamentSetupPage.test.tsx`, `__tests__/components/Localization.test.tsx`
+**Depends on**: T104, T105
+**TDD**: Tests written before implementation
+**Description**: Made public draft tournaments clear before start:
+- Public draft tournaments now render a join-phase panel instead of empty brackets, schedules, or stats.
+- Self-join controls render only for draft player-entry tournaments with self-join enabled.
+- Joined player display stays live and email-free through existing public tournament serialization.
+- Active tournaments continue rendering matches/brackets and hide draft join controls.
+
+Tests cover draft join-phase rendering, no bracket/stat rendering before start, self-join success state, active bracket rendering after start, and existing no-email response coverage.
+
+---

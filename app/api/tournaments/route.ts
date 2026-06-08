@@ -140,6 +140,8 @@ export async function POST(request: NextRequest) {
         courtsAvailable: tournament.courtsAvailable,
         inputMode: tournament.inputMode,
         allowSelfJoin: tournament.allowSelfJoin,
+        teams: tournament.teams,
+        matches: tournament.matches,
       },
       {
         status: 201,

@@ -102,6 +102,8 @@ describe("PublicTournamentView", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Join phase" })).toBeInTheDocument();
+    expect(screen.queryByTestId("winner-bracket-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Stats" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Join tournament" }));
 
@@ -112,6 +114,26 @@ describe("PublicTournamentView", () => {
       );
       expect(screen.getByText("Joined as Alice Example")).toBeInTheDocument();
     });
+  });
+
+  it("shows a draft join phase for team-entry tournaments without rendering matches", () => {
+    const initialTournament = tournament({
+      _id: makeTeams(1)[0]._id,
+      allowSelfJoin: false,
+      inputMode: "teams",
+      joinedPlayers: [],
+      matches: [],
+      name: "Draft Team Cup",
+      status: "draft",
+      teams: [],
+    });
+
+    render(<PublicTournamentView initialTournament={initialTournament} />);
+
+    expect(screen.getByRole("heading", { name: "Join phase" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Join tournament" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("winner-bracket-panel")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Stats" })).not.toBeInTheDocument();
   });
 
   it("highlights the current player's team in the bracket", () => {

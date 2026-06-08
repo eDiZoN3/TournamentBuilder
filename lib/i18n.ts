@@ -194,8 +194,10 @@ export type TranslationKey =
   | "resultUpdatedWithDownstreamReset"
   | "round"
   | "roundRobinMatchFormat"
+  | "rosterSaved"
   | "saving"
   | "savePracticeMatch"
+  | "saveRoster"
   | "saveSet"
   | "schedule"
   | "score"
@@ -230,6 +232,7 @@ export type TranslationKey =
   | "teamPreview"
   | "teamPreviewNameField"
   | "teamRoundRobin"
+  | "teamsConfigured"
   | "teams"
   | "teamSize"
   | "teamStats"
@@ -416,8 +419,10 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     resetStats: "Statistiken zurücksetzen",
     round: "Runde",
     roundRobinMatchFormat: "Round-Robin-Spielformat",
+    rosterSaved: "Kader gespeichert.",
     saving: "Speichern...",
     savePracticeMatch: "Trainingsspiel speichern",
+    saveRoster: "Kader speichern",
     schedule: "Spielplan",
     score: "Ergebnis",
     setOwnPassword:
@@ -439,6 +444,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     teamEntry: "Teameingabe",
     teamPreview: "Teamvorschau",
     teamRoundRobin: "Team-Round-Robin",
+    teamsConfigured: "{n} Teams eingetragen",
     teams: "Teams",
     teamSize: "Teamgröße",
     teamStats: "Teamstatistiken",
@@ -719,8 +725,10 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     resetStats: "Reset stats",
     round: "Round",
     roundRobinMatchFormat: "Round-robin match format",
+    rosterSaved: "Roster saved.",
     saving: "Saving...",
     savePracticeMatch: "Save practice match",
+    saveRoster: "Save roster",
     schedule: "Schedule",
     score: "Score",
     setOwnPassword: "Set your own password before continuing.",
@@ -741,6 +749,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     teamEntry: "Team entry",
     teamPreview: "Team preview",
     teamRoundRobin: "Team round robin",
+    teamsConfigured: "{n} teams configured",
     teams: "Teams",
     teamSize: "Team size",
     teamStats: "Team stats",

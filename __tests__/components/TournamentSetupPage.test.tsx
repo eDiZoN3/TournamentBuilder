@@ -111,6 +111,47 @@ describe("TournamentSetupForm", () => {
     });
   });
 
+  it("saves a draft roster without starting or redirecting", async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(jsonResponse({}));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Summer Cup",
+          teamSize: 2,
+          inputMode: "teams",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    const teamInputs = screen.getAllByLabelText(/Team \d+ name/);
+    fireEvent.change(teamInputs[0], { target: { value: "Alpha" } });
+    fireEvent.change(teamInputs[1], { target: { value: "Beta" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save roster" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/tournaments/tournament-id",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          teams: [
+            { name: "Alpha", players: [], seed: 0 },
+            { name: "Beta", players: [], seed: 0 },
+          ],
+        }),
+      }),
+    );
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByText("Roster saved.")).toBeInTheDocument();
+  });
+
   it("generates editable player-mode team previews and warns about remainders", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.999);
     render(

@@ -135,10 +135,16 @@ export function TournamentSetupForm({
         : blankPlayerEntries(),
   );
   const [previewTeams, setPreviewTeams] = useState<SetupTeam[]>(
-    tournament.inputMode === "players" ? tournament.teams : [],
+    tournament.inputMode === "players" &&
+      !isIndividualMixer &&
+      tournament.teams.every((team) => team.players.length >= tournament.teamSize)
+      ? tournament.teams
+      : [],
   );
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isSavingRoster, setIsSavingRoster] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
     if (tournament.inputMode !== "players" || joinedPlayerNames.length === 0) {
@@ -191,12 +197,14 @@ export function TournamentSetupForm({
       0;
 
   function updateTeamName(index: number, name: string) {
+    setStatusMessage(null);
     setTeamNames((current) =>
       current.map((value, currentIndex) => (currentIndex === index ? name : value)),
     );
   }
 
   function updatePlayerName(index: number, name: string) {
+    setStatusMessage(null);
     setPlayerEntries((current) =>
       current.map((value, currentIndex) =>
         currentIndex === index
@@ -210,6 +218,7 @@ export function TournamentSetupForm({
   }
 
   function addRegisteredPlayer(player: RegisteredPlayerOption) {
+    setStatusMessage(null);
     setPlayerEntries((current) => {
       if (
         current.some(
@@ -234,6 +243,7 @@ export function TournamentSetupForm({
 
   function generateTeams() {
     setError(null);
+    setStatusMessage(null);
 
     try {
       setPreviewTeams(
@@ -263,6 +273,7 @@ export function TournamentSetupForm({
   }
 
   function updatePreviewName(index: number, name: string) {
+    setStatusMessage(null);
     setPreviewTeams((current) =>
       current.map((team, currentIndex) =>
         currentIndex === index
@@ -275,34 +286,99 @@ export function TournamentSetupForm({
     );
   }
 
+  function playerEntryTeams(): SetupTeam[] {
+    return enteredPlayerEntries.map((player, index) => ({
+      name: player.displayName,
+      players: [player.displayName],
+      ...(player.playerProfileId
+        ? { playerProfileIds: [player.playerProfileId] }
+        : {}),
+      seed: index + 1,
+    }));
+  }
+
+  function namedTeamEntries(): SetupTeam[] {
+    return teamNames
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .map((name) => ({
+        name,
+        players: [],
+        seed: 0,
+      }));
+  }
+
+  function previewTeamEntries(): SetupTeam[] {
+    return previewTeams.map((team) => ({
+      ...team,
+      name: team.name.trim(),
+    }));
+  }
+
+  function draftRosterTeams(): SetupTeam[] {
+    if (tournament.inputMode === "teams") {
+      return namedTeamEntries();
+    }
+
+    if (isIndividualMixer || previewTeams.length === 0) {
+      return playerEntryTeams();
+    }
+
+    return previewTeamEntries();
+  }
+
+  function startRosterTeams(): SetupTeam[] {
+    if (tournament.inputMode === "teams") {
+      return namedTeamEntries();
+    }
+
+    return isIndividualMixer ? playerEntryTeams() : previewTeamEntries();
+  }
+
+  async function saveTournamentTeams(teams: SetupTeam[]) {
+    const updateResponse = await fetch(`/api/tournaments/${tournament._id}`, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ teams }),
+    });
+
+    if (!updateResponse.ok) {
+      setError(
+        await getApiErrorMessage(
+          updateResponse,
+          t("unableToSaveTournamentTeams"),
+        ),
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  async function saveRoster() {
+    setError(null);
+    setStatusMessage(null);
+    setIsSavingRoster(true);
+
+    try {
+      if (await saveTournamentTeams(draftRosterTeams())) {
+        setStatusMessage(t("rosterSaved"));
+        router.refresh();
+      }
+    } catch {
+      setError(t("unableToSaveTournamentTeams"));
+    } finally {
+      setIsSavingRoster(false);
+    }
+  }
+
   async function startTournament() {
     setError(null);
+    setStatusMessage(null);
 
-    const teams = (() => {
-      if (tournament.inputMode === "teams") {
-        return teamNames.map((name) => ({
-          name: name.trim(),
-          players: [],
-          seed: 0,
-        }));
-      }
-
-      if (isIndividualMixer) {
-        return enteredPlayerEntries.map((player, index) => ({
-          name: player.displayName,
-          players: [player.displayName],
-          ...(player.playerProfileId
-            ? { playerProfileIds: [player.playerProfileId] }
-            : {}),
-          seed: index + 1,
-        }));
-      }
-
-      return previewTeams.map((team) => ({
-        ...team,
-        name: team.name.trim(),
-      }));
-    })();
+    const teams = startRosterTeams();
 
     if (
       isIndividualMixer &&
@@ -338,6 +414,21 @@ export function TournamentSetupForm({
       }
     }
 
+    if (
+      tournament.inputMode === "players" &&
+      !isIndividualMixer &&
+      !isTeamRoundRobin &&
+      (previewTeams.length < 2 ||
+        previewTeams.some(
+          (team) =>
+            team.name.trim().length === 0 ||
+            team.players.length < tournament.teamSize,
+        ))
+    ) {
+      setError(t("generateMinTeams"));
+      return;
+    }
+
     if (teams.length < 2 || teams.some((team) => team.name.length === 0)) {
       setError(
         tournament.inputMode === "teams"
@@ -347,24 +438,10 @@ export function TournamentSetupForm({
       return;
     }
 
-    setIsSubmitting(true);
+    setIsStarting(true);
 
     try {
-      const updateResponse = await fetch(`/api/tournaments/${tournament._id}`, {
-        method: "PUT",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ teams }),
-      });
-
-      if (!updateResponse.ok) {
-        setError(
-          await getApiErrorMessage(
-            updateResponse,
-            t("unableToSaveTournamentTeams"),
-          ),
-        );
+      if (!(await saveTournamentTeams(teams))) {
         return;
       }
 
@@ -387,9 +464,11 @@ export function TournamentSetupForm({
     } catch {
       setError(t("unableToStartTournament"));
     } finally {
-      setIsSubmitting(false);
+      setIsStarting(false);
     }
   }
+
+  const isBusy = isSavingRoster || isStarting;
 
   return (
     <section className="max-w-3xl">
@@ -422,11 +501,12 @@ export function TournamentSetupForm({
               <button
                 className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
                 disabled={teamNames.length <= 2}
-                onClick={() =>
+                onClick={() => {
+                  setStatusMessage(null);
                   setTeamNames((current) =>
                     current.filter((_, currentIndex) => currentIndex !== index),
-                  )
-                }
+                  );
+                }}
                 type="button"
               >
                 {t("remove")}
@@ -435,7 +515,10 @@ export function TournamentSetupForm({
           ))}
           <button
             className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
-            onClick={() => setTeamNames((current) => [...current, ""])}
+            onClick={() => {
+              setStatusMessage(null);
+              setTeamNames((current) => [...current, ""]);
+            }}
             type="button"
           >
             {t("addTeam")}
@@ -486,13 +569,14 @@ export function TournamentSetupForm({
                 <button
                   className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
                   disabled={playerNames.length <= 1}
-                  onClick={() =>
+                  onClick={() => {
+                    setStatusMessage(null);
                     setPlayerEntries((current) =>
                       current.filter(
                         (_, currentIndex) => currentIndex !== index,
                       ),
-                    )
-                  }
+                    );
+                  }}
                   type="button"
                 >
                   {t("remove")}
@@ -503,9 +587,10 @@ export function TournamentSetupForm({
           <div className="mt-3 flex gap-3">
             <button
               className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
-              onClick={() =>
-                setPlayerEntries((current) => [...current, { displayName: "" }])
-              }
+              onClick={() => {
+                setStatusMessage(null);
+                setPlayerEntries((current) => [...current, { displayName: "" }]);
+              }}
               type="button"
             >
               {t("addPlayer")}
@@ -571,14 +656,30 @@ export function TournamentSetupForm({
         </p>
       ) : null}
 
-      <button
-        className="mt-8 rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-700 disabled:opacity-60"
-        disabled={isSubmitting}
-        onClick={startTournament}
-        type="button"
-      >
-        {isSubmitting ? t("saving") : t("startTournament")}
-      </button>
+      {statusMessage ? (
+        <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+          {statusMessage}
+        </p>
+      ) : null}
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <button
+          className="rounded-md border border-slate-300 px-4 py-2 font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-white dark:hover:bg-slate-800"
+          disabled={isBusy}
+          onClick={saveRoster}
+          type="button"
+        >
+          {isSavingRoster ? t("saving") : t("saveRoster")}
+        </button>
+        <button
+          className="rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-700 disabled:opacity-60"
+          disabled={isBusy}
+          onClick={startTournament}
+          type="button"
+        >
+          {isStarting ? t("saving") : t("startTournament")}
+        </button>
+      </div>
     </section>
   );
 }

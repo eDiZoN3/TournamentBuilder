@@ -122,6 +122,32 @@ describe("/api/tournaments", () => {
     await expect(Tournament.countDocuments()).resolves.toBe(1);
   });
 
+  it("creates an empty draft without teams or matches", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Ahead Of Time Cup",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      }),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(body._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body).toMatchObject({
+      name: "Ahead Of Time Cup",
+      status: "draft",
+      teams: [],
+      matches: [],
+    });
+    expect(saved).toMatchObject({
+      status: "draft",
+      teams: [],
+      matches: [],
+    });
+  });
+
   it("creates a team round-robin tournament", async () => {
     const response = await createTournament(
       request("http://localhost:3000/api/tournaments", "POST", {
@@ -453,6 +479,37 @@ describe("/api/tournaments/[id]", () => {
     await expect(Tournament.findById(tournament._id).lean()).resolves.toMatchObject({
       name: "New Name",
       teams: [{ name: "Alpha" }, { name: "Beta" }],
+    });
+  });
+
+  it("saves an empty draft roster without starting the tournament", async () => {
+    const tournament = await Tournament.create({
+      name: "Draft Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams: makeTeams(2),
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        teams: [],
+      }),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(tournament._id).lean();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      status: "draft",
+      teams: [],
+      matches: [],
+    });
+    expect(saved).toMatchObject({
+      status: "draft",
+      teams: [],
+      matches: [],
     });
   });
 

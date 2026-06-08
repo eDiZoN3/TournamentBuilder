@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requirePlayerSession } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
-import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { PracticeMatch } from "@/lib/models/PracticeMatch";
+import { playerProfileMapById } from "@/lib/playerProfiles";
 import {
   parsePracticeMatchPayload,
   referencedPlayerProfileIds,
@@ -24,13 +24,32 @@ async function getSessionProfileId() {
   return session?.user.playerProfileId ?? null;
 }
 
-async function validateReferencedProfiles(input: PracticeMatchInput) {
+async function resolvePracticeParticipants(
+  input: PracticeMatchInput,
+): Promise<PracticeMatchInput | null> {
   const referencedIds = referencedPlayerProfileIds(input);
-  const existingCount = await PlayerProfile.countDocuments({
-    _id: { $in: referencedIds },
-  });
+  const profilesById = await playerProfileMapById(referencedIds);
 
-  return existingCount === referencedIds.length;
+  if (referencedIds.length === 0 || profilesById.size !== referencedIds.length) {
+    return null;
+  }
+
+  const resolveSide = (side: PracticeMatchInput["sideA"]) =>
+    side.map((participant) => {
+      const playerProfileId = participant.playerProfileId!.toString();
+      const profile = profilesById.get(playerProfileId)!;
+
+      return {
+        playerProfileId: participant.playerProfileId,
+        displayName: profile.displayName,
+      };
+    });
+
+  return {
+    ...input,
+    sideA: resolveSide(input.sideA),
+    sideB: resolveSide(input.sideB),
+  };
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
@@ -73,16 +92,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return jsonError("Cannot edit another player's practice match", "FORBIDDEN", 403);
     }
 
-    if (!(await validateReferencedProfiles(parsed.value))) {
+    const resolvedInput = await resolvePracticeParticipants(parsed.value);
+
+    if (!resolvedInput) {
       return jsonError("Unknown player profile", "VALIDATION_ERROR", 422);
     }
 
     match.set({
-      playedAt: parsed.value.playedAt,
-      sideA: parsed.value.sideA,
-      sideB: parsed.value.sideB,
-      sets: parsed.value.sets,
-      winnerSide: parsed.value.winnerSide,
+      playedAt: resolvedInput.playedAt,
+      sideA: resolvedInput.sideA,
+      sideB: resolvedInput.sideB,
+      sets: resolvedInput.sets,
+      winnerSide: resolvedInput.winnerSide,
     });
 
     await match.save();

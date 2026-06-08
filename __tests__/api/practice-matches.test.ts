@@ -139,6 +139,95 @@ describe("/api/practice-matches", () => {
     expect(response.status).toBe(422);
   });
 
+  it("rejects practice match participants without registered player profiles", async () => {
+    const userId = new Types.ObjectId();
+    const profile = await PlayerProfile.create({
+      userId,
+      firstName: "Alice",
+      displayName: "Alice",
+      email: "alice@example.com",
+    });
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: userId.toString(),
+        playerProfileId: profile._id.toString(),
+        role: "player",
+      },
+    });
+
+    const response = await createPracticeMatch(
+      request("http://localhost:3000/api/practice-matches", "POST", {
+        playedAt: "2026-06-06T12:00:00.000Z",
+        sideA: [{ playerProfileId: profile._id.toString(), displayName: "Alice" }],
+        sideB: [{ displayName: "Unregistered Guest" }],
+        sets: [{ scoreA: 11, scoreB: 8 }],
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+    });
+  });
+
+  it("resolves participant display names from registered profiles and omits emails", async () => {
+    const userId = new Types.ObjectId();
+    const profile = await PlayerProfile.create({
+      userId,
+      firstName: "Alice",
+      surname: "Example",
+      displayName: "Alice Example",
+      email: "alice@example.com",
+    });
+    const opponent = await PlayerProfile.create({
+      userId: new Types.ObjectId(),
+      firstName: "Bob",
+      surname: "Builder",
+      displayName: "Bob Builder",
+      email: "bob@example.com",
+    });
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: userId.toString(),
+        playerProfileId: profile._id.toString(),
+        role: "player",
+      },
+    });
+
+    const response = await createPracticeMatch(
+      request("http://localhost:3000/api/practice-matches", "POST", {
+        playedAt: "2026-06-06T12:00:00.000Z",
+        sideA: [
+          {
+            playerProfileId: profile._id.toString(),
+            displayName: "Spoofed Alice",
+          },
+        ],
+        sideB: [
+          {
+            playerProfileId: opponent._id.toString(),
+            displayName: "Spoofed Bob",
+          },
+        ],
+        sets: [{ scoreA: 11, scoreB: 8 }],
+      }),
+    );
+    const body = await response.json();
+    const saved = await PracticeMatch.findById(body.match._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body.match.sideA[0]).toEqual({
+      playerProfileId: profile._id.toString(),
+      displayName: "Alice Example",
+    });
+    expect(body.match.sideB[0]).toEqual({
+      playerProfileId: opponent._id.toString(),
+      displayName: "Bob Builder",
+    });
+    expect(JSON.stringify(body)).not.toContain("example.com");
+    expect(saved?.sideB[0].displayName).toBe("Bob Builder");
+  });
+
   it("prevents players from editing another creator's practice match", async () => {
     const creatorProfileId = new Types.ObjectId();
     const otherProfileId = new Types.ObjectId();

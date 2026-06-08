@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Types } from "mongoose";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
+import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { Tournament } from "@/lib/models/Tournament";
 
 const { requireAdmin } = vi.hoisted(() => ({
@@ -452,6 +453,103 @@ describe("/api/tournaments/[id]", () => {
     await expect(Tournament.findById(tournament._id).lean()).resolves.toMatchObject({
       name: "New Name",
       teams: [{ name: "Alpha" }, { name: "Beta" }],
+    });
+  });
+
+  it("accepts manager-selected registered players and resolves their display names", async () => {
+    const alice = await PlayerProfile.create({
+      userId: new Types.ObjectId(),
+      firstName: "Alice",
+      surname: "Example",
+      displayName: "Alice Example",
+      email: "alice@example.com",
+    });
+    const bob = await PlayerProfile.create({
+      userId: new Types.ObjectId(),
+      firstName: "Bob",
+      surname: "Builder",
+      displayName: "Bob Builder",
+      email: "bob@example.com",
+    });
+    const tournament = await Tournament.create({
+      name: "Registered Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "players",
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        teams: [
+          {
+            name: "Alpha",
+            players: ["Spoofed Alice", "Spoofed Bob"],
+            playerProfileIds: [alice._id.toString(), bob._id.toString()],
+            seed: 0,
+          },
+          {
+            name: "Beta",
+            players: ["Cara", "Dana"],
+            seed: 0,
+          },
+        ],
+      }),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(tournament._id).lean();
+
+    expect(response.status).toBe(200);
+    expect(body.teams[0]).toMatchObject({
+      name: "Alpha",
+      players: ["Alice Example", "Bob Builder"],
+      playerProfileIds: [alice._id.toString(), bob._id.toString()],
+    });
+    expect(JSON.stringify(body)).not.toContain("alice@example.com");
+    expect(saved?.teams[0].players).toEqual(["Alice Example", "Bob Builder"]);
+    expect(saved?.teams[0].playerProfileIds?.map((id) => id?.toString())).toEqual([
+      alice._id.toString(),
+      bob._id.toString(),
+    ]);
+  });
+
+  it("rejects duplicate registered players in a draft roster update", async () => {
+    const alice = await PlayerProfile.create({
+      userId: new Types.ObjectId(),
+      firstName: "Alice",
+      displayName: "Alice",
+      email: "alice@example.com",
+    });
+    const tournament = await Tournament.create({
+      name: "Duplicate Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "players",
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        teams: [
+          {
+            name: "Alpha",
+            players: ["Alice"],
+            playerProfileIds: [alice._id.toString()],
+            seed: 0,
+          },
+          {
+            name: "Beta",
+            players: ["Alice Again"],
+            playerProfileIds: [alice._id.toString()],
+            seed: 0,
+          },
+        ],
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
     });
   });
 

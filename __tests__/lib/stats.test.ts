@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Types } from "mongoose";
 import {
   makeMatch,
   makeSet,
@@ -220,6 +221,90 @@ describe("aggregateStats", () => {
         }),
       ]),
     );
+  });
+
+  it("aggregates registered tournament players by player profile ID", () => {
+    const samProfileId = new Types.ObjectId();
+    const firstTeams = makeTeams(2);
+    firstTeams[0].name = "Alpha";
+    firstTeams[0].players = ["Sam Old"];
+    firstTeams[0].playerProfileIds = [samProfileId];
+    firstTeams[1].name = "Beta";
+    firstTeams[1].players = ["Lee"];
+    const secondTeams = makeTeams(2);
+    secondTeams[0].name = "Gamma";
+    secondTeams[0].players = ["Sam New"];
+    secondTeams[0].playerProfileIds = [samProfileId];
+    secondTeams[1].name = "Delta";
+    secondTeams[1].players = ["Mia"];
+    const first = tournament({
+      teams: firstTeams,
+      matches: [
+        makeMatch({
+          status: "completed",
+          teamA: { teamId: firstTeams[0]._id, sets: [makeSet(11, 9)] },
+          teamB: { teamId: firstTeams[1]._id, sets: [] },
+          winnerId: firstTeams[0]._id,
+          loserId: firstTeams[1]._id,
+        }),
+      ],
+    });
+    const second = tournament({
+      teams: secondTeams,
+      matches: [
+        makeMatch({
+          status: "completed",
+          teamA: { teamId: secondTeams[0]._id, sets: [makeSet(8, 11)] },
+          teamB: { teamId: secondTeams[1]._id, sets: [] },
+          winnerId: secondTeams[1]._id,
+          loserId: secondTeams[0]._id,
+        }),
+      ],
+    });
+
+    const stats = aggregateStats([first, second]);
+
+    expect(stats.players.filter((row) => row.playerProfileId === samProfileId.toString())).toEqual([
+      expect.objectContaining({
+        playerProfileId: samProfileId.toString(),
+        name: "Sam Old",
+        matchesPlayed: 2,
+        matchesWon: 1,
+        matchesLost: 1,
+        winRate: 0.5,
+      }),
+    ]);
+  });
+
+  it("filters tournament player stats by player profile reset rules", () => {
+    const samProfileId = new Types.ObjectId();
+    const teams = makeTeams(2);
+    teams[0].players = ["Sam"];
+    teams[0].playerProfileIds = [samProfileId];
+    teams[1].players = ["Lee"];
+    const cup = tournament({
+      teams,
+      matches: [
+        makeMatch({
+          status: "completed",
+          teamA: { teamId: teams[0]._id, sets: [makeSet(11, 9)] },
+          teamB: { teamId: teams[1]._id, sets: [] },
+          winnerId: teams[0]._id,
+          loserId: teams[1]._id,
+        }),
+      ],
+    });
+
+    const stats = aggregateStats([cup], [
+      {
+        scope: "player",
+        playerProfileId: samProfileId,
+        playerNameKey: "unrelated",
+      },
+    ]);
+
+    expect(stats.players.map((row) => row.name)).not.toContain("Sam");
+    expect(stats.players.map((row) => row.name)).toContain("Lee");
   });
 
   it("sorts rows by wins, win rate, point difference, then name", () => {

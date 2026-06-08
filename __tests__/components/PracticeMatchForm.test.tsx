@@ -10,7 +10,19 @@ describe("PracticeMatchForm", () => {
   });
 
   it("defaults the current player and blocks invalid scores", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        players: [
+          {
+            _id: "opponent-id",
+            displayName: "Bob Builder",
+            firstName: "Bob",
+            surname: "Builder",
+          },
+        ],
+      }),
+    } as Response);
     const onSaved = vi.fn();
 
     render(
@@ -28,6 +40,7 @@ describe("PracticeMatchForm", () => {
     fireEvent.change(screen.getByLabelText("Opponent name"), {
       target: { value: "Bob" },
     });
+    fireEvent.click(await screen.findByRole("button", { name: "Bob Builder" }));
     fireEvent.change(screen.getByLabelText("Your score"), {
       target: { value: "11" },
     });
@@ -37,25 +50,43 @@ describe("PracticeMatchForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save practice match" }));
 
     expect(await screen.findByText(/lead by at least 2/i)).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/practice-matches",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 
   it("submits a valid practice match to the API", async () => {
     const onSaved = vi.fn();
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        match: {
-          _id: "match-id",
-          createdBy: "profile-id",
-          playedAt: "2026-06-06T12:00:00.000Z",
-          sideA: [{ playerProfileId: "profile-id", displayName: "Alice Example" }],
-          sideB: [{ displayName: "Bob" }],
-          sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
-          winnerSide: "A",
-        },
-      }),
-    } as Response);
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          players: [
+            {
+              _id: "opponent-id",
+              displayName: "Bob Builder",
+              firstName: "Bob",
+              surname: "Builder",
+            },
+          ],
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          match: {
+            _id: "match-id",
+            createdBy: "profile-id",
+            playedAt: "2026-06-06T12:00:00.000Z",
+            sideA: [{ playerProfileId: "profile-id", displayName: "Alice Example" }],
+            sideB: [{ playerProfileId: "opponent-id", displayName: "Bob Builder" }],
+            sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+            winnerSide: "A",
+          },
+        }),
+      } as Response);
 
     render(
       <PracticeMatchForm
@@ -70,6 +101,7 @@ describe("PracticeMatchForm", () => {
     fireEvent.change(screen.getByLabelText("Opponent name"), {
       target: { value: "Bob" },
     });
+    fireEvent.click(await screen.findByRole("button", { name: "Bob Builder" }));
     fireEvent.change(screen.getByLabelText("Your score"), {
       target: { value: "11" },
     });
@@ -79,16 +111,58 @@ describe("PracticeMatchForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save practice match" }));
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/player-profiles?q=Bob",
+      expect.objectContaining({
+        method: "GET",
+      }),
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/practice-matches",
       expect.objectContaining({
         method: "POST",
       }),
     );
-    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({
       sideA: [{ playerProfileId: "profile-id", displayName: "Alice Example" }],
-      sideB: [{ displayName: "Bob" }],
+      sideB: [{ playerProfileId: "opponent-id", displayName: "Bob Builder" }],
       sets: [{ scoreA: 11, scoreB: 8 }],
     });
+  });
+
+  it("prevents selecting the current player as the opponent", async () => {
+    const onSaved = vi.fn();
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        players: [
+          {
+            _id: "profile-id",
+            displayName: "Alice Example",
+            firstName: "Alice",
+          },
+        ],
+      }),
+    } as Response);
+
+    render(
+      <PracticeMatchForm
+        currentPlayer={{
+          playerProfileId: "profile-id",
+          displayName: "Alice Example",
+        }}
+        onSaved={onSaved}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Opponent name"), {
+      target: { value: "Alice" },
+    });
+
+    expect(await screen.findByText("This player is already selected.")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Alice Example" }),
+    ).not.toBeInTheDocument();
   });
 });

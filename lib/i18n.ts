@@ -79,6 +79,7 @@ export type TranslationKey =
   | "exactPlayerCountRequirement"
   | "final"
   | "finalStandings"
+  | "findRegisteredPlayer"
   | "firstName"
   | "followCurrentTournaments"
   | "generateMinTeams"
@@ -127,6 +128,7 @@ export type TranslationKey =
   | "noPlayerStats"
   | "noPracticeMatches"
   | "noPracticeStats"
+  | "noRegisteredPlayersFound"
   | "noTeamStats"
   | "noTournamentsYet"
   | "noTournamentLeadAccounts"
@@ -152,6 +154,7 @@ export type TranslationKey =
   | "playerEmail"
   | "playerFirstName"
   | "playerJoined"
+  | "playerAlreadySelected"
   | "playerName"
   | "playerNameField"
   | "playerRemainderWarning"
@@ -332,6 +335,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterTeamNames: "Teamnamen eingeben",
     exactPlayerCountRequirement:
       "Spieleranzahl muss durch die Teamgröße teilbar sein.",
+    findRegisteredPlayer: "Registrierten Spieler suchen",
     finalStandings: "Endstand",
     firstName: "Vorname",
     followCurrentTournaments:
@@ -363,6 +367,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     noPlayerStats: "Noch keine Spielerstatistiken",
     noPracticeMatches: "Noch keine Trainingsspiele",
     noPracticeStats: "Noch keine Trainingsstatistiken",
+    noRegisteredPlayersFound: "Keine registrierten Spieler gefunden.",
     noTeamStats: "Noch keine Teamstatistiken",
     noTournamentsYet: "Noch keine Turniere.",
     noTournamentLeadAccounts: "Noch keine Turnierleiter-Konten.",
@@ -381,6 +386,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     playerAccounts: "Spielerkonten",
     playerEmail: "E-Mail des Spielers",
     playerFirstName: "Vorname des Spielers",
+    playerAlreadySelected: "Dieser Spieler ist bereits ausgewaehlt.",
     playerJoined: "{n} Spieler sind beigetreten",
     playerName: "Name des Spielers",
     players: "Spieler",
@@ -633,6 +639,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterPlayerNames: "Enter player names",
     enterTeamNames: "Enter team names",
     exactPlayerCountRequirement: "Player count must be divisible by team size.",
+    findRegisteredPlayer: "Find registered player",
     finalStandings: "Final standings",
     firstName: "First name",
     followCurrentTournaments:
@@ -664,6 +671,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     noPlayerStats: "No player stats yet",
     noPracticeMatches: "No practice matches yet",
     noPracticeStats: "No practice stats yet",
+    noRegisteredPlayersFound: "No registered players found.",
     noTeamStats: "No team stats yet",
     noTournamentsYet: "No tournaments yet.",
     noTournamentLeadAccounts: "No tournament lead accounts yet.",
@@ -682,6 +690,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     playerAccounts: "Player accounts",
     playerEmail: "Player email",
     playerFirstName: "Player first name",
+    playerAlreadySelected: "This player is already selected.",
     playerJoined: "{n} player{s} joined",
     playerName: "Player name",
     players: "players",

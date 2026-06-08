@@ -1366,3 +1366,99 @@ Tests cover exact 8-player generation, 9-player rejection, self-joined player in
 Tests cover player-entry selection, self-join availability, BO1 and BO3 submission, invalid player-count blocking, equal preview generation, self-joined player display, and localized labels.
 
 ---
+
+## Phase 13 - Issue 24
+
+Archived from `task.md` after issue 24 was implemented.
+
+### T98 - Registered Player Lookup API (TDD First)
+**Files**: `app/api/player-profiles/route.ts`, `lib/playerProfiles.ts`, `lib/openapi.ts`, `__tests__/api/player-profiles.test.ts`, `__tests__/api/openapi.test.ts`
+**Depends on**: T80, T91
+**TDD**: Tests written before implementation
+**Description**: Added a protected registered-player lookup API:
+- Searches player profiles by display name, first name, or surname.
+- Returns profile IDs and display labels only.
+- Omits email, userId, passwordHash, and other account-private fields from response bodies.
+- Applies deterministic sorting and bounded result limits.
+- Allows admins, tournament leads, and player accounts to use the lookup in setup/practice flows.
+- Documents the endpoint and response schema in OpenAPI.
+
+Tests cover authentication, query filtering, result limiting/sorting, no email leakage, and OpenAPI route/schema coverage.
+
+---
+
+### T99 - Practice Match Registered Player Validation (TDD First)
+**Files**: `lib/practiceMatches.ts`, `app/api/practice-matches/route.ts`, `app/api/practice-matches/[id]/route.ts`, `__tests__/api/practice-matches.test.ts`
+**Depends on**: T87, T98
+**TDD**: Tests written before implementation
+**Description**: Restricted practice-match participants to registered player profiles:
+- Practice-match create/update rejects participants without `playerProfileId`.
+- Server resolves participant display names from `PlayerProfile` records instead of trusting client text.
+- Creator participation, duplicate prevention, equal-side-size validation, and score validation remain enforced.
+- Serialized practice-match responses omit email addresses.
+
+Tests cover missing profile IDs, unknown/spoofed profile participants, canonical display-name snapshots, creator participation, response privacy, and preserved scoring validation.
+
+---
+
+### T100 - Practice Match Player Picker UI (TDD First)
+**Files**: `components/player/PracticeMatchForm.tsx`, `components/player/RegisteredPlayerPicker.tsx`, `lib/i18n.ts`, `__tests__/components/PracticeMatchForm.test.tsx`
+**Depends on**: T98, T99
+**TDD**: Tests written before implementation
+**Description**: Replaced free-text practice-match opponent entry with registered-player selection:
+- Added a reusable registered-player picker backed by `/api/player-profiles`.
+- Defaults the signed-in player into side A.
+- Requires selected registered opponents and submits `playerProfileId` values for all participants.
+- Prevents duplicate/current-player selection.
+- Adds localized loading, empty, and duplicate states.
+
+Tests cover player search calls, selecting an opponent, duplicate prevention, payload shape, and invalid-score blocking.
+
+---
+
+### T101 - Tournament Registered Participant Data Model and API (TDD First)
+**Files**: `lib/models/Tournament.ts`, `app/api/tournaments/[id]/route.ts`, `app/api/tournaments/[id]/start/route.ts`, `lib/bracket/playerAssign.ts`, `lib/round-robin/individualMixer.ts`, `__tests__/helpers/factories.ts`, `__tests__/api/tournaments.test.ts`, `__tests__/api/start.test.ts`
+**Depends on**: T93, T98
+**TDD**: Tests written before implementation
+**Description**: Preserved registered-player identity for tournament rosters:
+- Added optional aligned `playerProfileIds` on tournament teams while preserving existing player-name rendering.
+- Draft roster updates can include registered player profile IDs.
+- Server resolves registered tournament participant display names from `PlayerProfile`.
+- Team round-robin and individual-mixer generation carry profile IDs into generated teams.
+- Duplicate registered players in draft roster updates are rejected.
+- Tournament responses continue omitting joined-player emails.
+
+Tests cover manager-entered registered players, canonical display names, duplicate profile rejection, self-joined/generated profile ID preservation, and response privacy.
+
+---
+
+### T102 - Tournament Setup Registered Player Picker UI (TDD First)
+**Files**: `components/admin/TournamentSetupForm.tsx`, `components/player/RegisteredPlayerPicker.tsx`, `lib/i18n.ts`, `__tests__/components/TournamentSetupPage.test.tsx`
+**Depends on**: T98, T101
+**TDD**: Tests written before implementation
+**Description**: Let tournament leads add registered players during tournament setup:
+- Added registered-player typeahead selection for player-entry tournament setup.
+- Tracks selected registered players as roster entries with display names and profile IDs.
+- Merges self-joined players into the setup roster without duplicate selected profiles.
+- Submits aligned `playerProfileIds` with generated team payloads.
+- Keeps manual player-name entry for formats that still support non-account participants.
+- Adds localized picker labels, empty states, and duplicate-selection messages.
+
+Tests cover search/select behavior, generated-team payloads with profile IDs, self-joined roster merging, manual-name compatibility, and localized labels through the shared localization suite.
+
+---
+
+### T103 - Tournament Stats by Player Profile (TDD First)
+**Files**: `lib/stats.ts`, `app/api/stats/route.ts`, `components/stats/StatsTable.tsx`, `__tests__/lib/stats.test.ts`
+**Depends on**: T101
+**TDD**: Tests written before implementation
+**Description**: Aggregated tournament player stats by stable profile identity:
+- Uses `playerProfileId` as the primary player stats key when present.
+- Falls back to normalized display names for manual/non-account participants.
+- Merges stats for the same registered player across tournaments and entry paths.
+- Applies player reset rules by profile ID when available, with legacy name-key fallback.
+- Keeps team stats behavior unchanged and practice stats separate.
+
+Tests cover registered-player aggregation across tournaments, display-name changes, profile-based reset filtering, manual fallback rows, and practice/tournament separation through existing stats coverage.
+
+---

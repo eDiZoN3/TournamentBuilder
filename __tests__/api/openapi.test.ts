@@ -5,6 +5,7 @@ const documentedPaths = [
   "/api/auth/signup",
   "/api/practice-matches",
   "/api/practice-matches/{id}",
+  "/api/player-profiles",
   "/api/stats",
   "/api/tournaments",
   "/api/tournaments/{id}",
@@ -68,6 +69,10 @@ describe("/api/openapi", () => {
     });
     expect(body.components.schemas.PracticeMatch).toBeDefined();
     expect(body.components.schemas.PracticeMatchRequest).toBeDefined();
+    expect(body.components.schemas.PlayerProfileLookupResult).toBeDefined();
+    expect(body.paths["/api/player-profiles"].get).toMatchObject({
+      security: [{ cookieAuth: [] }],
+    });
   });
 
   it("documents team round-robin player entry and match format metadata", async () => {

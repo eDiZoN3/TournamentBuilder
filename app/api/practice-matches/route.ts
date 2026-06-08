@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requirePlayerSession } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
-import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { PracticeMatch } from "@/lib/models/PracticeMatch";
+import { playerProfileMapById } from "@/lib/playerProfiles";
 import {
   parsePracticeMatchPayload,
   referencedPlayerProfileIds,
@@ -17,18 +17,37 @@ async function getSessionProfileId() {
   return session?.user.playerProfileId ?? null;
 }
 
-async function validateReferencedProfiles(input: PracticeMatchInput) {
+async function resolvePracticeParticipants(
+  input: PracticeMatchInput,
+): Promise<PracticeMatchInput | null> {
   const referencedIds = referencedPlayerProfileIds(input);
 
   if (referencedIds.length === 0) {
-    return false;
+    return null;
   }
 
-  const existingCount = await PlayerProfile.countDocuments({
-    _id: { $in: referencedIds },
-  });
+  const profilesById = await playerProfileMapById(referencedIds);
 
-  return existingCount === referencedIds.length;
+  if (profilesById.size !== referencedIds.length) {
+    return null;
+  }
+
+  const resolveSide = (side: PracticeMatchInput["sideA"]) =>
+    side.map((participant) => {
+      const playerProfileId = participant.playerProfileId!.toString();
+      const profile = profilesById.get(playerProfileId)!;
+
+      return {
+        playerProfileId: participant.playerProfileId,
+        displayName: profile.displayName,
+      };
+    });
+
+  return {
+    ...input,
+    sideA: resolveSide(input.sideA),
+    sideB: resolveSide(input.sideB),
+  };
 }
 
 export async function GET() {
@@ -87,11 +106,13 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    if (!(await validateReferencedProfiles(parsed.value))) {
+    const resolvedInput = await resolvePracticeParticipants(parsed.value);
+
+    if (!resolvedInput) {
       return jsonError("Unknown player profile", "VALIDATION_ERROR", 422);
     }
 
-    const match = await PracticeMatch.create(parsed.value);
+    const match = await PracticeMatch.create(resolvedInput);
 
     return NextResponse.json(
       {

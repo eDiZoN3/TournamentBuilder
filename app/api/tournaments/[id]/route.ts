@@ -9,6 +9,7 @@ import {
   type ITeam,
   type ITournament,
 } from "@/lib/models/Tournament";
+import { playerProfileMapById } from "@/lib/playerProfiles";
 
 interface RouteContext {
   params: Promise<{
@@ -19,6 +20,7 @@ interface RouteContext {
 interface TeamInput {
   name: string;
   players: string[];
+  playerProfileIds?: Array<string | null>;
   seed: number;
 }
 
@@ -47,7 +49,7 @@ function parseTeams(value: unknown): TeamInput[] | null {
       return null;
     }
 
-    const { name, players, seed } = team as Record<string, unknown>;
+    const { name, players, playerProfileIds, seed } = team as Record<string, unknown>;
 
     if (
       typeof name !== "string" ||
@@ -57,6 +59,15 @@ function parseTeams(value: unknown): TeamInput[] | null {
       !players.every(
         (player) => typeof player === "string" && player.trim().length > 0,
       ) ||
+      (playerProfileIds !== undefined &&
+        (!Array.isArray(playerProfileIds) ||
+          playerProfileIds.length !== players.length ||
+          !playerProfileIds.every(
+            (playerProfileId) =>
+              playerProfileId === null ||
+              (typeof playerProfileId === "string" &&
+                Types.ObjectId.isValid(playerProfileId)),
+          ))) ||
       (seed !== undefined && !Number.isInteger(seed))
     ) {
       return null;
@@ -65,6 +76,13 @@ function parseTeams(value: unknown): TeamInput[] | null {
     teams.push({
       name: name.trim(),
       players: players.map((player) => player.trim()),
+      ...(Array.isArray(playerProfileIds)
+        ? {
+            playerProfileIds: playerProfileIds.map((playerProfileId) =>
+              typeof playerProfileId === "string" ? playerProfileId : null,
+            ),
+          }
+        : {}),
       seed: (seed as number | undefined) ?? 0,
     });
   }
@@ -140,6 +158,48 @@ async function findTournament(id: string) {
   return Tournament.findById(id);
 }
 
+async function resolveRegisteredTeamPlayers(
+  teams: TeamInput[],
+): Promise<TeamInput[] | null> {
+  const profileIds = teams.flatMap((team) => team.playerProfileIds ?? []).filter(
+    (id): id is string => typeof id === "string",
+  );
+  const uniqueIds = new Set(profileIds);
+
+  if (uniqueIds.size !== profileIds.length) {
+    return null;
+  }
+
+  if (profileIds.length === 0) {
+    return teams;
+  }
+
+  const profilesById = await playerProfileMapById(profileIds);
+
+  if (profilesById.size !== uniqueIds.size) {
+    return null;
+  }
+
+  return teams.map((team) => {
+    const playerProfileIds = team.playerProfileIds;
+
+    if (!playerProfileIds) {
+      return team;
+    }
+
+    return {
+      ...team,
+      players: team.players.map((player, index) => {
+        const playerProfileId = playerProfileIds[index];
+
+        return playerProfileId
+          ? profilesById.get(playerProfileId)!.displayName
+          : player;
+      }),
+    };
+  });
+}
+
 function publicJoinedPlayers(joinedPlayers: IJoinedPlayer[]) {
   return joinedPlayers.map(({ email: _email, ...joinedPlayer }) => joinedPlayer);
 }
@@ -212,7 +272,17 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     if (update.teams) {
-      tournament.teams = update.teams as ITeam[];
+      const resolvedTeams = await resolveRegisteredTeamPlayers(update.teams);
+
+      if (!resolvedTeams) {
+        return jsonError(
+          "Invalid registered player roster",
+          "VALIDATION_ERROR",
+          422,
+        );
+      }
+
+      tournament.teams = resolvedTeams as ITeam[];
     }
 
     await tournament.save();

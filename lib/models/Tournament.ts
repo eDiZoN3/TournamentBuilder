@@ -16,6 +16,7 @@ export interface ITeam {
   _id: Types.ObjectId;
   name: string;
   players: string[];
+  playerProfileIds?: Array<Types.ObjectId | null>;
   seed: number;
 }
 
@@ -128,6 +129,10 @@ const teamSchema = new Schema<ITeam>({
   },
   players: {
     type: [String],
+    default: [],
+  },
+  playerProfileIds: {
+    type: [Schema.Types.ObjectId],
     default: [],
   },
   seed: {

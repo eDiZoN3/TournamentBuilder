@@ -2,6 +2,7 @@ import type { IMatch, ITeam, ITournament } from "@/lib/models/Tournament";
 
 export interface StatsRow {
   name: string;
+  playerProfileId?: string;
   matchesPlayed: number;
   matchesWon: number;
   matchesLost: number;
@@ -55,10 +56,15 @@ function displayName(name: string): string {
   return name.trim().replace(/\s+/g, " ");
 }
 
-function createStats(name: string, key: string): MutableStats {
+function createStats(
+  name: string,
+  key: string,
+  playerProfileId?: string,
+): MutableStats {
   return {
     key,
     name: displayName(name),
+    playerProfileId,
     matchesPlayed: 0,
     matchesWon: 0,
     matchesLost: 0,
@@ -75,6 +81,7 @@ function ensureStats(
   statsByKey: Map<string, MutableStats>,
   key: string,
   name: string,
+  playerProfileId?: string,
 ): MutableStats {
   const existing = statsByKey.get(key);
 
@@ -82,7 +89,7 @@ function ensureStats(
     return existing;
   }
 
-  const stats = createStats(name, key);
+  const stats = createStats(name, key, playerProfileId);
 
   statsByKey.set(key, stats);
 
@@ -92,6 +99,7 @@ function ensureStats(
 function finalizeStats(stats: MutableStats): StatsRow {
   return {
     name: stats.name,
+    playerProfileId: stats.playerProfileId,
     matchesPlayed: stats.matchesPlayed,
     matchesWon: stats.matchesWon,
     matchesLost: stats.matchesLost,
@@ -156,7 +164,7 @@ function resetAppliesToTournament(
   return false;
 }
 
-function playerResetKeys(resetRules: StatsResetRule[]): Set<string> {
+function playerResetNameKeys(resetRules: StatsResetRule[]): Set<string> {
   return new Set(
     resetRules
       .filter((rule) => rule.scope === "player")
@@ -165,17 +173,31 @@ function playerResetKeys(resetRules: StatsResetRule[]): Set<string> {
   );
 }
 
+function playerResetProfileIds(resetRules: StatsResetRule[]): Set<string> {
+  return new Set(
+    resetRules
+      .filter((rule) => rule.scope === "player")
+      .map((rule) => idString(rule.playerProfileId))
+      .filter(Boolean),
+  );
+}
+
 function filterPlayerStats(
   rows: StatsRow[],
   resetRules: StatsResetRule[],
 ): StatsRow[] {
-  const resetKeys = playerResetKeys(resetRules);
+  const resetNameKeys = playerResetNameKeys(resetRules);
+  const resetProfileIds = playerResetProfileIds(resetRules);
 
-  if (resetKeys.size === 0) {
+  if (resetNameKeys.size === 0 && resetProfileIds.size === 0) {
     return rows;
   }
 
-  return rows.filter((row) => !resetKeys.has(normalizeName(row.name)));
+  return rows.filter(
+    (row) =>
+      !(row.playerProfileId && resetProfileIds.has(row.playerProfileId)) &&
+      !resetNameKeys.has(normalizeName(row.name)),
+  );
 }
 
 function playableCompleted(match: IMatch): boolean {
@@ -235,18 +257,27 @@ function applyDelta(stats: MutableStats, delta: MatchSideDelta) {
 }
 
 function applyPlayers(
-  players: string[],
+  team: ITeam,
   playerStatsByKey: Map<string, MutableStats>,
   delta: MatchSideDelta,
 ) {
-  for (const player of players) {
+  for (const [index, player] of team.players.entries()) {
     const name = displayName(player);
+    const playerProfileId = team.playerProfileIds?.[index]?.toString();
 
     if (!name) {
       continue;
     }
 
-    applyDelta(ensureStats(playerStatsByKey, normalizeName(name), name), delta);
+    applyDelta(
+      ensureStats(
+        playerStatsByKey,
+        playerProfileId ? `profile:${playerProfileId}` : `name:${normalizeName(name)}`,
+        name,
+        playerProfileId,
+      ),
+      delta,
+    );
   }
 }
 
@@ -269,11 +300,17 @@ export function calculateTournamentStats(
   for (const team of tournament.teams) {
     ensureStats(teamStatsByKey, idString(team._id), team.name);
 
-    for (const player of team.players) {
+    for (const [index, player] of team.players.entries()) {
       const name = displayName(player);
+      const playerProfileId = team.playerProfileIds?.[index]?.toString();
 
       if (name) {
-        ensureStats(playerStatsByKey, normalizeName(name), name);
+        ensureStats(
+          playerStatsByKey,
+          playerProfileId ? `profile:${playerProfileId}` : `name:${normalizeName(name)}`,
+          name,
+          playerProfileId,
+        );
       }
     }
   }
@@ -295,8 +332,8 @@ export function calculateTournamentStats(
 
     applyDelta(ensureStats(teamStatsByKey, idString(teamA._id), teamA.name), deltaA);
     applyDelta(ensureStats(teamStatsByKey, idString(teamB._id), teamB.name), deltaB);
-    applyPlayers(teamA.players, playerStatsByKey, deltaA);
-    applyPlayers(teamB.players, playerStatsByKey, deltaB);
+    applyPlayers(teamA, playerStatsByKey, deltaA);
+    applyPlayers(teamB, playerStatsByKey, deltaB);
   }
 
   return {
@@ -313,7 +350,15 @@ function mergeStats(
   sourceRows: StatsRow[],
 ) {
   for (const row of sourceRows) {
-    const stats = ensureStats(targetByKey, normalizeName(row.name), row.name);
+    const key = row.playerProfileId
+      ? `profile:${row.playerProfileId}`
+      : `name:${normalizeName(row.name)}`;
+    const stats = ensureStats(
+      targetByKey,
+      key,
+      row.name,
+      row.playerProfileId,
+    );
 
     stats.matchesPlayed += row.matchesPlayed;
     stats.matchesWon += row.matchesWon;

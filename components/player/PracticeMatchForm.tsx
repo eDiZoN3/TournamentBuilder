@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  RegisteredPlayerPicker,
+  type RegisteredPlayerOption,
+} from "@/components/player/RegisteredPlayerPicker";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import type { SerializedPracticeMatch } from "@/lib/practiceMatches";
 import { validateSet } from "@/lib/scoring";
@@ -17,20 +21,26 @@ interface PracticeMatchFormProps {
   onSaved: (match: SerializedPracticeMatch) => void;
 }
 
-function opponentNameFor(
+function opponentPlayerFor(
   match: SerializedPracticeMatch | null | undefined,
   currentPlayerProfileId: string,
-): string {
+): RegisteredPlayerOption | null {
   if (!match) {
-    return "";
+    return null;
   }
 
   const currentIsSideA = match.sideA.some(
     (participant) => participant.playerProfileId === currentPlayerProfileId,
   );
   const opponentSide = currentIsSideA ? match.sideB : match.sideA;
+  const opponent = opponentSide[0];
 
-  return opponentSide.map((participant) => participant.displayName).join(", ");
+  return opponent?.playerProfileId
+    ? {
+        _id: opponent.playerProfileId,
+        displayName: opponent.displayName,
+      }
+    : null;
 }
 
 function scoreValuesFor(
@@ -66,8 +76,8 @@ export function PracticeMatchForm({
     () => scoreValuesFor(editingMatch, currentPlayer.playerProfileId),
     [currentPlayer.playerProfileId, editingMatch],
   );
-  const [opponentName, setOpponentName] = useState(() =>
-    opponentNameFor(editingMatch, currentPlayer.playerProfileId),
+  const [opponent, setOpponent] = useState<RegisteredPlayerOption | null>(() =>
+    opponentPlayerFor(editingMatch, currentPlayer.playerProfileId),
   );
   const [currentScore, setCurrentScore] = useState(initialScores.currentScore);
   const [opponentScore, setOpponentScore] = useState(
@@ -79,7 +89,7 @@ export function PracticeMatchForm({
   useEffect(() => {
     const scores = scoreValuesFor(editingMatch, currentPlayer.playerProfileId);
 
-    setOpponentName(opponentNameFor(editingMatch, currentPlayer.playerProfileId));
+    setOpponent(opponentPlayerFor(editingMatch, currentPlayer.playerProfileId));
     setCurrentScore(scores.currentScore);
     setOpponentScore(scores.opponentScore);
     setError(null);
@@ -89,11 +99,10 @@ export function PracticeMatchForm({
     event.preventDefault();
     setError(null);
 
-    const trimmedOpponentName = opponentName.trim();
     const scoreA = Number(currentScore);
     const scoreB = Number(opponentScore);
 
-    if (!trimmedOpponentName) {
+    if (!opponent) {
       setError(t("opponentNameRequired"));
       return;
     }
@@ -115,7 +124,8 @@ export function PracticeMatchForm({
       ],
       sideB: [
         {
-          displayName: trimmedOpponentName,
+          playerProfileId: opponent._id,
+          displayName: opponent.displayName,
         },
       ],
       sets: [
@@ -151,7 +161,7 @@ export function PracticeMatchForm({
       onSaved(body.match as SerializedPracticeMatch);
 
       if (!editingMatch) {
-        setOpponentName("");
+        setOpponent(null);
         setCurrentScore("");
         setOpponentScore("");
       }
@@ -177,16 +187,30 @@ export function PracticeMatchForm({
           value={currentPlayer.displayName}
         />
       </label>
-      <label className="space-y-1">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          {t("opponentName")}
-        </span>
-        <input
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-          onChange={(event) => setOpponentName(event.target.value)}
-          value={opponentName}
+      <div className="space-y-2">
+        <RegisteredPlayerPicker
+          labelKey="opponentName"
+          onSelect={setOpponent}
+          selectedPlayerIds={[
+            currentPlayer.playerProfileId,
+            ...(opponent ? [opponent._id] : []),
+          ]}
         />
-      </label>
+        {opponent ? (
+          <div className="flex items-center justify-between gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm dark:border-slate-700">
+            <span className="font-medium text-slate-800 dark:text-slate-100">
+              {opponent.displayName}
+            </span>
+            <button
+              className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+              onClick={() => setOpponent(null)}
+              type="button"
+            >
+              {t("remove")}
+            </button>
+          </div>
+        ) : null}
+      </div>
       <label className="space-y-1">
         <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
           {t("yourScore")}

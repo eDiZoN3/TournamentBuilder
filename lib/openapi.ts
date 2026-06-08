@@ -218,6 +218,12 @@ export const openApiDocument: OpenApiDocument = {
               type: "string",
             },
           },
+          playerProfileIds: {
+            type: "array",
+            items: {
+              oneOf: [ref("ObjectId"), { type: "null" }],
+            },
+          },
         },
       },
       ScoreSet: {
@@ -280,16 +286,30 @@ export const openApiDocument: OpenApiDocument = {
       },
       PracticeParticipant: {
         type: "object",
-        required: ["displayName"],
+        required: ["playerProfileId", "displayName"],
         properties: {
-          playerProfileId: {
-            oneOf: [ref("ObjectId"), { type: "null" }],
-          },
+          playerProfileId: ref("ObjectId"),
           displayName: {
             type: "string",
             minLength: 1,
             maxLength: 120,
             example: "Alice Example",
+          },
+        },
+      },
+      PlayerProfileLookupResult: {
+        type: "object",
+        required: ["_id", "firstName", "displayName"],
+        properties: {
+          _id: ref("ObjectId"),
+          firstName: {
+            type: "string",
+          },
+          surname: {
+            type: "string",
+          },
+          displayName: {
+            type: "string",
           },
         },
       },
@@ -862,6 +882,48 @@ export const openApiDocument: OpenApiDocument = {
           "401": responseRef("Unauthorized"),
           "403": responseRef("Forbidden"),
           "404": responseRef("NotFound"),
+          "500": responseRef("InternalError"),
+        },
+      },
+    },
+    "/api/player-profiles": {
+      get: {
+        tags: ["Public"],
+        summary: "Search registered player profiles",
+        operationId: "searchPlayerProfiles",
+        security: cookieSecurity,
+        parameters: [
+          {
+            name: "q",
+            in: "query",
+            required: true,
+            schema: {
+              type: "string",
+            },
+          },
+          {
+            name: "limit",
+            in: "query",
+            required: false,
+            schema: {
+              type: "integer",
+              minimum: 1,
+              maximum: 20,
+            },
+          },
+        ],
+        responses: {
+          "200": jsonResponse("Matching registered player profiles.", {
+            type: "object",
+            required: ["players"],
+            properties: {
+              players: {
+                type: "array",
+                items: ref("PlayerProfileLookupResult"),
+              },
+            },
+          }),
+          "401": responseRef("Unauthorized"),
           "500": responseRef("InternalError"),
         },
       },

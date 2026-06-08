@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  assignPlayersToEqualTeams,
-  assignPlayersToTeams,
+  RegisteredPlayerPicker,
+  type RegisteredPlayerOption,
+} from "@/components/player/RegisteredPlayerPicker";
+import {
+  assignRosterPlayersToEqualTeams,
+  assignRosterPlayersToTeams,
 } from "@/lib/bracket/playerAssign";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { formatTranslation } from "@/lib/i18n";
@@ -12,6 +16,7 @@ import { formatTranslation } from "@/lib/i18n";
 export interface SetupTeam {
   name: string;
   players: string[];
+  playerProfileIds?: Array<string | null>;
   seed: number;
 }
 
@@ -23,6 +28,11 @@ export interface SetupJoinedPlayer {
   displayName: string;
   email: string;
   joinedAt: string;
+}
+
+interface SetupPlayerEntry {
+  displayName: string;
+  playerProfileId?: string | null;
 }
 
 export interface SetupTournament {
@@ -63,6 +73,26 @@ function uniqueNames(names: string[]): string[] {
   return unique;
 }
 
+function teamPlayerEntries(teams: SetupTeam[]): SetupPlayerEntry[] {
+  return teams.flatMap((team) =>
+    team.players.map((player, index) => ({
+      displayName: player,
+      playerProfileId: team.playerProfileIds?.[index] ?? null,
+    })),
+  );
+}
+
+function joinedPlayerEntries(players: SetupJoinedPlayer[]): SetupPlayerEntry[] {
+  return players.map((player) => ({
+    displayName: player.displayName,
+    playerProfileId: player.playerProfileId,
+  }));
+}
+
+function blankPlayerEntries(): SetupPlayerEntry[] {
+  return [{ displayName: "" }, { displayName: "" }];
+}
+
 export async function getApiErrorMessage(
   response: Response,
   fallback: string,
@@ -83,20 +113,26 @@ export function TournamentSetupForm({
   const format = tournament.format ?? "double_elimination";
   const isTeamRoundRobin = format === "team_round_robin";
   const isIndividualMixer = format === "individual_mixer";
-  const joinedPlayerNames = (tournament.joinedPlayers ?? []).map(
-    (player) => player.displayName,
+  const joinedPlayers = tournament.joinedPlayers;
+  const joinedPlayerNames = useMemo(
+    () => (joinedPlayers ?? []).map((player) => player.displayName),
+    [joinedPlayers],
+  );
+  const joinedEntries = useMemo(
+    () => joinedPlayerEntries(joinedPlayers ?? []),
+    [joinedPlayers],
   );
   const [teamNames, setTeamNames] = useState<string[]>(
     tournament.teams.length > 0
       ? tournament.teams.map((team) => team.name)
       : ["", ""],
   );
-  const [playerNames, setPlayerNames] = useState<string[]>(
+  const [playerEntries, setPlayerEntries] = useState<SetupPlayerEntry[]>(
     tournament.teams.length > 0
-      ? tournament.teams.flatMap((team) => team.players)
-      : joinedPlayerNames.length > 0
-        ? joinedPlayerNames
-        : ["", ""],
+      ? teamPlayerEntries(tournament.teams)
+      : joinedEntries.length > 0
+        ? joinedEntries
+        : blankPlayerEntries(),
   );
   const [previewTeams, setPreviewTeams] = useState<SetupTeam[]>(
     tournament.inputMode === "players" ? tournament.teams : [],
@@ -109,21 +145,43 @@ export function TournamentSetupForm({
       return;
     }
 
-    setPlayerNames((current) => {
-      const currentNames = new Set(
-        current.map((playerName) => playerName.trim()).filter(Boolean),
+    setPlayerEntries((current) => {
+      const currentProfileIds = new Set(
+        current
+          .map((player) => player.playerProfileId)
+          .filter((id): id is string => Boolean(id)),
       );
-      const newJoinedNames = joinedPlayerNames.filter(
-        (playerName) => !currentNames.has(playerName),
+      const currentNames = new Set(
+        current
+          .map((player) => player.displayName.trim().toLowerCase())
+          .filter(Boolean),
+      );
+      const newJoinedPlayers = joinedEntries.filter(
+        (player) =>
+          !currentProfileIds.has(player.playerProfileId ?? "") &&
+          !currentNames.has(player.displayName.trim().toLowerCase()),
       );
 
-      return newJoinedNames.length > 0 ? [...current, ...newJoinedNames] : current;
+      return newJoinedPlayers.length > 0
+        ? [...current, ...newJoinedPlayers]
+        : current;
     });
-  }, [joinedPlayerNames, tournament.inputMode]);
+  }, [joinedEntries, joinedPlayerNames.length, tournament.inputMode]);
+
+  const playerNames = playerEntries.map((player) => player.displayName);
+  const selectedPlayerProfileIds = playerEntries
+    .map((player) => player.playerProfileId)
+    .filter((id): id is string => Boolean(id));
 
   const enteredPlayerNames = playerNames
     .map((player) => player.trim())
     .filter(Boolean);
+  const enteredPlayerEntries = playerEntries
+    .map((player) => ({
+      displayName: player.displayName.trim(),
+      playerProfileId: player.playerProfileId ?? null,
+    }))
+    .filter((player) => Boolean(player.displayName));
   const exactPlayerNames = uniqueNames(enteredPlayerNames);
   const hasPlayerRemainder =
     !isIndividualMixer &&
@@ -139,9 +197,39 @@ export function TournamentSetupForm({
   }
 
   function updatePlayerName(index: number, name: string) {
-    setPlayerNames((current) =>
-      current.map((value, currentIndex) => (currentIndex === index ? name : value)),
+    setPlayerEntries((current) =>
+      current.map((value, currentIndex) =>
+        currentIndex === index
+          ? {
+              displayName: name,
+              playerProfileId: null,
+            }
+          : value,
+      ),
     );
+  }
+
+  function addRegisteredPlayer(player: RegisteredPlayerOption) {
+    setPlayerEntries((current) => {
+      if (
+        current.some(
+          (entry) =>
+            entry.playerProfileId === player._id ||
+            entry.displayName.trim().toLowerCase() ===
+              player.displayName.trim().toLowerCase(),
+        )
+      ) {
+        return current;
+      }
+
+      return [
+        ...current,
+        {
+          displayName: player.displayName,
+          playerProfileId: player._id,
+        },
+      ];
+    });
   }
 
   function generateTeams() {
@@ -150,11 +238,17 @@ export function TournamentSetupForm({
     try {
       setPreviewTeams(
         (isTeamRoundRobin
-          ? assignPlayersToEqualTeams(enteredPlayerNames, tournament.teamSize)
-          : assignPlayersToTeams(enteredPlayerNames, tournament.teamSize)
+          ? assignRosterPlayersToEqualTeams(
+              enteredPlayerEntries,
+              tournament.teamSize,
+            )
+          : assignRosterPlayersToTeams(enteredPlayerEntries, tournament.teamSize)
         ).map((team) => ({
           name: team.name,
           players: team.players,
+          playerProfileIds: team.playerProfileIds?.map((id) =>
+            id ? id.toString() : null,
+          ),
           seed: team.seed,
         })),
       );
@@ -194,9 +288,12 @@ export function TournamentSetupForm({
       }
 
       if (isIndividualMixer) {
-        return enteredPlayerNames.map((name, index) => ({
-          name,
-          players: [name],
+        return enteredPlayerEntries.map((player, index) => ({
+          name: player.displayName,
+          players: [player.displayName],
+          ...(player.playerProfileId
+            ? { playerProfileIds: [player.playerProfileId] }
+            : {}),
           seed: index + 1,
         }));
       }
@@ -358,8 +455,15 @@ export function TournamentSetupForm({
               </ul>
             </section>
           ) : null}
+          <div className="mb-6">
+            <RegisteredPlayerPicker
+              clearOnSelect={false}
+              onSelect={addRegisteredPlayer}
+              selectedPlayerIds={selectedPlayerProfileIds}
+            />
+          </div>
           <div className="space-y-3">
-            {playerNames.map((playerName, index) => (
+            {playerEntries.map((player, index) => (
               <div className="flex gap-2" key={index}>
                 <label className="flex-1">
                   <span className="sr-only">
@@ -376,14 +480,14 @@ export function TournamentSetupForm({
                       updatePlayerName(index, event.target.value)
                     }
                     placeholder={`${t("player")} ${index + 1}`}
-                    value={playerName}
+                    value={player.displayName}
                   />
                 </label>
                 <button
                   className="rounded-md border border-slate-300 px-3 py-2 text-sm dark:border-slate-600"
                   disabled={playerNames.length <= 1}
                   onClick={() =>
-                    setPlayerNames((current) =>
+                    setPlayerEntries((current) =>
                       current.filter(
                         (_, currentIndex) => currentIndex !== index,
                       ),
@@ -399,7 +503,9 @@ export function TournamentSetupForm({
           <div className="mt-3 flex gap-3">
             <button
               className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium dark:border-slate-600"
-              onClick={() => setPlayerNames((current) => [...current, ""])}
+              onClick={() =>
+                setPlayerEntries((current) => [...current, { displayName: "" }])
+              }
               type="button"
             >
               {t("addPlayer")}

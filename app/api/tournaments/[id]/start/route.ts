@@ -2,7 +2,10 @@ import { Types } from "mongoose";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/adminAuth";
 import { jsonError } from "@/lib/api";
-import { assignPlayersToEqualTeams } from "@/lib/bracket/playerAssign";
+import {
+  assignRosterPlayersToEqualTeams,
+  type RosterPlayer,
+} from "@/lib/bracket/playerAssign";
 import { generateBracket } from "@/lib/bracket/generate";
 import { autoAssignReadyMatches } from "@/lib/bracket/scheduler";
 import { connectDB } from "@/lib/db";
@@ -22,15 +25,27 @@ interface RouteContext {
   }>;
 }
 
+function teamRosterPlayers(team: ITeam): RosterPlayer[] {
+  if (team.players.length === 0) {
+    return [{ displayName: team.name }];
+  }
+
+  return team.players.map((player, index) => ({
+    displayName: player,
+    playerProfileId: team.playerProfileIds?.[index] ?? null,
+  }));
+}
+
 function playerRoster(tournament: {
   joinedPlayers: IJoinedPlayer[];
   teams: ITeam[];
-}): string[] {
+}): RosterPlayer[] {
   return [
-    ...tournament.teams.flatMap((team) =>
-      team.players.length > 0 ? team.players : [team.name],
-    ),
-    ...tournament.joinedPlayers.map((player) => player.displayName),
+    ...tournament.teams.flatMap(teamRosterPlayers),
+    ...tournament.joinedPlayers.map((player) => ({
+      displayName: player.displayName,
+      playerProfileId: player.playerProfileId,
+    })),
   ];
 }
 
@@ -41,26 +56,35 @@ function normalizeRosterName(name: string): string {
 function uniquePlayerRoster(tournament: {
   joinedPlayers: IJoinedPlayer[];
   teams: ITeam[];
-}): string[] {
-  const seen = new Set<string>();
-  const roster: string[] = [];
-  const candidates = [
-    ...tournament.teams.flatMap((team) =>
-      team.players.length > 0 ? team.players : [team.name],
-    ),
-    ...tournament.joinedPlayers.map((player) => player.displayName),
-  ];
+}): RosterPlayer[] {
+  const seenNames = new Set<string>();
+  const seenProfileIds = new Set<string>();
+  const roster: RosterPlayer[] = [];
+  const candidates = playerRoster(tournament);
 
   for (const candidate of candidates) {
-    const name = normalizeRosterName(candidate);
+    const name = normalizeRosterName(candidate.displayName);
+    const playerProfileId = candidate.playerProfileId?.toString();
     const key = name.toLowerCase();
 
-    if (!name || seen.has(key)) {
+    if (
+      !name ||
+      seenNames.has(key) ||
+      (playerProfileId && seenProfileIds.has(playerProfileId))
+    ) {
       continue;
     }
 
-    seen.add(key);
-    roster.push(name);
+    seenNames.add(key);
+
+    if (playerProfileId) {
+      seenProfileIds.add(playerProfileId);
+    }
+
+    roster.push({
+      displayName: name,
+      playerProfileId: candidate.playerProfileId ?? null,
+    });
   }
 
   return roster;
@@ -84,9 +108,15 @@ function hasGeneratedEqualTeams(tournament: {
   }
 
   const teamRosterKeys = new Set(
-    tournament.teams
-      .flatMap((team) => team.players)
-      .map((player) => normalizeRosterName(player).toLowerCase()),
+    tournament.teams.flatMap((team) =>
+      team.players.map((player, index) => {
+        const playerProfileId = team.playerProfileIds?.[index]?.toString();
+
+        return playerProfileId
+          ? `profile:${playerProfileId}`
+          : `name:${normalizeRosterName(player).toLowerCase()}`;
+      }),
+    ),
   );
   const totalPlayerSlots = tournament.teams.length * tournament.teamSize;
 
@@ -94,16 +124,19 @@ function hasGeneratedEqualTeams(tournament: {
     return false;
   }
 
-  return tournament.joinedPlayers.every((player) =>
-    teamRosterKeys.has(normalizeRosterName(player.displayName).toLowerCase()),
-  );
+  return tournament.joinedPlayers.every((player) => {
+    const profileKey = `profile:${player.playerProfileId.toString()}`;
+    const nameKey = `name:${normalizeRosterName(player.displayName).toLowerCase()}`;
+
+    return teamRosterKeys.has(profileKey) || teamRosterKeys.has(nameKey);
+  });
 }
 
 function generatedTeamDocuments(
-  players: string[],
+  players: RosterPlayer[],
   teamSize: 2 | 3 | 4,
 ): ITeam[] {
-  return assignPlayersToEqualTeams(players, teamSize).map((team) => ({
+  return assignRosterPlayersToEqualTeams(players, teamSize).map((team) => ({
     _id: new Types.ObjectId(),
     ...team,
   })) as ITeam[];

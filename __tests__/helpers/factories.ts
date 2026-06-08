@@ -4,6 +4,7 @@ export interface Team {
   _id: Types.ObjectId;
   name: string;
   players: string[];
+  playerProfileIds?: Array<Types.ObjectId | null>;
   seed: number;
 }
 

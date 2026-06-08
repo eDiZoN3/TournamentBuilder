@@ -241,6 +241,69 @@ describe("TournamentSetupForm", () => {
     expect(screen.getByLabelText("Player 1 name")).toHaveValue("Alice Example");
   });
 
+  it("persists selected registered player profile IDs in generated teams", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.999);
+    const registeredPlayers = [
+      { _id: "profile-a", displayName: "Alice Example", firstName: "Alice" },
+      { _id: "profile-b", displayName: "Bob Builder", firstName: "Bob" },
+      { _id: "profile-c", displayName: "Cara Count", firstName: "Cara" },
+      { _id: "profile-d", displayName: "Dana Dive", firstName: "Dana" },
+    ];
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ players: registeredPlayers }))
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(jsonResponse({ tournamentId: "tournament-id" }));
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Registered Cup",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Find registered player"), {
+      target: { value: "a" },
+    });
+
+    for (const player of registeredPlayers) {
+      fireEvent.click(await screen.findByRole("button", { name: player.displayName }));
+    }
+
+    fireEvent.click(screen.getByRole("button", { name: "Generate teams" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/tournaments/tournament-id",
+        expect.objectContaining({
+          method: "PUT",
+        }),
+      );
+    });
+    expect(JSON.parse(String(fetch.mock.calls[1][1]?.body))).toMatchObject({
+      teams: [
+        {
+          players: ["Alice Example", "Bob Builder"],
+          playerProfileIds: ["profile-a", "profile-b"],
+        },
+        {
+          players: ["Cara Count", "Dana Dive"],
+          playerProfileIds: ["profile-c", "profile-d"],
+        },
+      ],
+    });
+  });
+
   it("persists individual mixer players without generating fixed teams", async () => {
     const fetch = vi
       .fn()

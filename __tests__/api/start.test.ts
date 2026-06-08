@@ -251,6 +251,61 @@ describe("POST /api/tournaments/[id]/start", () => {
     );
   });
 
+  it("preserves registered player profile IDs when generating team round-robin teams", async () => {
+    const aliceProfileId = new Types.ObjectId();
+    const bobProfileId = new Types.ObjectId();
+    const tournament = await Tournament.create({
+      name: "Registered Player League",
+      format: "team_round_robin",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "players",
+      teams: [
+        {
+          name: "Manual Alice",
+          players: ["Alice Example"],
+          playerProfileIds: [aliceProfileId],
+          seed: 1,
+        },
+        {
+          name: "Manual Bob",
+          players: ["Bob Example"],
+          playerProfileIds: [bobProfileId],
+          seed: 2,
+        },
+      ],
+      joinedPlayers: [
+        {
+          ...joinedPlayer("Charlie Example"),
+          playerProfileId: new Types.ObjectId(),
+        },
+        {
+          ...joinedPlayer("Dana Example"),
+          playerProfileId: new Types.ObjectId(),
+        },
+      ],
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const savedTournament = await Tournament.findById(tournament._id);
+    const generatedProfileIds = savedTournament?.teams.flatMap((team) =>
+      (team.playerProfileIds ?? []).map((id) => id?.toString()),
+    );
+
+    expect(response.status).toBe(200);
+    expect(generatedProfileIds).toEqual(
+      expect.arrayContaining([
+        aliceProfileId.toString(),
+        bobProfileId.toString(),
+        tournament.joinedPlayers[0].playerProfileId.toString(),
+        tournament.joinedPlayers[1].playerProfileId.toString(),
+      ]),
+    );
+  });
+
   it("deduplicates manual and self-joined player names before exact generation", async () => {
     const tournament = await Tournament.create({
       name: "Duplicate Player League",

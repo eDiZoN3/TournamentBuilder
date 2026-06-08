@@ -6,20 +6,41 @@ interface IndividualMixerSchedule {
   teams: ITeam[];
 }
 
-function normalizePlayers(players: string[]): string[] {
+export interface IndividualMixerPlayer {
+  displayName: string;
+  playerProfileId?: { toString(): string } | string | null;
+}
+
+function playerName(player: string | IndividualMixerPlayer): string {
+  return typeof player === "string" ? player : player.displayName;
+}
+
+function playerProfileId(player: string | IndividualMixerPlayer) {
+  return typeof player === "string" ? null : (player.playerProfileId ?? null);
+}
+
+function normalizePlayers(
+  players: Array<string | IndividualMixerPlayer>,
+): IndividualMixerPlayer[] {
   const seen = new Set<string>();
-  const normalized: string[] = [];
+  const normalized: IndividualMixerPlayer[] = [];
 
   for (const player of players) {
-    const name = player.trim().replace(/\s+/g, " ");
-    const key = name.toLowerCase();
+    const name = playerName(player).trim().replace(/\s+/g, " ");
+    const profileId = playerProfileId(player);
+    const key = profileId
+      ? `profile:${profileId.toString()}`
+      : `name:${name.toLowerCase()}`;
 
     if (!name || seen.has(key)) {
       continue;
     }
 
     seen.add(key);
-    normalized.push(name);
+    normalized.push({
+      displayName: name,
+      playerProfileId: profileId,
+    });
   }
 
   return normalized;
@@ -32,17 +53,26 @@ function teamName(round: number, position: number, side: "A" | "B", matchesPerRo
 }
 
 function createTemporaryTeam(
-  players: string[],
+  players: IndividualMixerPlayer[],
   round: number,
   position: number,
   side: "A" | "B",
   seed: number,
   matchesPerRound: number,
 ): ITeam {
+  const hasProfileIds = players.some((player) => Boolean(player.playerProfileId));
+
   return {
     _id: new Types.ObjectId(),
     name: teamName(round, position, side, matchesPerRound),
-    players,
+    players: players.map((player) => player.displayName),
+    ...(hasProfileIds
+      ? {
+          playerProfileIds: players.map((player) =>
+            player.playerProfileId ? new Types.ObjectId(player.playerProfileId.toString()) : null,
+          ),
+        }
+      : {}),
     seed,
   };
 }
@@ -84,7 +114,7 @@ function createMatch(
 }
 
 export function generateIndividualMixerSchedule(
-  players: string[],
+  players: Array<string | IndividualMixerPlayer>,
   teamSize: 2 | 3 | 4,
 ): IndividualMixerSchedule {
   const roster = normalizePlayers(players);

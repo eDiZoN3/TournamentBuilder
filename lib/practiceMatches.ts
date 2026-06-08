@@ -71,20 +71,8 @@ function parseParticipant(value: unknown): IPracticeParticipant | string {
 
   const record = value as Record<string, unknown>;
 
-  if (typeof record.displayName !== "string") {
-    return "Participant displayName is required.";
-  }
-
-  const displayName = normalizeDisplayName(record.displayName);
-
-  if (!displayName || displayName.length > 120) {
-    return "Participant displayName must be 1 to 120 characters.";
-  }
-
   if (record.playerProfileId === undefined || record.playerProfileId === null) {
-    return {
-      displayName,
-    };
+    return "Participants must include registered player profile IDs.";
   }
 
   const playerProfileId = parseObjectId(
@@ -94,6 +82,15 @@ function parseParticipant(value: unknown): IPracticeParticipant | string {
 
   if (typeof playerProfileId === "string") {
     return playerProfileId;
+  }
+
+  const displayName =
+    typeof record.displayName === "string"
+      ? normalizeDisplayName(record.displayName)
+      : "Registered player";
+
+  if (!displayName || displayName.length > 120) {
+    return "Participant displayName must be 1 to 120 characters.";
   }
 
   return {

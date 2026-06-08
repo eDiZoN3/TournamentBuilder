@@ -64,20 +64,21 @@ describe("POST /api/tournaments/[id]/join", () => {
     expect(response.status).toBe(200);
     expect(body.player).toMatchObject({
       displayName: "Alice Example",
-      email: "alice@example.com",
     });
+    expect(body.player).not.toHaveProperty("email");
     expect(body.joinedPlayerCount).toBe(1);
     expect(body.joinedPlayers).toEqual([
       expect.objectContaining({
         displayName: "Alice Example",
-        email: "alice@example.com",
       }),
     ]);
+    expect(body.joinedPlayers[0]).not.toHaveProperty("email");
 
     const updated = await Tournament.findById(tournament._id);
 
     expect(updated?.joinedPlayers).toHaveLength(1);
     expect(updated?.joinedPlayers[0].userId.toString()).toBe(userId.toString());
+    expect(updated?.joinedPlayers[0].email).toBe("alice@example.com");
   });
 
   it("lets a player join a team round-robin player-entry tournament", async () => {

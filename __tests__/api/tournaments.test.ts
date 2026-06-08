@@ -393,6 +393,42 @@ describe("/api/tournaments/[id]", () => {
     });
   });
 
+  it("does not include joined player email addresses in the response body", async () => {
+    const tournament = await Tournament.create({
+      name: "Open Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "players",
+      allowSelfJoin: true,
+      joinedPlayers: [
+        {
+          userId: new Types.ObjectId(),
+          playerProfileId: new Types.ObjectId(),
+          firstName: "Alice",
+          surname: "Example",
+          displayName: "Alice Example",
+          email: "alice@example.com",
+          joinedAt: new Date(),
+        },
+      ],
+    });
+
+    const response = await getTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.joinedPlayers).toEqual([
+      expect.objectContaining({
+        displayName: "Alice Example",
+        firstName: "Alice",
+      }),
+    ]);
+    expect(body.joinedPlayers[0]).not.toHaveProperty("email");
+  });
+
   it("updates a draft tournament name and setup teams", async () => {
     const tournament = await Tournament.create({
       name: "Old Name",
@@ -417,6 +453,42 @@ describe("/api/tournaments/[id]", () => {
       name: "New Name",
       teams: [{ name: "Alpha" }, { name: "Beta" }],
     });
+  });
+
+  it("does not include joined player email addresses in update response bodies", async () => {
+    const tournament = await Tournament.create({
+      name: "Open Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "players",
+      allowSelfJoin: true,
+      joinedPlayers: [
+        {
+          userId: new Types.ObjectId(),
+          playerProfileId: new Types.ObjectId(),
+          firstName: "Alice",
+          surname: "Example",
+          displayName: "Alice Example",
+          email: "alice@example.com",
+          joinedAt: new Date(),
+        },
+      ],
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        name: "Open Cup Updated",
+      }),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.joinedPlayers[0]).toMatchObject({
+      displayName: "Alice Example",
+      firstName: "Alice",
+    });
+    expect(body.joinedPlayers[0]).not.toHaveProperty("email");
   });
 
   it("rejects status changes through the update endpoint", async () => {

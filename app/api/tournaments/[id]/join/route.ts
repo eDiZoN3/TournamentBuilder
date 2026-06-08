@@ -16,7 +16,6 @@ function joinedPlayerSummary(player: {
   joinedAt?: Date | string;
   playerProfileId?: { toString(): string };
   displayName: string;
-  email: string;
   firstName: string;
   surname?: string | null;
   userId?: { toString(): string };
@@ -27,7 +26,6 @@ function joinedPlayerSummary(player: {
     firstName: player.firstName,
     surname: player.surname ?? undefined,
     displayName: player.displayName,
-    email: player.email,
     joinedAt:
       player.joinedAt instanceof Date
         ? player.joinedAt.toISOString()

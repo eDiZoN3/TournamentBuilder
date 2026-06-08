@@ -3,7 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
-import { Tournament, type ITeam } from "@/lib/models/Tournament";
+import {
+  Tournament,
+  type IJoinedPlayer,
+  type ITeam,
+  type ITournament,
+} from "@/lib/models/Tournament";
 
 interface RouteContext {
   params: Promise<{
@@ -135,6 +140,21 @@ async function findTournament(id: string) {
   return Tournament.findById(id);
 }
 
+function publicJoinedPlayers(joinedPlayers: IJoinedPlayer[]) {
+  return joinedPlayers.map(({ email: _email, ...joinedPlayer }) => joinedPlayer);
+}
+
+function tournamentResponseBody(tournament: { toObject(): ITournament }) {
+  const responseBody = tournament.toObject();
+
+  return {
+    ...responseBody,
+    format: responseBody.format ?? "double_elimination",
+    roundRobinMatchFormat: responseBody.roundRobinMatchFormat ?? "bo1",
+    joinedPlayers: publicJoinedPlayers(responseBody.joinedPlayers),
+  };
+}
+
 export async function GET(_request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
 
@@ -145,18 +165,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return jsonError("Tournament not found", "NOT_FOUND", 404);
     }
 
-    const responseBody = tournament.toObject();
-
-    responseBody.format ??= "double_elimination";
-    responseBody.roundRobinMatchFormat ??= "bo1";
-
-    if (Array.isArray(responseBody.joinedPlayers)) {
-      responseBody.joinedPlayers = responseBody.joinedPlayers.map(
-        ({ email: _email, ...rest }: { email: string; [key: string]: unknown }) => rest,
-      );
-    }
-
-    return NextResponse.json(responseBody);
+    return NextResponse.json(tournamentResponseBody(tournament));
   } catch {
     return jsonError("Unable to load tournament", "INTERNAL_ERROR", 500);
   }
@@ -208,12 +217,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     await tournament.save();
 
-    const responseBody = tournament.toObject();
-
-    responseBody.format ??= "double_elimination";
-    responseBody.roundRobinMatchFormat ??= "bo1";
-
-    return NextResponse.json(responseBody);
+    return NextResponse.json(tournamentResponseBody(tournament));
   } catch {
     return jsonError("Unable to update tournament", "INTERNAL_ERROR", 500);
   }

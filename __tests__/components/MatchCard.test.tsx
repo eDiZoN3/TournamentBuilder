@@ -162,4 +162,46 @@ describe("MatchCard", () => {
     expect(controlsLayer).toHaveClass("md:absolute", "md:block");
     expect(controlsLayer).not.toHaveClass("md:hidden");
   });
+
+  it("suppresses animate-pulse on a pinned live match card (score entry open)", () => {
+    const [teamA, teamB] = makeTeams(2);
+
+    render(
+      <MatchCard
+        isPinned
+        match={makeMatch({
+          status: "in_progress",
+          courtNumber: 1,
+          teamA: { teamId: teamA._id, sets: [] },
+          teamB: { teamId: teamB._id, sets: [] },
+        })}
+        teamAName="Alpha"
+        teamBName="Beta"
+      />,
+    );
+
+    const card = screen.getByTestId("match-card");
+
+    expect(card).not.toHaveClass("animate-pulse");
+    expect(card).toHaveClass("border-amber-400");
+  });
+
+  it("retains animate-pulse on a live match card that is not pinned", () => {
+    const [teamA, teamB] = makeTeams(2);
+
+    render(
+      <MatchCard
+        match={makeMatch({
+          status: "in_progress",
+          courtNumber: 2,
+          teamA: { teamId: teamA._id, sets: [] },
+          teamB: { teamId: teamB._id, sets: [] },
+        })}
+        teamAName="Alpha"
+        teamBName="Beta"
+      />,
+    );
+
+    expect(screen.getByTestId("match-card")).toHaveClass("animate-pulse");
+  });
 });

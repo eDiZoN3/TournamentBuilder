@@ -10,6 +10,14 @@ Each task is atomic enough for a single coding session. TDD tasks write tests fi
 
 ---
 
+## Phase 14 — Remaining Roadmap and Issue Backlog
+
+### T107 — Score Entry Modal Foreground Opacity Polish [COMPLETED]
+**Files**: `components/bracket/MatchCard.tsx`, `__tests__/components/MatchCard.test.tsx`
+**Description**: Removed `animate-pulse` from live match cards when `isPinned=true` (score entry open). Amber border and ring styling retained so in-progress status remains visible. Two new tests verify the suppression when pinned and retention when not pinned. All 518 tests pass.
+
+---
+
 ## Phase 0 — Project Setup & Test Infrastructure
 
 ### T01 — Scaffold Next.js Project

@@ -11,22 +11,7 @@ Each task is atomic enough for a single coding session. TDD tasks write tests fi
 ## Phase 14 - Remaining Roadmap and Issue Backlog
 
 These tasks cover the currently unimplemented backlog items:
-- `open-issues.md` item 26: score-entry card opacity/pulsing polish.
 - `open-issues.md` item 27: localized tournament graph labels and place ranges.
-
----
-
-### T107 - Score Entry Modal Foreground Opacity Polish (TDD First)
-**Files**: `components/admin/ScoreEntry.tsx`, `components/admin/TournamentManageView.tsx`, `components/admin/MatchControls.tsx`, `__tests__/components/ScoreEntry.test.tsx`, `__tests__/components/TournamentManageView.test.tsx`, `__tests__/components/UiPolish.test.tsx`
-**Depends on**: T97
-**TDD**: Write tests before implementation
-**Description**: Remove the remaining opacity/pulse behavior from score-entry UI while a match is being edited:
-- Keep the score-entry card/modal in the foreground at full opacity until scores are saved, confirmed, overridden, or dismissed.
-- Ensure active-match highlighting behind the modal does not animate or visually compete with the score-entry surface.
-- Preserve disabled-button opacity for actual disabled controls only.
-- Keep keyboard focus, dismiss behavior, and toast/error flows unchanged.
-
-Tests: score-entry modal has stable full-opacity classes, no pulse/animate opacity class is applied while open, active match row/card styling remains non-animated behind the modal, disabled controls still expose disabled state without dimming the whole modal.
 
 ---
 

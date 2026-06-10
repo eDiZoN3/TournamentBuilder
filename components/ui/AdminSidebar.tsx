@@ -43,7 +43,7 @@ export function AdminSidebar() {
 
   return (
     <aside
-      className="flex w-full flex-col gap-4 border-b border-slate-800 bg-slate-900 px-4 py-5 text-white md:min-h-screen md:w-64 md:border-b-0"
+      className="sticky top-0 z-40 flex w-full flex-col gap-4 border-b border-slate-800 bg-slate-900 px-4 py-5 text-white md:h-screen md:w-64 md:self-start md:overflow-y-auto md:border-b-0"
       ref={sidebarRef}
     >
       <div className="flex items-center justify-between gap-3">

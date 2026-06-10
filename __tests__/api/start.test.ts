@@ -430,6 +430,51 @@ describe("POST /api/tournaments/[id]/start", () => {
     expect(savedTournament?.matches.every((match) => match.teamA && match.teamB)).toBe(true);
   });
 
+  it("starts an event tournament with one bracket per discipline", async () => {
+    const teams = makeTeams(6);
+    const tournament = await Tournament.create({
+      name: "Event Cup",
+      format: "event",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      eventParticipantCount: 6,
+      eventDisciplineCount: 2,
+      eventDisciplines: ["Darts", "Quiz"],
+      eventDrawSeed: 42,
+      teams,
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+    const savedTournament = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      format: "event",
+      matchesGenerated: 14,
+      byeCount: 4,
+      autoStartedMatches: [],
+    });
+    expect(savedTournament).toMatchObject({
+      status: "active",
+      currentMatchIds: [],
+    });
+    expect(savedTournament?.matches).toHaveLength(14);
+    expect(
+      savedTournament?.matches.every((match) =>
+        typeof match.eventDisciplineIndex === "number" &&
+        ["Darts", "Quiz"].includes(match.eventDisciplineName ?? ""),
+      ),
+    ).toBe(true);
+    expect(savedTournament?.matches.filter((match) => match.status === "ready")).toHaveLength(4);
+  });
+
   it("rejects an already-active tournament", async () => {
     const tournament = await Tournament.create({
       name: "Started Cup",

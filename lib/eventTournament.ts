@@ -1,0 +1,616 @@
+import { Types } from "mongoose";
+import { rollbackCompletedMatch } from "@/lib/bracket/rollback";
+import type { IMatch, ITeam, ITeamSlot, ITournament } from "@/lib/models/Tournament";
+
+type Slot = "A" | "B";
+
+interface FirstRoundEntity {
+  firstSeed: number;
+  isBye: boolean;
+  secondSeed: number | null;
+}
+
+export interface EventTournamentConfig {
+  bracketSize: number;
+  byeCount: number;
+  byePoolSize: number;
+  byeQuotas: number[];
+  disciplineCount: number;
+  participantCount: number;
+  roundCount: number;
+}
+
+export interface EventSlotPlan {
+  index: number;
+  matches: IMatch[];
+}
+
+export interface EventWinnerResult {
+  affectedMatchIds: string[];
+  loserId: string | null;
+  nextMatchesReady: string[];
+  selected: boolean;
+  tournamentCompleted: boolean;
+  winnerId: string | null;
+}
+
+export function defaultEventDisciplines(count: number): string[] {
+  return Array.from({ length: count }, (_, index) => `Discipline ${index + 1}`);
+}
+
+function nextPowerOfTwo(value: number): number {
+  let result = 1;
+
+  while (result < value) {
+    result *= 2;
+  }
+
+  return result;
+}
+
+export function deriveEventConfig(
+  participantCount: number,
+  disciplineCount: number,
+): EventTournamentConfig {
+  if (
+    !Number.isInteger(participantCount) ||
+    participantCount < 2 ||
+    participantCount > 32
+  ) {
+    throw new Error("Event tournaments require 2 to 32 participants");
+  }
+
+  if (
+    !Number.isInteger(disciplineCount) ||
+    disciplineCount < 1 ||
+    disciplineCount > 10
+  ) {
+    throw new Error("Event tournaments require 1 to 10 disciplines");
+  }
+
+  const bracketSize = nextPowerOfTwo(participantCount);
+  const byeCount = bracketSize - participantCount;
+  const byePoolSize = byeCount > 0 ? Math.min(participantCount, byeCount + 2) : 0;
+  const totalByes = byeCount * disciplineCount;
+  const baseQuota = byePoolSize > 0 ? Math.floor(totalByes / byePoolSize) : 0;
+  const remainder = byePoolSize > 0 ? totalByes % byePoolSize : 0;
+  const byeQuotas = Array.from({ length: byePoolSize }, (_, index) =>
+    baseQuota + (index < remainder ? 1 : 0),
+  );
+
+  return {
+    participantCount,
+    disciplineCount,
+    bracketSize,
+    byeCount,
+    roundCount: Math.log2(bracketSize),
+    byePoolSize,
+    byeQuotas,
+  };
+}
+
+function mulberry32(seed: number): () => number {
+  let value = seed;
+
+  return () => {
+    value |= 0;
+    value = (value + 0x6d2b79f5) | 0;
+
+    let next = Math.imul(value ^ (value >>> 15), 1 | value);
+    next = (next + Math.imul(next ^ (next >>> 7), 61 | next)) ^ next;
+
+    return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle<T>(values: T[], rng: () => number): T[] {
+  const shuffled = [...values];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(rng() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [
+      shuffled[swapIndex],
+      shuffled[index],
+    ];
+  }
+
+  return shuffled;
+}
+
+function pairKey(firstSeed: number, secondSeed: number): string {
+  return `${Math.min(firstSeed, secondSeed)}-${Math.max(firstSeed, secondSeed)}`;
+}
+
+function assignEventByes(config: EventTournamentConfig): number[][] {
+  const remaining = new Map<number, number>();
+  const lastUsed = new Map<number, number>();
+  const plan: number[][] = [];
+
+  config.byeQuotas.forEach((quota, index) => {
+    const seed = index + 1;
+
+    remaining.set(seed, quota);
+    lastUsed.set(seed, -1);
+  });
+
+  for (let disciplineIndex = 0; disciplineIndex < config.disciplineCount; disciplineIndex += 1) {
+    const chosen = [...remaining.entries()]
+      .filter(([, quota]) => quota > 0)
+      .sort(
+        ([firstSeed, firstQuota], [secondSeed, secondQuota]) =>
+          secondQuota - firstQuota ||
+          (lastUsed.get(firstSeed) ?? -1) - (lastUsed.get(secondSeed) ?? -1) ||
+          firstSeed - secondSeed,
+      )
+      .slice(0, config.byeCount)
+      .map(([seed]) => seed)
+      .sort((first, second) => first - second);
+
+    for (const seed of chosen) {
+      remaining.set(seed, (remaining.get(seed) ?? 0) - 1);
+      lastUsed.set(seed, disciplineIndex);
+    }
+
+    plan.push(chosen);
+  }
+
+  return plan;
+}
+
+function pairRoundOne(
+  players: number[],
+  usedPairs: Set<string>,
+  rng: () => number,
+): Array<[number, number]> {
+  const half = players.length / 2;
+  const strong = players.slice(0, half);
+  const weak = players.slice(half);
+
+  function backtrack(
+    index: number,
+    taken: Set<number>,
+    pairs: Array<[number, number]>,
+  ): Array<[number, number]> | null {
+    if (index === half) {
+      return pairs;
+    }
+
+    for (const weakSeed of shuffle(weak, rng)) {
+      if (
+        taken.has(weakSeed) ||
+        usedPairs.has(pairKey(strong[index], weakSeed))
+      ) {
+        continue;
+      }
+
+      taken.add(weakSeed);
+
+      const result = backtrack(index + 1, taken, [
+        ...pairs,
+        [strong[index], weakSeed],
+      ]);
+
+      if (result) {
+        return result;
+      }
+
+      taken.delete(weakSeed);
+    }
+
+    return null;
+  }
+
+  const pairs =
+    backtrack(0, new Set(), []) ??
+    strong.map((seed, index) => [seed, weak[index]] as [number, number]);
+
+  pairs.forEach(([firstSeed, secondSeed]) => {
+    usedPairs.add(pairKey(firstSeed, secondSeed));
+  });
+
+  return pairs;
+}
+
+function bracketOrder(matchCount: number): number[] {
+  let ranks = [1];
+
+  while (ranks.length < matchCount) {
+    const nextSize = ranks.length * 2;
+
+    ranks = ranks.flatMap((rank) => [rank, nextSize + 1 - rank]);
+  }
+
+  return ranks;
+}
+
+function teamSlot(team: ITeam): ITeamSlot {
+  return {
+    teamId: team._id,
+    sets: [],
+  };
+}
+
+function eventLabel(disciplineName: string, round: number, roundCount: number) {
+  if (round === roundCount) {
+    return `${disciplineName} Final`;
+  }
+
+  return `${disciplineName} Round ${round}`;
+}
+
+function createEventMatch(
+  disciplineIndex: number,
+  disciplineName: string,
+  round: number,
+  position: number,
+  roundCount: number,
+): IMatch {
+  return {
+    _id: new Types.ObjectId(),
+    bracket: "winner",
+    round,
+    position,
+    label: eventLabel(disciplineName, round, roundCount),
+    placeRange: "",
+    format: "bo1",
+    teamA: null,
+    teamB: null,
+    status: "pending",
+    winnerId: null,
+    loserId: null,
+    winnerNextMatchId: null,
+    winnerNextSlot: null,
+    loserNextMatchId: null,
+    loserNextSlot: null,
+    isBye: false,
+    isWBFinal: round === roundCount,
+    isLBFinal: false,
+    courtNumber: null,
+    eventDisciplineIndex: disciplineIndex,
+    eventDisciplineName: disciplineName,
+  };
+}
+
+function connectWinner(source: IMatch, target: IMatch, slot: Slot) {
+  source.winnerNextMatchId = target._id;
+  source.winnerNextSlot = slot;
+}
+
+function normalizeDisciplineNames(disciplineNames: string[]): string[] {
+  return disciplineNames.map((name, index) => {
+    const trimmed = name.trim();
+
+    return trimmed.length > 0 ? trimmed : `Discipline ${index + 1}`;
+  });
+}
+
+function routeWinner(
+  matchesById: Map<string, IMatch>,
+  match: IMatch,
+  winnerId: Types.ObjectId | null,
+  nextMatchesReady?: Set<string>,
+) {
+  if (!match.winnerNextMatchId || !match.winnerNextSlot || !winnerId) {
+    return;
+  }
+
+  const nextMatch = matchesById.get(match.winnerNextMatchId.toString());
+
+  if (!nextMatch) {
+    throw new Error("Generated event bracket points to a missing match");
+  }
+
+  nextMatch[match.winnerNextSlot === "A" ? "teamA" : "teamB"] = {
+    teamId: winnerId,
+    sets: [],
+  };
+
+  if (
+    nextMatch.status !== "completed" &&
+    !nextMatch.isBye &&
+    nextMatch.teamA &&
+    nextMatch.teamB
+  ) {
+    nextMatch.status = "ready";
+    nextMatchesReady?.add(nextMatch._id.toString());
+  }
+}
+
+export function generateEventTournamentMatches(
+  teams: ITeam[],
+  disciplineNames: string[],
+  drawSeed = 1,
+): IMatch[] {
+  const config = deriveEventConfig(teams.length, disciplineNames.length);
+  const names = normalizeDisciplineNames(disciplineNames);
+  const teamsBySeed = new Map<number, ITeam>();
+  const rng = mulberry32(drawSeed);
+  const usedPairs = new Set<string>();
+  const byePlan = assignEventByes(config);
+  const firstRoundMatchCount = config.bracketSize / 2;
+  const order = bracketOrder(firstRoundMatchCount);
+  const matches: IMatch[] = [];
+
+  teams.forEach((team, index) => {
+    team.seed = index + 1;
+    teamsBySeed.set(index + 1, team);
+  });
+
+  for (
+    let disciplineIndex = 0;
+    disciplineIndex < config.disciplineCount;
+    disciplineIndex += 1
+  ) {
+    const disciplineName = names[disciplineIndex];
+    const byes = byePlan[disciplineIndex];
+    const activeSeeds = Array.from(
+      { length: config.participantCount },
+      (_, index) => index + 1,
+    ).filter((seed) => !byes.includes(seed));
+    const pairs = pairRoundOne(activeSeeds, usedPairs, rng);
+    const entities: FirstRoundEntity[] = [
+      ...byes.map((seed) => ({
+        firstSeed: seed,
+        isBye: true,
+        secondSeed: null,
+      })),
+      ...pairs.map(([firstSeed, secondSeed]) => ({
+        firstSeed,
+        isBye: false,
+        secondSeed,
+      })),
+    ].sort(
+      (first, second) =>
+        Math.min(first.firstSeed, first.secondSeed ?? 99) -
+        Math.min(second.firstSeed, second.secondSeed ?? 99),
+    );
+    const firstRoundEntities = Array<FirstRoundEntity>(firstRoundMatchCount);
+    const rounds = Array.from({ length: config.roundCount }, (_, roundIndex) =>
+      Array.from(
+        { length: config.bracketSize / 2 ** (roundIndex + 1) },
+        (_value, positionIndex) =>
+          createEventMatch(
+            disciplineIndex,
+            disciplineName,
+            roundIndex + 1,
+            positionIndex + 1,
+            config.roundCount,
+          ),
+      ),
+    );
+
+    order.forEach((rank, position) => {
+      firstRoundEntities[position] = entities[rank - 1];
+    });
+
+    for (let roundIndex = 0; roundIndex < config.roundCount - 1; roundIndex += 1) {
+      const currentRound = rounds[roundIndex];
+      const nextRound = rounds[roundIndex + 1];
+
+      currentRound.forEach((match, index) => {
+        connectWinner(
+          match,
+          nextRound[Math.floor(index / 2)],
+          index % 2 === 0 ? "A" : "B",
+        );
+      });
+    }
+
+    rounds[0].forEach((match, index) => {
+      const entity = firstRoundEntities[index];
+      const firstTeam = teamsBySeed.get(entity.firstSeed);
+      const secondTeam = entity.secondSeed
+        ? teamsBySeed.get(entity.secondSeed)
+        : null;
+
+      if (!firstTeam) {
+        throw new Error("Generated event draw references a missing participant");
+      }
+
+      match.teamA = teamSlot(firstTeam);
+      match.teamB = secondTeam ? teamSlot(secondTeam) : null;
+
+      if (entity.isBye) {
+        match.isBye = true;
+        match.status = "completed";
+        match.winnerId = firstTeam._id;
+      } else {
+        match.status = "ready";
+      }
+    });
+
+    const disciplineMatches = rounds.flat();
+    const matchesById = new Map(
+      disciplineMatches.map((match) => [match._id.toString(), match]),
+    );
+
+    for (const match of disciplineMatches) {
+      if (match.isBye && match.status === "completed") {
+        routeWinner(matchesById, match, match.winnerId);
+      }
+    }
+
+    matches.push(...disciplineMatches);
+  }
+
+  return matches;
+}
+
+function eventDisciplineCount(matches: IMatch[]): number {
+  const indexes = matches
+    .map((match) => match.eventDisciplineIndex)
+    .filter((index): index is number => typeof index === "number");
+
+  return indexes.length > 0 ? Math.max(...indexes) + 1 : 1;
+}
+
+export function planEventSlots(matches: IMatch[]): EventSlotPlan[] {
+  let ready = matches.filter(
+    (match) =>
+      match.eventDisciplineIndex !== null &&
+      !match.isBye &&
+      match.status === "ready" &&
+      match.teamA &&
+      match.teamB &&
+      !match.winnerId,
+  );
+  const disciplineCount = eventDisciplineCount(matches);
+  const slots: EventSlotPlan[] = [];
+  let slotIndex = 0;
+
+  while (ready.length > 0) {
+    ready = [...ready].sort(
+      (first, second) =>
+        first.round - second.round ||
+        (((first.eventDisciplineIndex ?? 0) + slotIndex) % disciplineCount) -
+          (((second.eventDisciplineIndex ?? 0) + slotIndex) % disciplineCount) ||
+        first.position - second.position,
+    );
+
+    const busyParticipants = new Set<string>();
+    const busyDisciplines = new Set<number>();
+    const slotMatches: IMatch[] = [];
+    const rest: IMatch[] = [];
+
+    for (const match of ready) {
+      const disciplineIndex = match.eventDisciplineIndex ?? 0;
+      const firstTeamId = match.teamA?.teamId.toString();
+      const secondTeamId = match.teamB?.teamId.toString();
+
+      if (
+        !firstTeamId ||
+        !secondTeamId ||
+        busyDisciplines.has(disciplineIndex) ||
+        busyParticipants.has(firstTeamId) ||
+        busyParticipants.has(secondTeamId)
+      ) {
+        rest.push(match);
+        continue;
+      }
+
+      slotMatches.push(match);
+      busyDisciplines.add(disciplineIndex);
+      busyParticipants.add(firstTeamId);
+      busyParticipants.add(secondTeamId);
+    }
+
+    slots.push({
+      index: slotIndex + 1,
+      matches: slotMatches,
+    });
+    ready = rest;
+    slotIndex += 1;
+  }
+
+  return slots;
+}
+
+function idsEqual(
+  first: Types.ObjectId | string,
+  second: Types.ObjectId | string,
+): boolean {
+  return first.toString() === second.toString();
+}
+
+function removeCurrentMatch(tournament: ITournament, match: IMatch) {
+  tournament.currentMatchIds = tournament.currentMatchIds.filter(
+    (matchId) => !idsEqual(matchId, match._id),
+  );
+}
+
+function clearMatchResult(tournament: ITournament, match: IMatch) {
+  match.winnerId = null;
+  match.loserId = null;
+  match.courtNumber = null;
+  match.status = match.teamA && match.teamB ? "ready" : "pending";
+  removeCurrentMatch(tournament, match);
+}
+
+function matchParticipantSide(match: IMatch, winnerId: Types.ObjectId) {
+  if (match.teamA && idsEqual(match.teamA.teamId, winnerId)) {
+    return {
+      loserId: match.teamB?.teamId ?? null,
+      winnerId: match.teamA.teamId,
+    };
+  }
+
+  if (match.teamB && idsEqual(match.teamB.teamId, winnerId)) {
+    return {
+      loserId: match.teamA?.teamId ?? null,
+      winnerId: match.teamB.teamId,
+    };
+  }
+
+  return null;
+}
+
+export function toggleEventMatchWinner(
+  tournament: ITournament,
+  match: IMatch,
+  requestedWinnerId: Types.ObjectId | string,
+): EventWinnerResult {
+  if (match.isBye || !match.teamA || !match.teamB) {
+    throw new Error("Both participants are required");
+  }
+
+  const winnerObjectId =
+    requestedWinnerId instanceof Types.ObjectId
+      ? requestedWinnerId
+      : new Types.ObjectId(requestedWinnerId);
+  const participantSide = matchParticipantSide(match, winnerObjectId);
+
+  if (!participantSide || !participantSide.loserId) {
+    throw new Error("Winner must be one of the match participants");
+  }
+
+  const sameWinnerSelected =
+    match.status === "completed" &&
+    match.winnerId !== null &&
+    idsEqual(match.winnerId, winnerObjectId);
+  const affectedMatchIds =
+    match.status === "completed"
+      ? rollbackCompletedMatch(tournament, match).affectedMatchIds
+      : [];
+
+  if (sameWinnerSelected) {
+    clearMatchResult(tournament, match);
+    tournament.status = "active";
+
+    return {
+      affectedMatchIds,
+      loserId: null,
+      nextMatchesReady: [],
+      selected: false,
+      tournamentCompleted: false,
+      winnerId: null,
+    };
+  }
+
+  match.winnerId = participantSide.winnerId;
+  match.loserId = participantSide.loserId;
+  match.status = "completed";
+  match.courtNumber = null;
+  removeCurrentMatch(tournament, match);
+
+  const nextMatchesReady = new Set<string>();
+  const matchesById = new Map(
+    tournament.matches.map((candidate) => [candidate._id.toString(), candidate]),
+  );
+
+  routeWinner(matchesById, match, participantSide.winnerId, nextMatchesReady);
+
+  const tournamentCompleted = tournament.matches.every(
+    (candidate) => candidate.isBye || candidate.status === "completed",
+  );
+
+  tournament.status = tournamentCompleted ? "completed" : "active";
+
+  return {
+    affectedMatchIds,
+    loserId: participantSide.loserId.toString(),
+    nextMatchesReady: [...nextMatchesReady],
+    selected: true,
+    tournamentCompleted,
+    winnerId: participantSide.winnerId.toString(),
+  };
+}

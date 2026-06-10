@@ -35,6 +35,8 @@ export default function NewTournamentPage() {
   const [courtsAvailable, setCourtsAvailable] = useState(1);
   const [inputMode, setInputMode] = useState<"teams" | "players">("teams");
   const [allowSelfJoin, setAllowSelfJoin] = useState(false);
+  const [eventParticipantCount, setEventParticipantCount] = useState(8);
+  const [eventDisciplineCount, setEventDisciplineCount] = useState(3);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,6 +46,13 @@ export default function NewTournamentPage() {
     if (nextFormat === "individual_mixer") {
       setInputMode("players");
       setAllowSelfJoin(false);
+    }
+
+    if (nextFormat === "event") {
+      setCourtsAvailable(1);
+      setAllowSelfJoin(false);
+      setMatchResultMode("winner_only");
+      setKnockoutMatchFormat("bo1");
     }
 
     if (nextFormat !== "team_round_robin") {
@@ -83,10 +92,18 @@ export default function NewTournamentPage() {
                     : knockoutMatchFormat,
               }
             : {}),
+          ...(format === "event"
+            ? {
+                matchResultMode: "winner_only",
+                knockoutMatchFormat: "bo1",
+                eventParticipantCount,
+                eventDisciplineCount,
+              }
+            : {}),
           teamSize,
-          courtsAvailable,
+          courtsAvailable: format === "event" ? 1 : courtsAvailable,
           inputMode,
-          allowSelfJoin,
+          allowSelfJoin: format === "event" ? false : allowSelfJoin,
           ...(format === "team_round_robin" ? { roundRobinMatchFormat } : {}),
         }),
       });
@@ -139,6 +156,7 @@ export default function NewTournamentPage() {
               ["double_elimination", t("doubleElimination")],
               ["team_round_robin", t("teamRoundRobin")],
               ["individual_mixer", t("individualMixer")],
+              ["event", t("eventTournament")],
             ] as const).map(([value, label]) => (
               <label className="flex items-center gap-2" key={value}>
                 <input
@@ -229,45 +247,96 @@ export default function NewTournamentPage() {
           </>
         ) : null}
 
-        <fieldset>
-          <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {t("teamSize")}
-          </legend>
-          <div className="mt-2 flex gap-4">
-            {([2, 3, 4] as const).map((size) => (
-              <label className="flex items-center gap-2" key={size}>
-                <input
-                  checked={teamSize === size}
-                  name="teamSize"
-                  onChange={() => setTeamSize(size)}
-                  type="radio"
-                />
-                {size} {t("players")}
+        {format === "event" ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                htmlFor="eventParticipantCount"
+              >
+                {t("participants")}
               </label>
-            ))}
+              <input
+                className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+                id="eventParticipantCount"
+                max={32}
+                min={2}
+                onChange={(event) =>
+                  setEventParticipantCount(
+                    Number.parseInt(event.target.value, 10),
+                  )
+                }
+                required
+                type="number"
+                value={eventParticipantCount}
+              />
+            </div>
+            <div>
+              <label
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                htmlFor="eventDisciplineCount"
+              >
+                {t("disciplines")}
+              </label>
+              <input
+                className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+                id="eventDisciplineCount"
+                max={10}
+                min={1}
+                onChange={(event) =>
+                  setEventDisciplineCount(
+                    Number.parseInt(event.target.value, 10),
+                  )
+                }
+                required
+                type="number"
+                value={eventDisciplineCount}
+              />
+            </div>
           </div>
-        </fieldset>
+        ) : (
+          <fieldset>
+            <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("teamSize")}
+            </legend>
+            <div className="mt-2 flex gap-4">
+              {([2, 3, 4] as const).map((size) => (
+                <label className="flex items-center gap-2" key={size}>
+                  <input
+                    checked={teamSize === size}
+                    name="teamSize"
+                    onChange={() => setTeamSize(size)}
+                    type="radio"
+                  />
+                  {size} {t("players")}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
 
-        <div>
-          <label
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-            htmlFor="courtsAvailable"
-          >
-            {t("courtsAvailable")}
-          </label>
-          <input
-            className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
-            id="courtsAvailable"
-            max={10}
-            min={1}
-            onChange={(event) =>
-              setCourtsAvailable(Number.parseInt(event.target.value, 10))
-            }
-            required
-            type="number"
-            value={courtsAvailable}
-          />
-        </div>
+        {format === "event" ? null : (
+          <div>
+            <label
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              htmlFor="courtsAvailable"
+            >
+              {t("courtsAvailable")}
+            </label>
+            <input
+              className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+              id="courtsAvailable"
+              max={10}
+              min={1}
+              onChange={(event) =>
+                setCourtsAvailable(Number.parseInt(event.target.value, 10))
+              }
+              required
+              type="number"
+              value={courtsAvailable}
+            />
+          </div>
+        )}
 
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -306,8 +375,8 @@ export default function NewTournamentPage() {
 
         <label className="flex items-center gap-2">
           <input
-            checked={allowSelfJoin}
-            disabled={inputMode !== "players"}
+                checked={allowSelfJoin}
+            disabled={inputMode !== "players" || format === "event"}
             onChange={(event) => setAllowSelfJoin(event.target.checked)}
             type="checkbox"
           />

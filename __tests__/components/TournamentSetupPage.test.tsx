@@ -404,6 +404,70 @@ describe("TournamentSetupForm", () => {
     expect(screen.queryByRole("button", { name: "Generate teams" })).not.toBeInTheDocument();
   });
 
+  it("persists event participants and discipline names before starting", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(jsonResponse({ tournamentId: "tournament-id" }));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Event Cup",
+          format: "event",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: false,
+          eventParticipantCount: 3,
+          eventDisciplineCount: 2,
+          eventDisciplines: ["Discipline 1", "Discipline 2"],
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    screen.getAllByLabelText(/Participant \d+ name/).forEach((input, index) => {
+      fireEvent.change(input, {
+        target: {
+          value: ["Alice", "Bob", "Charlie"][index],
+        },
+      });
+    });
+    screen.getAllByLabelText(/Discipline \d+ name/).forEach((input, index) => {
+      fireEvent.change(input, {
+        target: {
+          value: ["Darts", "Quiz"][index],
+        },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        "/api/tournaments/tournament-id",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            teams: [
+              { name: "Alice", players: ["Alice"], seed: 1 },
+              { name: "Bob", players: ["Bob"], seed: 2 },
+              { name: "Charlie", players: ["Charlie"], seed: 3 },
+            ],
+            eventDisciplines: ["Darts", "Quiz"],
+          }),
+        }),
+      );
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/tournaments/tournament-id/start",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+  });
+
   it("loads the tournament for the setup route", async () => {
     vi.stubGlobal(
       "fetch",

@@ -39,6 +39,8 @@ function createMatch(
     isWBFinal: false,
     isLBFinal: false,
     courtNumber: null,
+    eventDisciplineIndex: null,
+    eventDisciplineName: null,
   };
 }
 

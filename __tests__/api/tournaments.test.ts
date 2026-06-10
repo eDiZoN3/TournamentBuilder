@@ -294,6 +294,50 @@ describe("/api/tournaments", () => {
     });
   });
 
+  it("creates an event tournament with participant and discipline counts", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Event Cup",
+        format: "event",
+        eventParticipantCount: 12,
+        eventDisciplineCount: 4,
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "players",
+      }),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(body._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body).toMatchObject({
+      format: "event",
+      inputMode: "players",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      courtsAvailable: 1,
+      eventParticipantCount: 12,
+      eventDisciplineCount: 4,
+      eventDisciplines: [
+        "Discipline 1",
+        "Discipline 2",
+        "Discipline 3",
+        "Discipline 4",
+      ],
+    });
+    expect(saved).toMatchObject({
+      format: "event",
+      eventParticipantCount: 12,
+      eventDisciplineCount: 4,
+      eventDisciplines: [
+        "Discipline 1",
+        "Discipline 2",
+        "Discipline 3",
+        "Discipline 4",
+      ],
+    });
+  });
+
   it.each([
     [
       "individual mixer with teams",
@@ -400,6 +444,28 @@ describe("/api/tournaments", () => {
     [{ name: "Summer Cup", teamSize: 2, courtsAvailable: 0, inputMode: "teams" }],
     [{ name: "", teamSize: 2, courtsAvailable: 1, inputMode: "teams" }],
     [{ name: "Summer Cup", teamSize: 2, courtsAvailable: 1, inputMode: "manual" }],
+    [
+      {
+        name: "Bad Event",
+        format: "event",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+        eventParticipantCount: 33,
+        eventDisciplineCount: 2,
+      },
+    ],
+    [
+      {
+        name: "Bad Event Disciplines",
+        format: "event",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+        eventParticipantCount: 8,
+        eventDisciplineCount: 11,
+      },
+    ],
   ])("rejects invalid create requests", async (body) => {
     const response = await createTournament(
       request("http://localhost:3000/api/tournaments", "POST", body),
@@ -547,6 +613,40 @@ describe("/api/tournaments/[id]", () => {
     await expect(Tournament.findById(tournament._id).lean()).resolves.toMatchObject({
       name: "New Name",
       teams: [{ name: "Alpha" }, { name: "Beta" }],
+    });
+  });
+
+  it("updates an event tournament roster and disciplines while in draft", async () => {
+    const tournament = await Tournament.create({
+      name: "Draft Event",
+      format: "event",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      eventParticipantCount: 3,
+      eventDisciplineCount: 2,
+      eventDisciplines: ["Discipline 1", "Discipline 2"],
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        teams: [
+          { name: "Alpha", players: [], seed: 1 },
+          { name: "Beta", players: [], seed: 2 },
+          { name: "Gamma", players: [], seed: 3 },
+        ],
+        eventDisciplines: ["Darts", "Quiz"],
+      }),
+      context(tournament._id.toString()),
+    );
+    const saved = await Tournament.findById(tournament._id).lean();
+
+    expect(response.status).toBe(200);
+    expect(saved).toMatchObject({
+      eventDisciplines: ["Darts", "Quiz"],
+      teams: [{ name: "Alpha" }, { name: "Beta" }, { name: "Gamma" }],
     });
   });
 

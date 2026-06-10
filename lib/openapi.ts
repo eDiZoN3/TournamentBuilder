@@ -193,7 +193,7 @@ export const openApiDocument: OpenApiDocument = {
       },
       TournamentFormat: {
         type: "string",
-        enum: ["double_elimination", "team_round_robin", "individual_mixer"],
+        enum: ["double_elimination", "team_round_robin", "individual_mixer", "event"],
       },
       InputMode: {
         type: "string",

@@ -10,6 +10,10 @@ import { generateBracket } from "@/lib/bracket/generate";
 import { autoAssignReadyMatches } from "@/lib/bracket/scheduler";
 import { connectDB } from "@/lib/db";
 import {
+  defaultEventDisciplines,
+  generateEventTournamentMatches,
+} from "@/lib/eventTournament";
+import {
   Tournament,
   type IJoinedPlayer,
   type IMatch,
@@ -203,6 +207,48 @@ export async function POST(_request: NextRequest, context: RouteContext) {
         tournament.teams as ITeam[],
         roundRobinMatchFormat,
       );
+    } else if (format === "event") {
+      const eventParticipantCount = tournament.eventParticipantCount ?? 0;
+      const eventDisciplineCount = tournament.eventDisciplineCount ?? 0;
+      const configuredDisciplines = tournament.eventDisciplines ?? [];
+      const eventDisciplines =
+        configuredDisciplines.length > 0
+          ? configuredDisciplines
+          : defaultEventDisciplines(eventDisciplineCount);
+
+      if (
+        tournament.teams.length !== eventParticipantCount ||
+        tournament.teams.length < 2 ||
+        tournament.teams.length > 32
+      ) {
+        return jsonError(
+          `Exactly ${eventParticipantCount} participants are required`,
+          "VALIDATION_ERROR",
+          422,
+        );
+      }
+
+      if (
+        eventDisciplines.length !== eventDisciplineCount ||
+        eventDisciplines.length < 1 ||
+        eventDisciplines.length > 10
+      ) {
+        return jsonError(
+          "Invalid event disciplines",
+          "VALIDATION_ERROR",
+          422,
+        );
+      }
+
+      tournament.courtsAvailable = 1;
+      tournament.matchResultMode = "winner_only";
+      tournament.knockoutMatchFormat = "bo1";
+      tournament.eventDisciplines = eventDisciplines;
+      matches = generateEventTournamentMatches(
+        tournament.teams as ITeam[],
+        eventDisciplines,
+        tournament.eventDrawSeed ?? 1,
+      );
     } else if (format === "individual_mixer") {
       const players = playerRoster(tournament);
       const minimumPlayers = tournament.teamSize * 2;
@@ -268,7 +314,10 @@ export async function POST(_request: NextRequest, context: RouteContext) {
 
     tournament.matches = matches as IMatch[];
     tournament.status = "active";
-    const scheduling = autoAssignReadyMatches(tournament);
+    const scheduling =
+      format === "event"
+        ? { autoStartedMatches: [] }
+        : autoAssignReadyMatches(tournament);
 
     await tournament.save();
 

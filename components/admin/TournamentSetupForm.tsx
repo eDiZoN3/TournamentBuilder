@@ -38,10 +38,13 @@ interface SetupPlayerEntry {
 export interface SetupTournament {
   _id: string;
   name: string;
-  format?: "double_elimination" | "team_round_robin" | "individual_mixer";
+  format?: "double_elimination" | "team_round_robin" | "individual_mixer" | "event";
   teamSize: 2 | 3 | 4;
   inputMode: "teams" | "players";
   allowSelfJoin?: boolean;
+  eventParticipantCount?: number;
+  eventDisciplineCount?: number;
+  eventDisciplines?: string[];
   joinedPlayers?: SetupJoinedPlayer[];
   teams: SetupTeam[];
 }
@@ -113,6 +116,9 @@ export function TournamentSetupForm({
   const format = tournament.format ?? "double_elimination";
   const isTeamRoundRobin = format === "team_round_robin";
   const isIndividualMixer = format === "individual_mixer";
+  const isEventTournament = format === "event";
+  const eventParticipantCount = tournament.eventParticipantCount ?? 2;
+  const eventDisciplineCount = tournament.eventDisciplineCount ?? 1;
   const joinedPlayers = tournament.joinedPlayers;
   const joinedPlayerNames = useMemo(
     () => (joinedPlayers ?? []).map((player) => player.displayName),
@@ -140,6 +146,19 @@ export function TournamentSetupForm({
       tournament.teams.every((team) => team.players.length >= tournament.teamSize)
       ? tournament.teams
       : [],
+  );
+  const [eventParticipantNames, setEventParticipantNames] = useState<string[]>(
+    tournament.teams.length > 0
+      ? tournament.teams.map((team) => team.name).slice(0, eventParticipantCount)
+      : Array.from({ length: eventParticipantCount }, () => ""),
+  );
+  const [eventDisciplineNames, setEventDisciplineNames] = useState<string[]>(
+    (tournament.eventDisciplines ?? []).length > 0
+      ? (tournament.eventDisciplines ?? []).slice(0, eventDisciplineCount)
+      : Array.from(
+          { length: eventDisciplineCount },
+          (_value, index) => `Discipline ${index + 1}`,
+        ),
   );
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -215,6 +234,33 @@ export function TournamentSetupForm({
           : value,
       ),
     );
+  }
+
+  function updateEventParticipantName(index: number, name: string) {
+    setStatusMessage(null);
+    setEventParticipantNames((current) => {
+      const next = Array.from(
+        { length: eventParticipantCount },
+        (_value, currentIndex) => current[currentIndex] ?? "",
+      );
+
+      next[index] = name;
+      return next;
+    });
+  }
+
+  function updateEventDisciplineName(index: number, name: string) {
+    setStatusMessage(null);
+    setEventDisciplineNames((current) => {
+      const next = Array.from(
+        { length: eventDisciplineCount },
+        (_value, currentIndex) =>
+          current[currentIndex] ?? `Discipline ${currentIndex + 1}`,
+      );
+
+      next[index] = name;
+      return next;
+    });
   }
 
   function addRegisteredPlayer(player: RegisteredPlayerOption) {
@@ -297,6 +343,26 @@ export function TournamentSetupForm({
     }));
   }
 
+  function eventParticipantTeams(): SetupTeam[] {
+    return eventParticipantNames.map((name, index) => {
+      const trimmedName = name.trim();
+
+      return {
+        name: trimmedName,
+        players: tournament.inputMode === "players" ? [trimmedName] : [],
+        seed: index + 1,
+      };
+    });
+  }
+
+  function eventDisciplineEntries(): string[] {
+    return eventDisciplineNames.map((name, index) => {
+      const trimmedName = name.trim();
+
+      return trimmedName.length > 0 ? trimmedName : `Discipline ${index + 1}`;
+    });
+  }
+
   function namedTeamEntries(): SetupTeam[] {
     return teamNames
       .map((name) => name.trim())
@@ -316,6 +382,10 @@ export function TournamentSetupForm({
   }
 
   function draftRosterTeams(): SetupTeam[] {
+    if (isEventTournament) {
+      return eventParticipantTeams();
+    }
+
     if (tournament.inputMode === "teams") {
       return namedTeamEntries();
     }
@@ -328,6 +398,10 @@ export function TournamentSetupForm({
   }
 
   function startRosterTeams(): SetupTeam[] {
+    if (isEventTournament) {
+      return eventParticipantTeams();
+    }
+
     if (tournament.inputMode === "teams") {
       return namedTeamEntries();
     }
@@ -341,7 +415,14 @@ export function TournamentSetupForm({
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({ teams }),
+      body: JSON.stringify(
+        isEventTournament
+          ? {
+              teams,
+              eventDisciplines: eventDisciplineEntries(),
+            }
+          : { teams },
+      ),
     });
 
     if (!updateResponse.ok) {
@@ -379,6 +460,26 @@ export function TournamentSetupForm({
     setStatusMessage(null);
 
     const teams = startRosterTeams();
+
+    if (isEventTournament) {
+      const disciplines = eventDisciplineEntries();
+
+      if (
+        teams.length !== eventParticipantCount ||
+        teams.some((team) => team.name.length === 0)
+      ) {
+        setError(t("enterAtLeastTwoTeamNames"));
+        return;
+      }
+
+      if (
+        disciplines.length !== eventDisciplineCount ||
+        disciplines.some((discipline) => discipline.trim().length === 0)
+      ) {
+        setError(t("unableToSaveTournamentTeams"));
+        return;
+      }
+    }
 
     if (
       isIndividualMixer &&
@@ -418,6 +519,7 @@ export function TournamentSetupForm({
       tournament.inputMode === "players" &&
       !isIndividualMixer &&
       !isTeamRoundRobin &&
+      !isEventTournament &&
       (previewTeams.length < 2 ||
         previewTeams.some(
           (team) =>
@@ -469,6 +571,126 @@ export function TournamentSetupForm({
   }
 
   const isBusy = isSavingRoster || isStarting;
+
+  if (isEventTournament) {
+    const participantValues = Array.from(
+      { length: eventParticipantCount },
+      (_value, index) => eventParticipantNames[index] ?? "",
+    );
+    const disciplineValues = Array.from(
+      { length: eventDisciplineCount },
+      (_value, index) =>
+        eventDisciplineNames[index] ?? `Discipline ${index + 1}`,
+    );
+
+    return (
+      <section className="max-w-3xl">
+        <h1 className="text-3xl font-bold tracking-tight">
+          {formatTranslation(locale, "setupTournamentTitle", {
+            name: tournament.name,
+          })}
+        </h1>
+        <p className="mt-2 text-slate-600 dark:text-slate-300">
+          {t("eventSetupDescription")}
+        </p>
+
+        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]">
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {t("participants")}
+            </h2>
+            <div className="mt-3 space-y-3">
+              {participantValues.map((participantName, index) => (
+                <label className="block" key={index}>
+                  <span className="sr-only">
+                    {formatTranslation(locale, "participantNameField", {
+                      n: index + 1,
+                    })}
+                  </span>
+                  <input
+                    aria-label={formatTranslation(
+                      locale,
+                      "participantNameField",
+                      { n: index + 1 },
+                    )}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+                    maxLength={50}
+                    onChange={(event) =>
+                      updateEventParticipantName(index, event.target.value)
+                    }
+                    placeholder={`${t("participants")} ${index + 1}`}
+                    value={participantName}
+                  />
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {t("disciplines")}
+            </h2>
+            <div className="mt-3 space-y-3">
+              {disciplineValues.map((disciplineName, index) => (
+                <label className="block" key={index}>
+                  <span className="sr-only">
+                    {formatTranslation(locale, "disciplineNameField", {
+                      n: index + 1,
+                    })}
+                  </span>
+                  <input
+                    aria-label={formatTranslation(
+                      locale,
+                      "disciplineNameField",
+                      { n: index + 1 },
+                    )}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+                    maxLength={80}
+                    onChange={(event) =>
+                      updateEventDisciplineName(index, event.target.value)
+                    }
+                    placeholder={`${t("discipline")} ${index + 1}`}
+                    value={disciplineName}
+                  />
+                </label>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        {error ? (
+          <p className="mt-4 text-sm font-medium text-red-600" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        {statusMessage ? (
+          <p className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+            {statusMessage}
+          </p>
+        ) : null}
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          <button
+            className="rounded-md border border-slate-300 px-4 py-2 font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-white dark:hover:bg-slate-800"
+            disabled={isBusy}
+            onClick={saveRoster}
+            type="button"
+          >
+            {isSavingRoster ? t("saving") : t("saveRoster")}
+          </button>
+          <button
+            className="rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-700 disabled:opacity-60"
+            disabled={isBusy}
+            onClick={startTournament}
+            type="button"
+          >
+            {isStarting ? t("saving") : t("startTournament")}
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="max-w-3xl">

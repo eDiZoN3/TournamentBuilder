@@ -8,6 +8,7 @@ import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteCont
 import { BracketView } from "@/components/bracket/BracketView";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { FinalStandings } from "@/components/bracket/PublicTournamentView";
+import { EventTournamentView } from "@/components/event/EventTournamentView";
 import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useLocale } from "@/components/ui/LocaleProvider";
@@ -92,11 +93,19 @@ export function TournamentManageView({
           onDismiss={() => setUnableToRefresh(false)}
         />
       ) : null}
-      {tournament.status === "completed" ? (
+      {tournament.status === "completed" && tournament.format !== "event" ? (
         <FinalStandings tournament={tournament} />
       ) : null}
       {showSkeleton ? (
         <BracketSkeleton />
+      ) : tournament.format === "event" ? (
+        <EventTournamentView
+          editable
+          onUpdated={async () => {
+            await mutate();
+          }}
+          tournament={tournament}
+        />
       ) : isNonKnockoutFormat(tournament.format) ? (
         <RoundRobinView
           renderMatchControls={(match, teamAName, teamBName) => (

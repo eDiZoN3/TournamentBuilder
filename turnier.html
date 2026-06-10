@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mehrkampf · K.-o.-Runde</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e1310; --bg2:#121a15; --panel:#161f19; --panel2:#1b2620;
+  --line:#27332b; --line2:#324138;
+  --ink:#e9ede6; --muted:#8d9a8f; --dim:#5d6a5f;
+  --gold:#f2b63c; --gold-dim:#7a5e21;
+  --mw:196px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scrollbar-color:var(--line2) var(--bg)}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Barlow',sans-serif; font-size:15px; line-height:1.45;
+  min-height:100vh; position:relative;
+}
+/* court-line backdrop */
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(circle 340px at 85% -60px, rgba(242,182,60,.07), transparent 70%),
+    radial-gradient(circle 500px at -120px 110%, rgba(98,184,232,.05), transparent 70%),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.012) 3px 4px);
+}
+body::after{ /* center-court circle */
+  content:''; position:fixed; left:50%; top:18%; width:560px; height:560px;
+  transform:translateX(-50%); border:1.5px solid rgba(233,237,230,.04);
+  border-radius:50%; pointer-events:none; z-index:0;
+}
+.wrap{position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:0 28px 90px}
+
+/* ---------- header / nav ---------- */
+header{
+  display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap;
+  gap:16px; padding:34px 0 18px; border-bottom:1px solid var(--line);
+}
+.brand h1{
+  font-family:'Barlow Condensed'; font-weight:800; font-size:46px; line-height:.95;
+  text-transform:uppercase; letter-spacing:.02em;
+}
+.brand h1 em{font-style:normal; color:var(--gold)}
+.brand p{color:var(--muted); margin-top:6px; font-size:14px; letter-spacing:.04em}
+.brand p b{color:var(--ink); font-weight:600}
+nav{display:flex; gap:8px; flex-wrap:wrap}
+nav a{
+  font-family:'Barlow Condensed'; font-weight:600; font-size:17px; letter-spacing:.06em;
+  text-transform:uppercase; text-decoration:none; color:var(--muted);
+  padding:9px 16px 8px; border:1px solid var(--line); border-radius:3px;
+  background:var(--panel); transition:.15s; display:flex; align-items:center; gap:8px;
+}
+nav a:hover{color:var(--ink); border-color:var(--line2)}
+nav a.on{color:#10130d; background:var(--gold); border-color:var(--gold)}
+nav a .dot{width:8px;height:8px;border-radius:50%}
+nav a.on .dot{outline:2px solid rgba(0,0,0,.25)}
+
+/* ---------- generic ---------- */
+h2{
+  font-family:'Barlow Condensed'; font-weight:700; font-size:24px;
+  text-transform:uppercase; letter-spacing:.08em; margin:38px 0 14px;
+  display:flex; align-items:center; gap:12px;
+}
+h2::after{content:''; flex:1; height:1px; background:var(--line)}
+h2 .tag{
+  font-size:12px; font-family:'Barlow'; font-weight:600; letter-spacing:.05em;
+  color:var(--muted); background:var(--panel); border:1px solid var(--line);
+  padding:3px 9px; border-radius:99px; text-transform:none;
+}
+.panel{background:var(--panel); border:1px solid var(--line); border-radius:6px}
+button{
+  font-family:'Barlow Condensed'; font-weight:700; font-size:16px; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--ink); background:var(--panel2);
+  border:1px solid var(--line2); border-radius:3px; padding:10px 18px; cursor:pointer;
+  transition:.15s;
+}
+button:hover{border-color:var(--gold); color:var(--gold)}
+button.armed{background:#3a1f1a; border-color:#c25b40; color:#ff9d7e}
+input.inline{
+  font-family:inherit; font-size:inherit; color:var(--ink); background:transparent;
+  border:none; border-bottom:1px dashed transparent; padding:2px 0; width:100%;
+}
+input.inline:hover{border-bottom-color:var(--dim)}
+input.inline:focus{outline:none; border-bottom-color:var(--gold)}
+input.num{
+  font-family:'Barlow Condensed'; font-weight:700; font-size:22px; width:74px;
+  color:var(--ink); background:var(--bg); border:1px solid var(--line2);
+  border-radius:3px; padding:6px 8px; text-align:center; font-variant-numeric:tabular-nums;
+}
+input.num:focus{outline:none; border-color:var(--gold)}
+.seedb{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:23px; height:23px; padding:0 4px; border-radius:3px;
+  font-family:'Barlow Condensed'; font-weight:700; font-size:14px;
+  background:var(--panel2); border:1px solid var(--line2); color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.seedb.top{border-color:var(--gold-dim); color:var(--gold)}
+
+/* ---------- overview ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:14px}
+.dcard{
+  position:relative; padding:18px 18px 16px; cursor:pointer; overflow:hidden;
+  transition:.15s; display:block; text-decoration:none; color:var(--ink);
+}
+.dcard:hover{border-color:var(--line2); transform:translateY(-2px)}
+.dcard::before{content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--dc)}
+.dcard .dnum{
+  position:absolute; right:10px; top:2px; font-family:'Barlow Condensed'; font-weight:800;
+  font-size:64px; color:transparent; -webkit-text-stroke:1px rgba(233,237,230,.08);
+}
+.dcard h3{font-family:'Barlow Condensed'; font-weight:700; font-size:22px; text-transform:uppercase; letter-spacing:.04em}
+.dcard .stage{color:var(--muted); font-size:13.5px; margin:3px 0 12px; min-height:20px}
+.dcard .stage b{color:var(--gold); font-weight:600}
+.pbar{height:5px; background:var(--bg); border-radius:99px; overflow:hidden; margin-bottom:9px}
+.pbar i{display:block; height:100%; background:var(--dc); border-radius:99px; transition:width .4s}
+.dcard .meta{display:flex; justify-content:space-between; font-size:12.5px; color:var(--dim); font-variant-numeric:tabular-nums}
+.cols2{display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start}
+@media(max-width:900px){.cols2{grid-template-columns:1fr}}
+.plist{padding:8px 0; max-height:520px; overflow-y:auto}
+.prow-edit{display:flex; align-items:center; gap:12px; padding:7px 18px; border-bottom:1px solid rgba(39,51,43,.55)}
+.prow-edit:last-child{border-bottom:none}
+.prow-edit .rk{width:30px; text-align:right; color:var(--dim); font-family:'Barlow Condensed'; font-weight:600; font-variant-numeric:tabular-nums}
+table.byes{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums}
+table.byes th,table.byes td{padding:9px 12px; text-align:center; border-bottom:1px solid rgba(39,51,43,.55); font-size:14px}
+table.byes th{font-family:'Barlow Condensed'; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-size:13px}
+table.byes td:first-child,table.byes th:first-child{text-align:left}
+.byedot{display:inline-block; width:11px; height:11px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px rgba(242,182,60,.5)}
+.nodot{display:inline-block; width:11px; height:11px; border-radius:50%; border:1px solid var(--line2)}
+.actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:16px}
+.actions .note{color:var(--dim); font-size:12.5px}
+.cfgrow{display:flex; gap:22px; flex-wrap:wrap; align-items:flex-end; padding:18px}
+.cfgrow label{display:block; font-family:'Barlow Condensed'; font-weight:600; font-size:13px;
+  letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+.cfgrow .info{color:var(--dim); font-size:12.5px; flex-basis:100%}
+.cfgrow .info b{color:var(--muted); font-weight:600}
+
+/* ---------- bracket ---------- */
+.bhead{display:flex; align-items:baseline; gap:18px; margin-top:34px; flex-wrap:wrap}
+.bhead .dlabel{
+  font-family:'Barlow Condensed'; font-weight:800; font-size:38px; text-transform:uppercase;
+  letter-spacing:.02em; color:var(--dc); background:transparent; border:none;
+  border-bottom:1px dashed transparent; max-width:420px;
+}
+.bhead .dlabel:hover{border-bottom-color:var(--dim)}
+.bhead .dlabel:focus{outline:none; border-bottom-color:var(--dc)}
+.bhead .hint{color:var(--dim); font-size:13px}
+.bscroll{overflow-x:auto; padding:18px 2px 8px}
+.bracket{display:grid; gap:0}
+.rlabel{
+  font-family:'Barlow Condensed'; font-weight:600; font-size:14px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--dim); align-self:center;
+}
+.match{
+  align-self:center; width:100%;
+  background:var(--panel); border:1px solid var(--line); border-radius:5px;
+  overflow:hidden; position:relative; z-index:1;
+}
+.match.live{border-color:var(--gold-dim); box-shadow:0 0 0 1px rgba(242,182,60,.12), 0 4px 18px rgba(0,0,0,.3)}
+.match.live::after{
+  content:'SPIELBEREIT'; position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  font-family:'Barlow Condensed'; font-weight:700; font-size:9px; letter-spacing:.14em;
+  color:var(--gold); opacity:.85; writing-mode:vertical-rl; text-orientation:mixed;
+}
+.mrow{
+  display:flex; align-items:center; gap:8px; padding:6px 9px;
+  border-bottom:1px solid rgba(39,51,43,.6); min-height:31px; position:relative;
+}
+.mrow:last-child{border-bottom:none}
+.mrow .nm{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; font-size:14px}
+.mrow.tbd .nm{color:var(--dim); font-weight:400}
+.mrow.pick{cursor:pointer}
+.mrow.pick:hover{background:rgba(242,182,60,.08)}
+.mrow.win{background:linear-gradient(90deg, rgba(242,182,60,.14), transparent 80%)}
+.mrow.win .nm{color:var(--gold); font-weight:600}
+.mrow.win::after{content:'✓'; color:var(--gold); font-size:12px; margin-left:4px}
+.mrow.lose .nm,.mrow.lose .seedb{opacity:.38; text-decoration:line-through}
+.mrow.hl{outline:1px solid var(--gold-dim); outline-offset:-1px; background:rgba(242,182,60,.05)}
+.mrow .freilos{
+  font-family:'Barlow Condensed'; font-weight:600; font-size:11px; letter-spacing:.12em;
+  color:var(--dim); border:1px dashed var(--line2); padding:1px 7px; border-radius:99px;
+}
+.joiner{position:relative}
+.joiner::before{
+  content:''; position:absolute; left:0; right:50%; top:25%; bottom:25%;
+  border-top:1.5px solid var(--line2); border-bottom:1.5px solid var(--line2);
+  border-right:1.5px solid var(--line2); border-radius:0 4px 4px 0;
+}
+.joiner::after{
+  content:''; position:absolute; left:50%; right:0; top:50%;
+  border-top:1.5px solid var(--line2);
+}
+.jfinal{position:relative}
+.jfinal::before{content:''; position:absolute; left:0; right:0; top:50%; border-top:1.5px solid var(--line2)}
+.champ{
+  align-self:center; text-align:center; padding:16px 12px;
+  border:1px solid var(--gold-dim); border-radius:6px;
+  background:linear-gradient(160deg, rgba(242,182,60,.12), rgba(242,182,60,.02));
+}
+.champ .t{font-family:'Barlow Condensed'; font-weight:600; font-size:13px; letter-spacing:.18em; color:var(--gold); text-transform:uppercase}
+.champ .n{font-family:'Barlow Condensed'; font-weight:800; font-size:26px; margin-top:4px}
+.champ .q{color:var(--dim); font-size:12px; margin-top:2px}
+.champ.open{border-color:var(--line); background:none}
+.champ.open .t{color:var(--dim)}
+.champ.open .n{color:var(--dim); font-weight:600; font-size:18px}
+
+/* ---------- backup codes ---------- */
+.codegrid{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+@media(max-width:900px){.codegrid{grid-template-columns:1fr}}
+.codebox{padding:14px 16px}
+.codebox h4{
+  font-family:'Barlow Condensed'; font-weight:700; font-size:16px; letter-spacing:.08em;
+  text-transform:uppercase; margin-bottom:4px; display:flex; justify-content:space-between;
+  align-items:center; gap:10px;
+}
+.codebox .sub{color:var(--dim); font-size:12.5px; margin-bottom:9px}
+.codebox textarea{
+  width:100%; height:86px; resize:vertical; background:var(--bg); color:var(--muted);
+  border:1px solid var(--line2); border-radius:3px; padding:8px;
+  font-family:Consolas,'Courier New',monospace; font-size:11px; line-height:1.5; word-break:break-all;
+}
+.codebox textarea:focus{outline:none; border-color:var(--gold); color:var(--ink)}
+.codebox button{padding:5px 12px; font-size:13px}
+.flash{margin-top:12px; padding:9px 13px; border-radius:4px; font-size:13.5px}
+.flash.ok{background:rgba(111,207,151,.1); border:1px solid rgba(111,207,151,.4); color:#9fe3bd}
+.flash.err{background:rgba(239,125,87,.1); border:1px solid rgba(239,125,87,.45); color:#ffb39c}
+
+/* ---------- plan ---------- */
+.slotgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:14px}
+.slot{padding:14px 16px}
+.slot h4{
+  font-family:'Barlow Condensed'; font-weight:700; font-size:18px; letter-spacing:.08em;
+  text-transform:uppercase; display:flex; justify-content:space-between; align-items:baseline;
+  margin-bottom:10px; color:var(--gold);
+}
+.slot h4 small{color:var(--dim); font-size:12px; font-family:'Barlow'; font-weight:500; letter-spacing:.03em; text-transform:none}
+.slot.next h4{color:var(--ink)}
+.slot.next{border-color:var(--gold-dim); box-shadow:0 0 0 1px rgba(242,182,60,.1)}
+.sm{display:flex; align-items:center; gap:9px; padding:6px 0; border-top:1px solid rgba(39,51,43,.55); font-size:14px}
+.sm .dchip{
+  font-family:'Barlow Condensed'; font-weight:700; font-size:12px; letter-spacing:.06em;
+  color:#10130d; background:var(--dc); border-radius:3px; padding:1px 7px; min-width:64px; text-align:center;
+}
+.sm .vs{color:var(--dim); font-size:12px}
+.statbar{display:flex; gap:26px; flex-wrap:wrap; margin:6px 0 20px; color:var(--muted); font-size:14px}
+.statbar b{color:var(--ink); font-family:'Barlow Condensed'; font-size:22px; font-weight:700; margin-right:6px; font-variant-numeric:tabular-nums}
+.empty{color:var(--dim); padding:26px; text-align:center; border:1px dashed var(--line2); border-radius:6px}
+footer{margin-top:60px; color:var(--dim); font-size:12px; border-top:1px solid var(--line); padding-top:14px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Mehrkampf <em>// K.-o.</em></h1>
+      <p id="subtitle"></p>
+    </div>
+    <nav id="nav"></nav>
+  </header>
+  <main id="app"></main>
+  <footer>
+    <span id="footinfo"></span>
+    <span id="seedinfo"></span>
+  </footer>
+</div>
+
+<script>
+'use strict';
+/* ================= configurable core =================
+   N participants (2..32) and K disciplines (1..10) are state;
+   everything else (bracket size, byes, quota pool, rounds) is derived. */
+const BYE=0, LS='turnier_v2';
+
+const DEFAULTS={n:13,k:5,drawSeed:2026,names:[],discs:[],results:{}};
+const FNAMES=['Anna','Ben','Clara','David','Emma','Felix','Greta','Hannes','Ida','Jonas',
+  'Klara','Lukas','Mia','Noah','Olivia','Paul','Quirin','Rosa','Samuel','Tina',
+  'Uwe','Vera','Willi','Xenia','Yannik','Zoe','Arno','Bea','Carl','Dora','Edda','Fritz'];
+const FDISCS=['Tischtennis','Darts','Billard','Schach','Kegeln',
+  'Tischfußball','Boule','Cornhole','Mölkky','Würfeln'];
+
+let state=load();
+function load(){
+  try{
+    const s=JSON.parse(localStorage.getItem(LS));
+    if(s&&s.n&&s.k&&Array.isArray(s.names)){resizeArrays(s); return s;}
+  }catch(e){}
+  const s=JSON.parse(JSON.stringify(DEFAULTS)); resizeArrays(s); return s;
+}
+function resizeArrays(s){
+  while(s.names.length<s.n) s.names.push(FNAMES[s.names.length]||('Spieler '+(s.names.length+1)));
+  s.names.length=s.n;
+  while(s.discs.length<s.k) s.discs.push(FDISCS[s.discs.length]||('Disziplin '+(s.discs.length+1)));
+  s.discs.length=s.k;
+}
+function save(){localStorage.setItem(LS,JSON.stringify(state));}
+const nameOf=s=>state.names[s-1]||('Spieler '+s);
+
+/* derived configuration */
+function conf(){
+  const n=state.n, k=state.k;
+  const size=1<<Math.ceil(Math.log2(Math.max(2,n)));
+  const byes=size-n, R=Math.round(Math.log2(size));
+  const pool=byes?Math.min(n,byes+2):0;          // rotation pool slightly larger than byes
+  const quotas={};
+  if(byes){                                      // distribute byes*k evenly, remainder to top
+    const T=byes*k, base=Math.floor(T/pool); let rem=T%pool;
+    for(let s=1;s<=pool;s++){quotas[s]=base+(rem-->0?1:0);}
+  }
+  return {n,k,size,byes,R,pool,quotas};
+}
+function dColor(i){
+  const base=['#f2b63c','#62b8e8','#ef7d57','#6fcf97','#b58ce0'];
+  return i<base.length?base[i]:`hsl(${(45+i*67)%360} 55% 62%)`;
+}
+
+/* ================= deterministic PRNG ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffle(arr,rng){for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+const pkey=(a,b)=>Math.min(a,b)+'-'+Math.max(a,b);
+
+/* ================= seeding algorithm ================= */
+// byes rotate within the quota pool: greedy on (remaining desc, least recently used)
+function assignByes(cfg){
+  const rem={...cfg.quotas}, last={}; Object.keys(rem).forEach(s=>last[s]=-1);
+  const plan=[];
+  for(let b=0;b<cfg.k;b++){
+    const cands=Object.keys(rem).map(Number).filter(s=>rem[s]>0)
+      .sort((x,y)=>(rem[y]-rem[x])||(last[x]-last[y])||(x-y));
+    const chosen=cands.slice(0,cfg.byes).sort((a,b)=>a-b);
+    chosen.forEach(s=>{rem[s]--;last[s]=b;});
+    plan.push(chosen);
+  }
+  return plan;
+}
+// strong half vs weak half, backtracking so no pairing repeats across brackets
+function pairRound1(players,used,rng){
+  const half=players.length/2, strong=players.slice(0,half), weak=players.slice(half);
+  function bt(i,taken,acc){
+    if(i===half) return acc;
+    for(const w of shuffle(weak.slice(),rng)){
+      if(taken.has(w)||used.has(pkey(strong[i],w))) continue;
+      taken.add(w);
+      const res=bt(i+1,taken,acc.concat([[strong[i],w]]));
+      if(res) return res;
+      taken.delete(w);
+    }
+    return null;
+  }
+  let pairs=bt(0,new Set(),[])||strong.map((s,i)=>[s,weak[i]]);
+  pairs.forEach(p=>used.add(pkey(p[0],p[1])));
+  return pairs;
+}
+// canonical seeding order: rank that belongs at each of m bracket positions
+function bracketOrder(m){
+  let r=[1];
+  while(r.length<m){const n2=r.length*2; r=r.flatMap(x=>[x,n2+1-x]);}
+  return r;
+}
+let drawCache=null;
+function getDraw(){
+  const cfg=conf();
+  const key=state.drawSeed+'|'+cfg.n+'|'+cfg.k;
+  if(drawCache&&drawCache.key===key) return drawCache;
+  const rng=mulberry32(state.drawSeed), used=new Set();
+  const byePlan=assignByes(cfg), M=cfg.size/2, order=bracketOrder(M);
+  const r0s=byePlan.map(byes=>{
+    const rest=[]; for(let s=1;s<=cfg.n;s++) if(!byes.includes(s)) rest.push(s);
+    const pairs=pairRound1(rest,used,rng);
+    // entities ranked by strength, placed via canonical seeding order:
+    // strong matches/byes land in different halves and quarters automatically
+    const ents=byes.map(s=>({p1:s,p2:BYE}))
+      .concat(pairs.map(p=>({p1:p[0],p2:p[1]})))
+      .sort((a,b)=>Math.min(a.p1,a.p2||99)-Math.min(b.p1,b.p2||99));
+    const r0=Array(M);
+    order.forEach((rank,pos)=>{r0[pos]=ents[rank-1];});
+    return r0;
+  });
+  drawCache={key,byePlan,r0s};
+  return drawCache;
+}
+// build full bracket state: stored results only count if both players still match
+function buildBrackets(){
+  const cfg=conf(), draw=getDraw();
+  return draw.r0s.map((r0,b)=>{
+    const rounds=Array.from({length:cfg.R},(_,r)=>
+      Array.from({length:cfg.size>>(r+1)},(_,i)=>({b,r,i,p1:null,p2:null,winner:null,bye:false})));
+    r0.forEach((m0,i)=>{const m=rounds[0][i]; m.p1=m0.p1; m.p2=m0.p2; m.bye=m0.p2===BYE;});
+    for(let r=0;r<cfg.R;r++) rounds[r].forEach((m,i)=>{
+      if(m.bye) m.winner=m.p1;
+      else if(m.p1&&m.p2){
+        const w=state.results[`${b}-${r}-${i}`];
+        if(w===m.p1||w===m.p2) m.winner=w;
+      }
+      if(m.winner&&r<cfg.R-1){
+        const nx=rounds[r+1][i>>1];
+        if(i%2===0) nx.p1=m.winner; else nx.p2=m.winner;
+      }
+    });
+    return rounds;
+  });
+}
+/* greedy parallel plan over currently playable matches:
+   one match per player per slot AND one match per discipline per slot
+   (each discipline has exactly one station) -> max K matches in parallel */
+function planSlots(brs){
+  const k=state.k;
+  let ready=[];
+  brs.forEach(rs=>rs.forEach(rm=>rm.forEach(m=>{
+    if(!m.bye&&m.p1&&m.p2&&!m.winner) ready.push(m);
+  })));
+  const slots=[]; let t=0;
+  while(ready.length){
+    ready.sort((a,b)=>(a.r-b.r)||(((a.b+t)%k)-((b.b+t)%k))||(a.i-b.i));
+    const busy=new Set(), busyDisc=new Set(), slot=[], rest=[];
+    for(const m of ready){
+      if(!busyDisc.has(m.b)&&!busy.has(m.p1)&&!busy.has(m.p2)){
+        slot.push(m); busy.add(m.p1); busy.add(m.p2); busyDisc.add(m.b);
+      } else rest.push(m);
+    }
+    slots.push(slot); ready=rest; t++;
+  }
+  return slots;
+}
+
+/* ================= interactions ================= */
+function pick(b,r,i,p){
+  const key=`${b}-${r}-${i}`;
+  if(state.results[key]===p) delete state.results[key]; else state.results[key]=p;
+  save(); render();
+}
+function setName(idx,v){state.names[idx]=v.trim()||('Spieler '+(idx+1)); save(); render(false);}
+function setDisc(idx,v){state.discs[idx]=v.trim()||('Disziplin '+(idx+1)); save(); render(false);}
+function arm(btn,fn){           // inline two-step confirm, no blocking dialogs
+  if(btn.dataset.armed){fn(); return;}
+  btn.dataset.armed='1'; btn.classList.add('armed');
+  btn.dataset.label=btn.textContent; btn.textContent='Sicher? Klick bestätigt';
+  setTimeout(()=>{delete btn.dataset.armed; btn.classList.remove('armed');
+    btn.textContent=btn.dataset.label;},3200);
+}
+function redraw(btn){arm(btn,()=>{state.drawSeed=1+Math.floor(Math.random()*1e9); state.results={}; save(); render();});}
+function clearResults(btn){arm(btn,()=>{state.results={}; save(); render();});}
+function applyConfig(btn){
+  const n=Math.min(32,Math.max(2,parseInt(document.getElementById('cfgN').value)||state.n));
+  const k=Math.min(10,Math.max(1,parseInt(document.getElementById('cfgK').value)||state.k));
+  if(n===state.n&&k===state.k) return;
+  arm(btn,()=>{
+    state.n=n; state.k=k; state.results={}; resizeArrays(state);
+    if(!/^(home|plan)$/.test(route())) location.hash='#/';
+    save(); render();
+  });
+}
+
+/* ================= backup / restore codes =================
+   Code 1 (TK1) = configuration + draw: n, k, drawSeed, names, disciplines.
+   Code 2 (TE1) = results, bound to the draw via config hash so results
+   can never be applied to a different bracket structure. */
+function b64e(s){
+  const b=new TextEncoder().encode(s); let bin='';
+  b.forEach(c=>bin+=String.fromCharCode(c));
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function b64d(s){
+  s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='=';
+  return new TextDecoder().decode(Uint8Array.from(atob(s),c=>c.charCodeAt(0)));
+}
+function h32(s){let h=5381;for(let i=0;i<s.length;i++)h=((h*33)^s.charCodeAt(i))>>>0;return h.toString(36);}
+function cfgHash(){return h32(state.n+'|'+state.k+'|'+state.drawSeed);}
+function codeConfig(){
+  const p=b64e(JSON.stringify({n:state.n,k:state.k,s:state.drawSeed,nm:state.names,dc:state.discs}));
+  return 'TK1.'+p+'.'+h32(p);
+}
+function codeResults(){
+  const p=b64e(JSON.stringify(state.results));
+  return 'TE1.'+cfgHash()+'.'+p+'.'+h32(p);
+}
+let flash=null, lastCodeIn='';
+function restoreCode(btn){
+  const raw=(document.getElementById('codeIn').value||'').replace(/\s+/g,'');
+  if(!raw){flash={ok:false,txt:'Bitte zuerst einen Code in das Feld einfügen.'}; render(false); return;}
+  lastCodeIn=raw;
+  arm(btn,()=>{
+    try{doRestore(raw); lastCodeIn='';}
+    catch(e){flash={ok:false,txt:'Wiederherstellung fehlgeschlagen: '+e.message};}
+    render(false);
+  });
+}
+function doRestore(raw){
+  const p=raw.split('.');
+  if(p[0]==='TK1'&&p.length===3){
+    if(h32(p[1])!==p[2]) throw new Error('Prüfsumme stimmt nicht — Code unvollständig oder Tippfehler.');
+    const o=JSON.parse(b64d(p[1]));
+    if(!(o.n>=2&&o.n<=32&&o.k>=1&&o.k<=10&&Number.isFinite(o.s)))
+      throw new Error('Werte außerhalb des gültigen Bereichs.');
+    state.n=o.n; state.k=o.k; state.drawSeed=o.s;
+    state.names=Array.isArray(o.nm)?o.nm.map(String):[];
+    state.discs=Array.isArray(o.dc)?o.dc.map(String):[];
+    resizeArrays(state); state.results={};
+    save();
+    flash={ok:true,txt:'Code 1 eingelöst — Konfiguration, Auslosung und Namen wiederhergestellt. Falls vorhanden, jetzt Code 2 (Ergebnisse) einlösen.'};
+  } else if(p[0]==='TE1'&&p.length===4){
+    if(h32(p[2])!==p[3]) throw new Error('Prüfsumme stimmt nicht — Code unvollständig oder Tippfehler.');
+    if(p[1]!==cfgHash()) throw new Error('Dieser Ergebnis-Code gehört zu einer anderen Auslosung. Zuerst den passenden Code 1 einlösen.');
+    const res=JSON.parse(b64d(p[2])), cfg=conf(), clean={};
+    let n=0;
+    Object.entries(res).forEach(([key,v])=>{
+      const m=key.match(/^(\d+)-(\d+)-(\d+)$/); if(!m) return;
+      const b=+m[1], r=+m[2], i=+m[3];
+      if(b<cfg.k&&r<cfg.R&&i<(cfg.size>>(r+1))&&v>=1&&v<=cfg.n){clean[key]=v; n++;}
+    });
+    state.results=clean; save();
+    flash={ok:true,txt:'Code 2 eingelöst — '+n+' Ergebnis'+(n===1?'':'se')+' wiederhergestellt.'};
+  } else throw new Error('Format nicht erkannt — erwartet wird ein Code, der mit TK1. oder TE1. beginnt.');
+}
+function copyCode(id,btn){
+  const ta=document.getElementById(id);
+  const done=()=>{btn.textContent='Kopiert ✓'; setTimeout(()=>{btn.textContent='Kopieren';},1800);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(ta.value).then(done,()=>{ta.select();document.execCommand('copy');done();});
+  else{ta.select();document.execCommand('copy');done();}
+}
+
+/* ================= rendering ================= */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function seedB(s){return `<span class="seedb ${s<=conf().pool?'top':''}">${s}</span>`;}
+function route(){const h=location.hash.replace('#/',''); return h||'home';}
+function roundName(r,cfg){
+  const m=cfg.size>>(r+1);
+  return m===1?'Finale':m===2?'Halbfinale':m===4?'Viertelfinale':'Runde '+(r+1);
+}
+function roundShort(r,cfg){
+  const m=cfg.size>>(r+1);
+  return m===1?'F':m===2?'HF':m===4?'VF':'R'+(r+1);
+}
+
+function renderNav(){
+  const r=route();
+  let h=`<a href="#/" class="${r==='home'?'on':''}">Übersicht</a>`;
+  state.discs.forEach((d,i)=>{
+    h+=`<a href="#/d${i}" class="${r==='d'+i?'on':''}"><span class="dot" style="background:${dColor(i)}"></span>${esc(d)}</a>`;
+  });
+  h+=`<a href="#/plan" class="${r==='plan'?'on':''}">Spielplan</a>`;
+  document.getElementById('nav').innerHTML=h;
+}
+
+function stageInfo(rs,cfg){
+  const done=rs.flat().filter(m=>!m.bye&&m.winner).length;
+  const fin=rs[cfg.R-1][0];
+  if(fin.winner) return {done,txt:`🏆 Sieger: <b>${esc(nameOf(fin.winner))}</b>`};
+  for(let r=0;r<cfg.R;r++) if(rs[r].some(m=>!m.bye&&m.p1&&m.p2&&!m.winner))
+    return {done,txt:'Aktuell: <b>'+roundName(r,cfg)+'</b>'};
+  return {done,txt:'Wartet auf Ergebnisse'};
+}
+
+function renderHome(brs,cfg){
+  const draw=getDraw(), plan=planSlots(brs), total=cfg.n-1;
+  let h=`<h2>Disziplinen <span class="tag">je ${total} echte Matches</span></h2><div class="cards">`;
+  brs.forEach((rs,b)=>{
+    const st=stageInfo(rs,cfg);
+    h+=`<a class="dcard panel" href="#/d${b}" style="--dc:${dColor(b)}">
+      <span class="dnum">${b+1}</span>
+      <h3>${esc(state.discs[b])}</h3>
+      <div class="stage">${st.txt}</div>
+      <div class="pbar"><i style="width:${Math.round(st.done/total*100)}%"></i></div>
+      <div class="meta"><span>${st.done} / ${total} gespielt</span>
+      <span>${cfg.byes?'Freilos: '+draw.byePlan[b].join(' · '):'kein Freilos'}</span></div></a>`;
+  });
+  h+=`</div>`;
+
+  // next playable slot
+  h+=`<h2>Als Nächstes spielbar <span class="tag">1 Spieler = max. 1 Match · 1 Station je Disziplin</span></h2>`;
+  if(plan.length){
+    h+=`<div class="slotgrid"><div class="slot panel next"><h4>Slot 1 <small>${plan[0].length} Matches parallel</small></h4>`;
+    plan[0].forEach(m=>{h+=slotMatch(m,cfg);});
+    h+=`</div></div>`;
+    if(plan.length>1) h+=`<p style="color:var(--dim);margin-top:10px;font-size:13px">+ ${plan.length-1} weitere Slots → <a href="#/plan" style="color:var(--gold)">kompletter Spielplan</a></p>`;
+  } else h+=`<div class="empty">Keine offenen Matches — Turnier abgeschlossen 🏆</div>`;
+
+  // configuration
+  h+=`<h2>Konfiguration <span class="tag">Struktur ändern verwirft Ergebnisse</span></h2>
+  <div class="panel cfgrow">
+    <div><label>Teilnehmer (2–32)</label><input class="num" type="number" id="cfgN" min="2" max="32" value="${cfg.n}"></div>
+    <div><label>Disziplinen (1–10)</label><input class="num" type="number" id="cfgK" min="1" max="10" value="${cfg.k}"></div>
+    <button onclick="applyConfig(this)">Übernehmen</button>
+    <div class="info">Daraus abgeleitet: Baumgröße <b>${cfg.size}</b> · <b>${cfg.byes}</b> Freilos${cfg.byes===1?'':'e'} je Baum ·
+      Freilos-Pool <b>Top ${cfg.pool||0}</b> · gesamt <b>${cfg.k*(cfg.n-1)}</b> Matches</div>
+  </div>`;
+
+  h+=`<div class="cols2"><div>
+    <h2>Teilnehmer <span class="tag">Setzliste, Namen editierbar</span></h2>
+    <div class="panel plist">`;
+  state.names.forEach((n,i)=>{
+    h+=`<div class="prow-edit"><span class="rk">${i+1}</span>${seedB(i+1)}
+        <input class="inline" value="${esc(n)}" onchange="setName(${i},this.value)"></div>`;
+  });
+  h+=`</div></div><div>
+    <h2>Freilos-Rotation <span class="tag">${cfg.byes?'Top-'+cfg.pool+'-Pool':'ohne Freilose'}</span></h2>`;
+  if(cfg.byes){
+    h+=`<div class="panel" style="padding:6px 6px 2px"><table class="byes">
+    <tr><th>Seed</th>${state.discs.map((d,i)=>`<th style="color:${dColor(i)}">${esc(d.slice(0,9))}</th>`).join('')}<th>Σ</th></tr>`;
+    for(let s=1;s<=cfg.pool;s++){
+      h+=`<tr><td>${seedB(s)} ${esc(nameOf(s))}</td>`;
+      let c=0;
+      for(let b=0;b<cfg.k;b++){const has=draw.byePlan[b].includes(s); if(has)c++;
+        h+=`<td>${has?'<span class="byedot"></span>':'<span class="nodot"></span>'}</td>`;}
+      h+=`<td style="color:var(--muted)">${c}</td></tr>`;
+    }
+    h+=`</table></div>`;
+  } else {
+    h+=`<div class="empty">Teilnehmerzahl ${cfg.n} füllt den ${cfg.size}er-Baum exakt — keine Freilose nötig.</div>`;
+  }
+  h+=`<div class="actions">
+      <button onclick="redraw(this)">⟲ Neu auslosen</button>
+      <button onclick="clearResults(this)">Ergebnisse löschen</button>
+      <span class="note">Neu auslosen würfelt Paarungen &amp; Freilos-Rotation neu und verwirft alle Ergebnisse.</span>
+    </div></div></div>`;
+
+  // backup & restore codes
+  const played=brs.flat(2).filter(m=>!m.bye&&m.winner).length;
+  h+=`<h2>Sicherung &amp; Wiederherstellung <span class="tag">Codes aktualisieren sich automatisch</span></h2>
+  <div class="codegrid">
+    <div class="codebox panel">
+      <h4>Code 1 · Konfiguration &amp; Auslosung <button onclick="copyCode('codeCfg',this)">Kopieren</button></h4>
+      <div class="sub">Enthält Teilnehmer, Disziplinen, Namen und die Auslosung (#${state.drawSeed}). Einmal sichern, solange sich die Struktur nicht ändert.</div>
+      <textarea id="codeCfg" readonly onclick="this.select()">${codeConfig()}</textarea>
+    </div>
+    <div class="codebox panel">
+      <h4>Code 2 · Ergebnisse <button onclick="copyCode('codeRes',this)">Kopieren</button></h4>
+      <div class="sub">Enthält ${played} eingetragene${played===1?'s':''} Ergebnis${played===1?'':'se'}, gebunden an Code 1. Am besten nach jeder Runde neu kopieren.</div>
+      <textarea id="codeRes" readonly onclick="this.select()">${codeResults()}</textarea>
+    </div>
+    <div class="codebox panel" style="grid-column:1 / -1">
+      <h4>Code einlösen <button onclick="restoreCode(this)">Wiederherstellen</button></h4>
+      <div class="sub">Code 1 stellt Struktur und Auslosung wieder her (verwirft den aktuellen Stand), Code 2 anschließend die Ergebnisse dazu. Reihenfolge: erst Code 1, dann Code 2.</div>
+      <textarea id="codeIn" placeholder="TK1.… oder TE1.… hier einfügen">${esc(lastCodeIn)}</textarea>
+      ${flash?`<div class="flash ${flash.ok?'ok':'err'}">${esc(flash.txt)}</div>`:''}
+    </div>
+  </div>`;
+  return h;
+}
+
+function matchCard(m){
+  const live=!m.bye&&m.p1&&m.p2&&!m.winner;
+  const cls=['match', m.bye?'bye':'', live?'live':''].join(' ');
+  const col=2*m.r+1, span=1<<(m.r+1), row=2+m.i*span;
+  let rows='';
+  if(m.bye){
+    rows=`<div class="mrow win" data-seed="${m.p1}">${seedB(m.p1)}<span class="nm">${esc(nameOf(m.p1))}</span></div>
+          <div class="mrow"><span class="freilos">Freilos</span></div>`;
+  }else{
+    [m.p1,m.p2].forEach(p=>{
+      if(!p){rows+=`<div class="mrow tbd"><span class="seedb">·</span><span class="nm">– offen –</span></div>`; return;}
+      const w=m.winner===p, l=m.winner&&m.winner!==p;
+      const click=(m.p1&&m.p2)?`onclick="pick(${m.b},${m.r},${m.i},${p})"`:'';
+      rows+=`<div class="mrow ${w?'win':''} ${l?'lose':''} ${m.p1&&m.p2?'pick':''}" data-seed="${p}" ${click} title="Klick = Sieger setzen/ändern">
+             ${seedB(p)}<span class="nm">${esc(nameOf(p))}</span></div>`;
+    });
+  }
+  return `<div class="${cls}" style="grid-column:${col};grid-row:${row} / span ${span}">${rows}</div>`;
+}
+
+function renderBracket(brs,b,cfg){
+  const rs=brs[b], R=cfg.R, size=cfg.size;
+  // dynamic grid: R match columns + (R-1) joiner columns + final line + champion box
+  const cols=[];
+  for(let r=0;r<R;r++){cols.push('var(--mw)'); if(r<R-1)cols.push('30px');}
+  cols.push('26px','200px');
+  const rh=size>16?'34px':'40px';
+  const grid=`grid-template-columns:${cols.join(' ')};grid-template-rows:30px repeat(${size},${rh});min-width:${R*200+(R-1)*30+230}px`;
+  let h=`<div class="bhead" style="--dc:${dColor(b)}">
+    <input class="dlabel" style="--dc:${dColor(b)};color:${dColor(b)}" value="${esc(state.discs[b])}" onchange="setDisc(${b},this.value)">
+    <span class="hint">Disziplin ${b+1} von ${cfg.k} · Klicke im Baum auf den Sieger eines Matches — nochmal klicken macht es rückgängig.</span>
+  </div><div class="bscroll"><div class="bracket" style="--dc:${dColor(b)};${grid}">`;
+  for(let r=0;r<R;r++) h+=`<div class="rlabel" style="grid-column:${2*r+1};grid-row:1">${roundName(r,cfg)}</div>`;
+  rs.forEach(rm=>rm.forEach(m=>{h+=matchCard(m);}));
+  // joiners between rounds
+  for(let r=0;r<R-1;r++){
+    const nxt=size>>(r+2);
+    for(let j=0;j<nxt;j++){
+      const span=1<<(r+2);
+      h+=`<div class="joiner" style="grid-column:${2*r+2};grid-row:${2+j*span} / span ${span}"></div>`;
+    }
+  }
+  // champion box
+  const champ=rs[R-1][0].winner;
+  h+=`<div class="jfinal" style="grid-column:${2*R};grid-row:2 / span ${size}"></div>
+      <div class="champ ${champ?'':'open'}" style="grid-column:${2*R+1};grid-row:2 / span ${size}">
+      <div class="t">${champ?'🏆 Turniersieg':'Titel offen'}</div>
+      <div class="n">${champ?esc(nameOf(champ)):'– ? –'}</div>
+      ${champ?`<div class="q">Seed ${champ} · ${esc(state.discs[b])}</div>`:''}</div>`;
+  h+=`</div></div>`;
+  const byes=getDraw().byePlan[b];
+  h+=`<p style="color:var(--dim);font-size:13px;margin-top:4px">${
+    byes.length?'Freilos in dieser Disziplin: '+byes.map(s=>esc(nameOf(s))+' ('+s+')').join(', ')+
+      ' — rotiert über die Disziplinen, ':'Keine Freilose — '
+    }Paarungen der Runde 1 sind über alle Bäume einmalig (sofern kombinatorisch möglich).</p>`;
+  return h;
+}
+
+function slotMatch(m,cfg){
+  return `<div class="sm" style="--dc:${dColor(m.b)}">
+    <span class="dchip">${esc(state.discs[m.b].slice(0,8))} ${roundShort(m.r,cfg)}</span>
+    ${seedB(m.p1)} <span>${esc(nameOf(m.p1))}</span>
+    <span class="vs">vs</span>
+    ${seedB(m.p2)} <span>${esc(nameOf(m.p2))}</span></div>`;
+}
+
+function renderPlan(brs,cfg){
+  const plan=planSlots(brs);
+  const open=plan.reduce((a,s)=>a+s.length,0);
+  const played=brs.flat(2).filter(m=>!m.bye&&m.winner).length;
+  const total=cfg.k*(cfg.n-1);
+  const future=total-played-open;   // matches whose participants are not yet known
+  let h=`<h2>Spielplan <span class="tag">1 Station je Disziplin · max. ${cfg.k} parallel · Runden zuerst, Disziplin rotiert</span></h2>
+  <div class="statbar">
+    <span><b>${played}</b>gespielt</span>
+    <span><b>${open}</b>jetzt planbar</span>
+    <span><b>${future}</b>warten auf Sieger</span>
+    <span><b>${plan.length}</b>Slots für die planbaren</span>
+  </div>`;
+  if(!plan.length){h+=`<div class="empty">Nichts zu planen — alle erreichbaren Matches sind gespielt.</div>`; return h;}
+  h+=`<div class="slotgrid">`;
+  plan.forEach((slot,t)=>{
+    h+=`<div class="slot panel ${t===0?'next':''}"><h4>Slot ${t+1} <small>${slot.length} parallel</small></h4>`;
+    slot.forEach(m=>{h+=slotMatch(m,cfg);});
+    h+=`</div>`;
+  });
+  h+=`</div><p style="color:var(--dim);font-size:13px;margin-top:14px">
+    Der Plan deckt nur Matches mit feststehenden Teilnehmern ab. Nach jedem eingetragenen Ergebnis
+    rücken Sieger nach und der Plan baut sich automatisch neu auf.</p>`;
+  return h;
+}
+
+function render(scroll=true){
+  const cfg=conf(), brs=buildBrackets(), r=route();
+  renderNav();
+  const app=document.getElementById('app');
+  const dm=r.match(/^d(\d+)$/);
+  if(r==='plan') app.innerHTML=renderPlan(brs,cfg);
+  else if(dm&&+dm[1]<cfg.k) app.innerHTML=renderBracket(brs,+dm[1],cfg);
+  else app.innerHTML=renderHome(brs,cfg);
+  document.getElementById('subtitle').innerHTML=
+    `<b>${cfg.n} Teilnehmer</b> · ${cfg.k} Disziplin${cfg.k===1?'':'en'} · `+
+    `${cfg.size}er-Baum · ${cfg.byes?cfg.byes+' Freilos'+(cfg.byes===1?'':'e')+' je Baum (Rotation Top '+cfg.pool+')':'ohne Freilose'} · paralleler Spielbetrieb`;
+  document.getElementById('footinfo').textContent=
+    `Setzliste 1–${cfg.n} · Freilose rotieren im Top-${cfg.pool||0}-Pool · keine Erstrunden-Paarung doppelt (sofern möglich)`;
+  document.getElementById('seedinfo').textContent='Auslosung #'+state.drawSeed;
+  flash=null;                     // status message is shown exactly once
+  if(scroll) window.scrollTo(0,0);
+}
+
+/* hover: highlight a player's path everywhere in the bracket */
+document.addEventListener('mouseover',e=>{
+  const row=e.target.closest('.mrow[data-seed]'); if(!row) return;
+  document.querySelectorAll(`.mrow[data-seed="${row.dataset.seed}"]`).forEach(el=>el.classList.add('hl'));
+});
+document.addEventListener('mouseout',e=>{
+  const row=e.target.closest('.mrow[data-seed]'); if(!row) return;
+  document.querySelectorAll('.mrow.hl').forEach(el=>el.classList.remove('hl'));
+});
+
+window.addEventListener('hashchange',()=>render());
+render();
+</script>
+</body>
+</html>

@@ -21,6 +21,7 @@ export type TranslationKey =
   | "bestOfThreeSemisFinal"
   | "bestOfOne"
   | "bracketSelection"
+  | "bye"
   | "cancel"
   | "changePassword"
   | "changePasswordDescription"
@@ -78,6 +79,12 @@ export type TranslationKey =
   | "enterScores"
   | "enterTeamNames"
   | "exactPlayerCountRequirement"
+  | "eventBrackets"
+  | "eventChampion"
+  | "eventOverview"
+  | "eventSetupDescription"
+  | "eventTournament"
+  | "titleOpen"
   | "final"
   | "finalStandings"
   | "findRegisteredPlayer"
@@ -127,6 +134,7 @@ export type TranslationKey =
   | "newTournament"
   | "newTournamentLeadEmail"
   | "noCompletedMatches"
+  | "noPlayableEventMatches"
   | "noPlayersListed"
   | "noPlayerAccounts"
   | "noPlayerStats"
@@ -152,6 +160,8 @@ export type TranslationKey =
   | "place"
   | "played"
   | "playedMatches"
+  | "participantNameField"
+  | "participants"
   | "player"
   | "playerAccount"
   | "playerAccounts"
@@ -174,6 +184,9 @@ export type TranslationKey =
   | "pointsDiff"
   | "pointsFor"
   | "pointsScoring"
+  | "discipline"
+  | "disciplineNameField"
+  | "disciplines"
   | "primaryNavigation"
   | "publicTournamentList"
   | "publicTournaments"
@@ -210,6 +223,7 @@ export type TranslationKey =
   | "scoreSaved"
   | "semiFinal"
   | "singleElimination"
+  | "slot"
   | "setOwnPassword"
   | "set"
   | "setSaved"
@@ -287,6 +301,7 @@ export type TranslationKey =
   | "updating"
   | "view"
   | "versus"
+  | "viewInBracket"
   | "volleyballTournaments"
   | "winRate"
   | "won"
@@ -348,6 +363,12 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterTeamNames: "Teamnamen eingeben",
     exactPlayerCountRequirement:
       "Spieleranzahl muss durch die Teamgröße teilbar sein.",
+    eventBrackets: "Brackets",
+    eventChampion: "Turniersieg",
+    eventOverview: "Event-Übersicht",
+    eventSetupDescription:
+      "Teilnehmer und Disziplinen für dieses Event eintragen.",
+    eventTournament: "Event-Turnier",
     findRegisteredPlayer: "Registrierten Spieler suchen",
     finalStandings: "Endstand",
     firstName: "Vorname",
@@ -397,12 +418,14 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     place: "Platz",
     played: "Gespielt",
     playedMatches: "Gespielte Spiele",
+    participantNameField: "Teilnehmer {n} Name",
+    participants: "Teilnehmer",
     player: "Spieler",
     playerAccount: "Spielerkonto",
     playerAccounts: "Spielerkonten",
     playerEmail: "E-Mail des Spielers",
     playerFirstName: "Vorname des Spielers",
-    playerAlreadySelected: "Dieser Spieler ist bereits ausgewaehlt.",
+    playerAlreadySelected: "Dieser Spieler ist bereits ausgewählt.",
     playerJoined: "{n} Spieler sind beigetreten",
     playerName: "Name des Spielers",
     players: "Spieler",
@@ -416,6 +439,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     pointsAgainst: "Punkte gegen",
     pointsScoring: "Mit Punkten",
     pointsFor: "Punkte für",
+    discipline: "Disziplin",
+    disciplineNameField: "Disziplin {n} Name",
+    disciplines: "Disziplinen",
     publicTournaments: "Öffentliche Turniere",
     raroVolleyball: "Turnier Manager",
     registerPlayersNote:
@@ -441,6 +467,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     schedule: "Spielplan",
     score: "Ergebnis",
     singleElimination: "Single Elimination",
+    slot: "Slot",
     setOwnPassword:
       "Legen Sie Ihr eigenes Passwort fest, bevor Sie fortfahren.",
     setupTournamentTitle: "Richten Sie {name} ein",
@@ -502,6 +529,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     assigning: "Zuweisen...",
     bestOfOne: "Best of 1",
     bracketSelection: "Turnierbaum-Auswahl",
+    bye: "Freilos",
     changing: "Ändern...",
     close: "Schließen",
     closeAdminNavigation: "Admin-Navigation schließen",
@@ -552,6 +580,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     matchWinnerNotDetermined: "Der Spielsieger wurde noch nicht ermittelt",
     mobileNavigation: "Mobile Navigation",
     noCompletedMatches: "Noch keine abgeschlossenen Spiele.",
+    noPlayableEventMatches: "Keine spielbaren Event-Matches.",
     noPlayersListed: "Keine Spieler eingetragen",
     openApiJson: "OpenAPI JSON",
     openAdminNavigation: "Admin-Navigation öffnen",
@@ -587,6 +616,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     teamPreviewNameField: "Teamvorschau {n} Name",
     temporaryPasswordHelp:
       "Teilen Sie dieses temporäre Passwort. Der Benutzer muss danach ein eigenes Passwort festlegen.",
+    titleOpen: "Titel offen",
     toBeDetermined: "Offen",
     tournamentLead: "Turnierleiter",
     unableToAssignCourt: "Konnte Feld nicht zuweisen.",
@@ -607,6 +637,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToSignIn: "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
     updating: "Aktualisieren...",
     versus: "vs",
+    viewInBracket: "Im Bracket anzeigen",
     winner: "Sieger",
     teamWon: "{team} hat gewonnen",
     winnerBracket: "Gewinnerbaum",
@@ -664,6 +695,11 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterPlayerNames: "Enter player names",
     enterTeamNames: "Enter team names",
     exactPlayerCountRequirement: "Player count must be divisible by team size.",
+    eventBrackets: "Brackets",
+    eventChampion: "Champion",
+    eventOverview: "Event overview",
+    eventSetupDescription: "Enter participants and disciplines for this event.",
+    eventTournament: "Event tournament",
     findRegisteredPlayer: "Find registered player",
     finalStandings: "Final standings",
     firstName: "First name",
@@ -713,6 +749,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     place: "Place",
     played: "Played",
     playedMatches: "Played matches",
+    participantNameField: "Participant {n} name",
+    participants: "Participants",
     player: "Player",
     playerAccount: "Player account",
     playerAccounts: "Player accounts",
@@ -732,6 +770,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     pointsAgainst: "Points Against",
     pointsScoring: "Points scoring",
     pointsFor: "Points For",
+    discipline: "Discipline",
+    disciplineNameField: "Discipline {n} name",
+    disciplines: "Disciplines",
     publicTournaments: "Public tournaments",
     raroVolleyball: "Tournament Manager",
     registerPlayersNote: "Register players and reset account passwords.",
@@ -756,6 +797,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     schedule: "Schedule",
     score: "Score",
     singleElimination: "Single elimination",
+    slot: "Slot",
     setOwnPassword: "Set your own password before continuing.",
     setupTournamentTitle: "Set up {name}",
     signIn: "Sign in",
@@ -817,6 +859,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     assigning: "Assigning...",
     bestOfOne: "Best of 1",
     bracketSelection: "Bracket selection",
+    bye: "Bye",
     changing: "Changing...",
     close: "Close",
     closeAdminNavigation: "Close admin navigation",
@@ -866,6 +909,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     matchWinnerNotDetermined: "Match winner has not been determined",
     mobileNavigation: "Mobile navigation",
     noCompletedMatches: "No completed matches yet.",
+    noPlayableEventMatches: "No playable event matches.",
     noPlayersListed: "No players listed",
     openApiJson: "OpenAPI JSON",
     openAdminNavigation: "Open admin navigation",
@@ -900,6 +944,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     teamPreviewNameField: "Preview team {n} name",
     temporaryPasswordHelp:
       "Share this temporary password. The user must set their own password next.",
+    titleOpen: "Title open",
     toBeDetermined: "TBD",
     tournamentLead: "Tournament Lead",
     unableToAssignCourt: "Unable to assign court.",
@@ -920,6 +965,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToSignIn: "Unable to sign in. Please try again.",
     updating: "Updating...",
     versus: "vs",
+    viewInBracket: "View in bracket",
     winner: "Winner",
     teamWon: "{team} won",
     winnerBracket: "Winner bracket",
@@ -953,4 +999,3 @@ export function formatTranslation(
       : placeholder,
   );
 }
-

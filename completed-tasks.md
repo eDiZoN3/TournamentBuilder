@@ -433,7 +433,7 @@ T09 → T39 → T40 → T41 → T42
 
 ## Phase 8 - Testing Feedback, Usability, and Stats
 
-This phase documents the implemented feedback items 1-9 from `issues.md`. It extends the completed Phase 0-7 baseline without changing the historical task list above.
+This phase documents the implemented feedback items 1-9 from `implemented-issues.md`. It extends the completed Phase 0-7 baseline without changing the historical task list above.
 
 ### Issue Resolution Plan
 
@@ -661,7 +661,7 @@ Tests: mobile round tabs render, selecting a round hides other rounds, bracket t
 **Files**: `__tests__/feedback/issues-regression.test.tsx`, `__tests__/api/feedback-regression.test.ts`
 **Depends on**: T43-T56
 **TDD**: Write tests throughout implementation; finalize after all feedback tasks
-**Description**: Add high-level regression coverage for the exact `issues.md` scenarios:
+**Description**: Add high-level regression coverage for the exact `implemented-issues.md` scenarios:
 - Auto scheduling starts matches without admin clicks.
 - Admin can manually override a scheduled court.
 - Score entry remains pinned while editing.
@@ -694,7 +694,7 @@ T43-T56 -> T57
 
 | Phase | Tasks | Notes |
 |---|---|---|
-| 8 - Testing Feedback, Usability, and Stats | 15 | Resolves implemented issues 1-9 from `issues.md`; includes scheduler, overrides, stats, delete flow, and responsive bracket changes |
+| 8 - Testing Feedback, Usability, and Stats | 15 | Resolves implemented issues 1-9 from `implemented-issues.md`; includes scheduler, overrides, stats, delete flow, and responsive bracket changes |
 ---
 
 ---
@@ -983,7 +983,7 @@ T70, T71, T34, T44 -> T72 -> T73 -> T74
 
 ---
 
-## Phase 10 - Open Issues from issues.md
+## Phase 10 - Implemented Issues from implemented-issues.md
 
 Archived from `task.md` after issues 10-19 were implemented. Issue 20 is empty and has no task until a concrete requirement is added.
 

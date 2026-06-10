@@ -1,0 +1,8 @@
+1. [implemented] admin feature to add new admin accounts to create, first time login on new admin account with simple random generated password 10 chars and then the prompt to change it to a self set password from the admin
+2. [implemented] future player accounts to track own stats, enter tournament on your own that are available, needs setting in tournament creation of admin to make it self joinable with accounts from players. ongoing tournaments can not be joined anymore, but in join phase either players are entered or player can join on their own. saved player data contains name, evt surname, hashedpassword, username/email, player accounts can be created by themselves als sign up, own name/account in tournament should be highlighted and easy visible for the player
+3. [implemented] dark mode (switchable)
+4. [implemented] admin dashboard with : registered player, registered admins, registered tournament, sum played matches, player registration, abbility to reset password of player accounts
+5. [implemented] support for not only ko phase tournaments -> everyone(individual) vs everyone(individual) with new teams each match, each team vs each team, winner is team or indivual with most wins, decided by points if same amount of wins
+6. [implemented] add german translation to frontend, can be toggled like dark mode but requires reload probably?
+7. [implemented] feature for each players to create little matches on their own that do not belong to any tournament so they can enter pratice matches that count to their personal stats, but are seperated from tournament matches. overall stats should then show the personal stats of player and their match stats seperate in two tables.
+8. [implemented] add swagger api documentation

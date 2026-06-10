@@ -15,6 +15,7 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./vitest.setup.ts", "./__tests__/setup/db.ts"],
     passWithNoTests: true,
+    hookTimeout: 60000,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

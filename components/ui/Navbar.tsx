@@ -60,6 +60,13 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
       </Link>
       <Link
         className="inline-flex text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white md:inline-flex"
+        href="/groups"
+        onClick={() => setIsMenuOpen(false)}
+      >
+        {t("groups")}
+      </Link>
+      <Link
+        className="inline-flex text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white md:inline-flex"
         href="/stats"
         onClick={() => setIsMenuOpen(false)}
       >

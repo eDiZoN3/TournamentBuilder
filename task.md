@@ -63,7 +63,7 @@ Isolation principle: all group logic lives under `lib/groups/`, `lib/models/Tour
 
 ---
 
-### T124 - Group Admin Frontend — Setup Pages (TDD First)
+### T124 - Group Admin Frontend — Setup Pages [COMPLETED]
 **Files**: `app/admin/groups/page.tsx`, `app/admin/groups/new/page.tsx`, `components/groups/GroupSetupForm.tsx`, `__tests__/components/GroupSetupForm.test.tsx`
 **Depends on**: T118, T119, T120
 **TDD**: Write tests before implementation
@@ -80,7 +80,7 @@ Tests: list renders group rows, new group form requires name, add team row, remo
 
 ---
 
-### T125 - Group Admin Frontend — Active Group Management View (TDD First)
+### T125 - Group Admin Frontend — Active Group Management View [COMPLETED]
 **Files**: `app/admin/groups/[id]/page.tsx`, `components/groups/GroupManageView.tsx`, `components/groups/CategoryLiveRow.tsx`, `__tests__/components/GroupManageView.test.tsx`
 **Depends on**: T124, T122
 **TDD**: Write tests before implementation
@@ -100,7 +100,7 @@ Tests: renders one row per category, active match shows team names and score ent
 
 ---
 
-### T126 - Group Leaderboard Frontend (TDD First)
+### T126 - Group Leaderboard Frontend [COMPLETED]
 **Files**: `components/groups/GroupLeaderboard.tsx`, `__tests__/components/GroupLeaderboard.test.tsx`
 **Depends on**: T117, T125
 **TDD**: Write tests before implementation
@@ -113,7 +113,7 @@ Tests: renders correct rank order, correct placement per category cell, total sc
 
 ---
 
-### T127 - Public Group View (TDD First)
+### T127 - Public Group View [COMPLETED]
 **Files**: `app/(public)/groups/page.tsx`, `app/(public)/groups/[id]/page.tsx`, `components/groups/PublicGroupView.tsx`, `__tests__/components/PublicGroupView.test.tsx`
 **Depends on**: T125, T126
 **TDD**: Write tests before implementation
@@ -128,7 +128,7 @@ Tests: list skips draft groups, group view renders one bracket section per categ
 
 ---
 
-### T128 - Navigation and i18n Integration (TDD First)
+### T128 - Navigation and i18n Integration [COMPLETED]
 **Files**: `components/ui/Navbar.tsx`, `lib/i18n.ts`, `app/admin/dashboard/page.tsx` (or admin sidebar), `__tests__/components/Navbar.test.tsx`, `__tests__/components/Localization.test.tsx`
 **Depends on**: T127
 **TDD**: Write tests before implementation

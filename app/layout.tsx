@@ -7,8 +7,8 @@ import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Raro Volleyball Tournament",
-  description: "Create and follow live volleyball tournament brackets.",
+  title: "Tournament Manager",
+  description: "Create and Track Custom Tournaments",
 };
 
 function ThemeStartupScript() {

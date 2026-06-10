@@ -300,7 +300,22 @@ export type TranslationKey =
   | "yourScore"
   | "addParticipantsNote"
   | "completedNonByeMatches"
-  | "individualMixer";
+  | "individualMixer"
+  | "tournamentGroups"
+  | "groups"
+  | "group"
+  | "newGroup"
+  | "groupName"
+  | "categories"
+  | "category"
+  | "addCategory"
+  | "categoryName"
+  | "startGroup"
+  | "groupLeaderboard"
+  | "totalScore"
+  | "idleWaitingForTeams"
+  | "nextQueuedMatch"
+  | "noGroupsYet";
 
 const translations: Record<Locale, Record<TranslationKey, string>> = {
   de: {
@@ -620,6 +635,21 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Fügen Sie Teilnehmer hinzu und bestätigen Sie die Teams, bevor Sie das Turnier starten.",
     completedNonByeMatches: "Gespielte Matches",
     individualMixer: "Einzel-Mixer",
+    tournamentGroups: "Turniergruppen",
+    groups: "Gruppen",
+    group: "Gruppe",
+    newGroup: "Neue Gruppe",
+    groupName: "Gruppenname",
+    categories: "Kategorien",
+    category: "Kategorie",
+    addCategory: "Kategorie hinzufügen",
+    categoryName: "Kategoriename",
+    startGroup: "Gruppe starten",
+    groupLeaderboard: "Gruppenrangliste",
+    totalScore: "Gesamtpunktzahl",
+    idleWaitingForTeams: "Wartend — Teams belegt",
+    nextQueuedMatch: "Nächstes Spiel",
+    noGroupsYet: "Noch keine Turniergruppen.",
   },
   en: {
     account: "Account",
@@ -931,6 +961,21 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Add participants and confirm the teams before starting the tournament.",
     completedNonByeMatches: "Completed non-bye matches",
     individualMixer: "Individual mixer",
+    tournamentGroups: "Tournament Groups",
+    groups: "Groups",
+    group: "Group",
+    newGroup: "New group",
+    groupName: "Group name",
+    categories: "Categories",
+    category: "Category",
+    addCategory: "Add category",
+    categoryName: "Category name",
+    startGroup: "Start group",
+    groupLeaderboard: "Group leaderboard",
+    totalScore: "Total score",
+    idleWaitingForTeams: "Waiting — teams occupied",
+    nextQueuedMatch: "Next up",
+    noGroupsYet: "No tournament groups yet.",
   },
 };
 

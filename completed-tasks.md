@@ -10,6 +10,22 @@ Each task is atomic enough for a single coding session. TDD tasks write tests fi
 
 ---
 
+## Phase 15 — Tournament Groups (Roadmap Feature 10)
+
+### T115 — TournamentGroup Mongoose Model [COMPLETED]
+**Files**: `lib/models/TournamentGroup.ts`, `__tests__/lib/models/TournamentGroup.test.ts`
+**Description**: Mongoose schema for tournament groups. `IGroupTeam` and `IGroupMatch` are type aliases for `ITeam`/`IMatch` from Tournament.ts. `IGroupCategory` adds `position` (priority order), embedded `matches`, and `currentMatchId`. Root `ITournamentGroup` has `name`, `status`, `teams`, `categories`, timestamps. 9 tests, all passing.
+
+### T116 — Group Auto-Scheduler Pure Function [COMPLETED]
+**Files**: `lib/groups/scheduler.ts`, `__tests__/lib/groups/scheduler.test.ts`
+**Description**: `computeNextMatches(group)` collects all in_progress team IDs across categories, then iterates categories in ascending `position` order. For each idle category it finds the first `ready` match with no team conflicts, appends it to activations, and adds those teams to the active set for subsequent iterations. 9 tests, all passing.
+
+### T117 — Group Leaderboard Calculator Pure Function [COMPLETED]
+**Files**: `lib/groups/leaderboard.ts`, `__tests__/lib/groups/leaderboard.test.ts`
+**Description**: `computeLeaderboard(group)` derives team placement per category from the bracket structure: final winner=1st, final loser=2nd, earlier-round losers get `2^(totalRounds-eliminationRound)+1`. Sums scores across categories; tie-breaks by total wins descending. 7 tests, all passing.
+
+---
+
 ## Phase 14 — Remaining Roadmap and Issue Backlog
 
 ### T107 — Score Entry Modal Foreground Opacity Polish [COMPLETED]

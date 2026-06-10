@@ -22,168 +22,44 @@ Isolation principle: all group logic lives under `lib/groups/`, `lib/models/Tour
 
 ---
 
-### T115 - TournamentGroup Mongoose Model (TDD First)
+### T115 - TournamentGroup Mongoose Model [COMPLETED]
 **Files**: `lib/models/TournamentGroup.ts`, `__tests__/lib/models/TournamentGroup.test.ts`
-**Depends on**: —
-**TDD**: Write tests before implementation
-**Description**: Define the MongoDB schema for tournament groups and their embedded sub-documents.
 
-Schema:
-- `GroupTeam` sub-schema: `name` (string, required), `players` (string[]), `seed` (number).
-- `GroupMatch` sub-schema: identical field set to the existing `IMatch` (bracket, round, position, label, placeRange, format, teamA, teamB, status, winnerId, loserId, winnerNextMatchId, loserNextMatchId, winnerNextSlot, loserNextSlot, isBye, isWBFinal, isLBFinal, courtNumber). Reuse the same field definitions, do not import from Tournament model.
-- `GroupCategory` sub-schema: `name` (string, required), `position` (number, required — controls priority order), `status` ("pending" | "active" | "completed", default "pending"), `matches` (GroupMatch[]).
-- `TournamentGroup` root schema: `name` (string, required), `status` ("draft" | "active" | "completed", default "draft"), `teams` (GroupTeam[]), `categories` (GroupCategory[]), `createdAt` (Date, default now).
-
-Export TypeScript interfaces `ITournamentGroup`, `IGroupCategory`, `IGroupMatch`, `IGroupTeam`.
-
-Tests: name is required, status defaults to "draft", category position field stored correctly, embedded match fields round-trip through save/load, createdAt auto-set.
-
----
-
-### T116 - Group Auto-Scheduler Pure Function (TDD First)
+### T116 - Group Auto-Scheduler Pure Function [COMPLETED]
 **Files**: `lib/groups/scheduler.ts`, `__tests__/lib/groups/scheduler.test.ts`
-**Depends on**: T115
-**TDD**: Write tests before implementation
-**Description**: Pure function `computeNextMatches(categories: IGroupCategory[]): Array<{ categoryIndex: number; matchId: string }>` that, given the current match state across all categories, returns which `ready` matches should be activated next — one per idle category, subject to the team-conflict constraint.
 
-Algorithm:
-1. Build `activeTeamIds`: collect `teamA.teamId` and `teamB.teamId` from every `in_progress` match across all categories.
-2. Iterate categories in ascending `position` order. For each category that has no `in_progress` match:
-   a. Find the first match with `status === "ready"` and `teamA` and `teamB` both set where neither `teamId` is in `activeTeamIds`.
-   b. If found: append `{categoryIndex, matchId}` to the result, then add both `teamId`s to `activeTeamIds` so later categories in the same pass account for this activation.
-3. Return the result list (may be empty).
-
-Tests:
-- No categories → returns [].
-- Single category with one ready match → returns that match.
-- Single category, all matches pending → returns [].
-- Category already has an in_progress match → skipped (not returned again).
-- Two categories, one team active in cat 1 → their ready match in cat 2 skipped; next ready match in cat 2 without that team is returned.
-- Three categories, all unblocked → all three returned in position order.
-- Activation in an earlier category blocks a match in a later category within the same call → later category skips to its next eligible match.
-- All categories blocked by conflicts → returns [].
-
----
-
-### T117 - Group Leaderboard Calculator Pure Function (TDD First)
+### T117 - Group Leaderboard Calculator Pure Function [COMPLETED]
 **Files**: `lib/groups/leaderboard.ts`, `__tests__/lib/groups/leaderboard.test.ts`
-**Depends on**: T115
-**TDD**: Write tests before implementation
-**Description**: Pure function `computeLeaderboard(categories: IGroupCategory[], teams: IGroupTeam[]): LeaderboardRow[]` where `LeaderboardRow = { teamId: string; teamName: string; placements: number[]; totalScore: number; totalWins: number; rank: number }`.
-
-Placement extraction per category:
-- Find the match whose `placeRange` is "1st-2nd Place": its `winnerId` → placement 1, its `loserId` → placement 2.
-- Find matches with "3rd-4th Place", "3rd Place", "5th-8th Place", "7th-8th Place", etc.: winner gets the lower bound of the range, loser gets the upper bound.
-- Parse range bounds from the stored English `placeRange` string (e.g. "7th-8th Place" → bounds 7 and 8).
-- Teams not yet placed in a category (category not completed) receive a fallback placement equal to the total team count.
-
-Ranking:
-- Sort by `totalScore` ascending (sum of all placement bounds, lower is better).
-- Ties broken by `totalWins` descending (total `winnerId` appearances across all category matches).
-- Assign `rank` starting at 1; ties share the same rank.
-
-Tests:
-- 4 teams, 1 category, all matches complete → correct 1st/2nd/3rd-4th placements and total scores.
-- 4 teams, 2 categories, one team wins both → total score 2, rank 1.
-- Tie on total score → tie broken by wins, correct shared rank.
-- Incomplete category → fallback placement applied for that category.
-- Empty teams list → returns [].
 
 ---
 
-### T118 - Groups CRUD API (TDD First)
+### T118 - Groups CRUD API [COMPLETED]
 **Files**: `app/api/groups/route.ts`, `app/api/groups/[id]/route.ts`, `__tests__/api/groups.test.ts`
-**Depends on**: T115
-**TDD**: Write tests before implementation
-**Description**: Core REST endpoints for tournament group lifecycle.
-
-- `POST /api/groups` (admin only): create a group from `{ name: string }`. Returns the created group with status "draft". Rejects with 400 if name missing.
-- `GET /api/groups` (admin only): return array of group summaries `{ _id, name, status, teamCount, categoryCount, createdAt }`.
-- `GET /api/groups/[id]` (public): return full group document including all embedded categories and their matches. Returns 404 if not found.
-- `DELETE /api/groups/[id]` (admin only): delete group. Returns 409 if status is "active".
-
-Tests: create with valid name, create without name → 400, list returns summaries, get by id, get non-existent → 404, delete draft group, delete active group → 409, unauthenticated POST/DELETE → 401.
 
 ---
 
-### T119 - Categories Management API (TDD First)
+### T119 - Categories Management API [COMPLETED]
 **Files**: `app/api/groups/[id]/categories/route.ts`, `app/api/groups/[id]/categories/[catId]/route.ts`, `__tests__/api/groups-categories.test.ts`
-**Depends on**: T118
-**TDD**: Write tests before implementation
-**Description**: Endpoints for adding, renaming, and removing categories from a draft group.
-
-- `POST /api/groups/[id]/categories` (admin): add `{ name: string }` as a new category. Appended with `position = current max position + 1`. Rejects 400 if name missing, 409 if group is not "draft".
-- `DELETE /api/groups/[id]/categories/[catId]` (admin): remove the category. Rejects 409 if group is not "draft".
-- `PUT /api/groups/[id]/categories/[catId]` (admin): rename `{ name: string }`. Rejects 409 if group is not "draft".
-
-Tests: add category increments position, delete removes only that category, rename updates name, all three routes return 409 on active group, unauthenticated → 401, category not found → 404.
 
 ---
 
-### T120 - Teams Management API (TDD First)
+### T120 - Teams Management API [COMPLETED]
 **Files**: `app/api/groups/[id]/teams/route.ts`, `__tests__/api/groups-teams.test.ts`
-**Depends on**: T118
-**TDD**: Write tests before implementation
-**Description**: Endpoint to set the complete team roster of a draft group.
-
-- `PUT /api/groups/[id]/teams` (admin): replace `teams` array with `{ teams: [{ name: string, players: string[] }] }`. Seeds are assigned 1…N by array order. Rejects 409 if group not "draft", 400 if fewer than 2 teams provided.
-
-Tests: teams replaced and seeds assigned, rejects < 2 teams → 400, rejects on active group → 409, unauthenticated → 401.
 
 ---
 
-### T121 - Start Group API (TDD First)
+### T121 - Start Group API [COMPLETED]
 **Files**: `app/api/groups/[id]/start/route.ts`, `__tests__/api/groups-start.test.ts`
-**Depends on**: T118, T119, T120, T116
-**TDD**: Write tests before implementation
-**Description**: Endpoint that transitions a group from "draft" to "active", generates brackets for all categories, and runs the initial auto-schedule.
-
-- `POST /api/groups/[id]/start` (admin):
-  1. Validates: ≥ 2 teams, ≥ 1 category. Returns 400 otherwise.
-  2. Returns 409 if group is not "draft".
-  3. For each category (in position order): calls `lib/bracket/generate.ts` with `knockoutBracketType: "single_elimination"` and the group's teams; stores resulting matches on the category; sets category status to "active".
-  4. Sets group status to "active".
-  5. Calls `computeNextMatches` and sets the returned matches to `in_progress`.
-  6. Returns the updated group.
-
-Tests: bracket generated for each category with correct match count, first round ready matches auto-started, if first ready match in cat 1 uses the same teams as in cat 2 then cat 2 first activates the next eligible pair, reject if no teams → 400, reject if no categories → 400, reject if already active → 409, unauthenticated → 401.
 
 ---
 
-### T122 - Score Entry and Auto-Reschedule API (TDD First)
+### T122 - Score Entry and Auto-Reschedule API [COMPLETED]
 **Files**: `app/api/groups/[id]/categories/[catId]/matches/[matchId]/scores/route.ts`, `app/api/groups/[id]/categories/[catId]/matches/[matchId]/status/route.ts`, `__tests__/api/groups-scores.test.ts`
-**Depends on**: T121, T116
-**TDD**: Write tests before implementation
-**Description**: Endpoints to record set scores and confirm a match winner, triggering bracket advancement and auto-rescheduling.
-
-- `PUT .../scores` (admin): accept `{ setIndex, scoreA, scoreB }`, validate via `lib/scoring.ts`, save onto the match, return the updated group. Rejects if match is not `in_progress`.
-- `PUT .../status` with `{ status: "completed" }` (admin): confirm the match is done.
-  1. Validates a winner is determined (at least one set saved with a clear winner per `lib/scoring.ts`).
-  2. Sets match status to "completed".
-  3. Calls `lib/bracket/advance.ts` on the category's match list to propagate winner/loser to the next round.
-  4. Marks newly-populated next-round matches as "ready" where both slots are filled.
-  5. Calls `computeNextMatches` across all categories and sets the returned matches to `in_progress`.
-  6. If every match in every category is now "completed", sets each category status to "completed" and group status to "completed".
-  7. Returns the updated group.
-
-Tests: set score saved, match confirmed, next-round match promoted to ready, scheduler activates next eligible match, blocked match (team conflict) not started, group completes when last match in last category confirmed, unauthenticated → 401, match not in_progress → 409.
 
 ---
 
-### T123 - Override API for Group Matches (TDD First)
+### T123 - Override API for Group Matches [COMPLETED]
 **Files**: `app/api/groups/[id]/categories/[catId]/matches/[matchId]/override/route.ts`, `__tests__/api/groups-override.test.ts`
-**Depends on**: T122
-**TDD**: Write tests before implementation
-**Description**: Admin endpoint to correct a completed match result within a group category.
-
-- `POST .../override` (admin): accept `{ sets: ISetScore[] }`.
-  1. Calls `lib/bracket/rollback.ts` on the category's match list to reverse downstream advancement from the overridden match.
-  2. Applies the corrected sets and re-determines the winner via `lib/scoring.ts`.
-  3. Re-advances via `lib/bracket/advance.ts`.
-  4. Re-runs `computeNextMatches` and sets newly-eligible matches to `in_progress`.
-  5. Returns the updated group.
-
-Tests: winner changed → downstream matches reset and re-advanced, scheduler fires after rollback, corrected winner propagated to next round, unauthenticated → 401.
 
 ---
 
@@ -280,3 +156,56 @@ New translation keys (add to both `en` and `de` in `lib/i18n.ts`):
 - `noGroupsYet`: "No tournament groups yet." / "Noch keine Turniergruppen."
 
 Tests: "Groups" link present in public navbar in both locales, admin sidebar has groups link, all new translation keys exist in both `en` and `de` and produce non-empty strings.
+
+---
+
+## Phase 16 — Open Issue Fixes (Issues 29–30)
+
+---
+
+### T129 - Fix "Mark as In Progress" in Winner-Only Tournaments (TDD First)
+**Files**: `lib/bracket/advance.ts`, `lib/bracket/scheduler.ts`, `components/admin/MatchControls.tsx`, `__tests__/lib/bracket/advance.test.ts`, `__tests__/lib/bracket/scheduler.test.ts`, `__tests__/components/MatchControls.test.tsx`
+**Depends on**: —
+**TDD**: Write tests before implementation
+**Description**: In winner-only tournaments (`matchResultMode === "winner_only"`), the "Mark as in progress" button in `MatchControls` is disabled whenever `currentMatchIds.length >= courtsAvailable`. Because winner-only matches complete instantly (admin taps "Team Won" — no score entry), court capacity is not a meaningful constraint. The admin needs to freely pick which ready match to start.
+
+Three root causes to fix:
+
+1. **`lib/bracket/advance.ts` — `assignCourt`**: skip the `canMarkInProgress` court-capacity guard when `tournament.matchResultMode === "winner_only"`. Multiple winner-only matches may be `in_progress` simultaneously. Assign `courtNumber` using the lowest free court if one is available, otherwise fall back to `1`. All other `assignCourt` logic (status check, `currentMatchIds` push) remains unchanged.
+
+2. **`lib/bracket/scheduler.ts` — `autoAssignReadyMatches`**: return `{ autoStartedMatches: [] }` immediately when `tournament.matchResultMode === "winner_only"`. Auto-scheduling removes the admin's ability to choose which match runs next; in winner-only mode the admin picks manually.
+
+3. **`components/admin/MatchControls.tsx`**: compute `courtsFull = false` when `matchResultMode === "winner_only"` so the "Mark as in progress" button is never disabled for court-capacity reasons.
+
+Tests (write first):
+- `assignCourt` on a winner-only tournament where `currentMatchIds.length >= courtsAvailable`: succeeds, sets match status to `"in_progress"`, pushes match id to `currentMatchIds`
+- `assignCourt` on a points tournament where courts are full: still throws `"No courts available"` (regression guard)
+- `autoAssignReadyMatches` on a winner-only tournament with ready matches: returns `{ autoStartedMatches: [] }` without touching any match
+- `autoAssignReadyMatches` on a points tournament: still auto-assigns the next ready match (regression guard)
+- MatchControls: "Mark as in progress" button is **enabled** when `matchResultMode="winner_only"` and all courts are occupied (`currentMatchIds.length >= courtsAvailable`)
+- MatchControls: "Mark as in progress" button remains **disabled** for `matchResultMode="points"` when courts are full (regression guard)
+
+---
+
+### T130 - Fix JWT Token Refresh After Password Change (TDD First)
+**Files**: `lib/auth.ts`, `app/admin/change-password/page.tsx`, `__tests__/lib/auth.test.ts`
+**Depends on**: —
+**TDD**: Write tests before implementation
+**Description**: After changing password via `/admin/change-password`, the NextAuth JWT token still carries `mustChangePassword: true` because the JWT `callback` in `lib/auth.ts` only updates the token when a `user` object is present (i.e., on initial sign-in). The middleware intercepts every subsequent `/admin/*` navigation and redirects back to `/admin/change-password`. This makes the `/admin/dashboard` redirect after the form submit unreachable and causes every "Manage tournament" link in `AdminDashboard` to redirect to the change-password page instead of the management view.
+
+Fix:
+
+1. **`lib/auth.ts`**: add a `trigger === "update"` branch to the JWT callback that accepts `mustChangePassword` from a client-triggered session refresh:
+   ```ts
+   if (trigger === "update" && typeof session?.mustChangePassword === "boolean") {
+     token.mustChangePassword = session.mustChangePassword;
+   }
+   ```
+   NextAuth v4 JWT-strategy re-runs the `jwt` callback with `trigger: "update"` and the passed session payload, overwriting the encrypted cookie without requiring re-login.
+
+2. **`app/admin/change-password/page.tsx`**: after a successful API response, call `update({ mustChangePassword: false })` from `useSession()` (import `useSession` from `"next-auth/react"`) before calling `router.push(...)`. Remove the existing `router.refresh()` call — it does not update the JWT cookie and is no longer needed.
+
+Tests (write first):
+- JWT callback with `trigger === "update"` and `session.mustChangePassword === false`: returned token has `mustChangePassword === false`
+- JWT callback with `trigger === "update"` and `session` that does **not** include `mustChangePassword`: token is unchanged (no regression)
+- JWT callback on sign-in (`user` object present): still sets `mustChangePassword` from the user object (regression guard)

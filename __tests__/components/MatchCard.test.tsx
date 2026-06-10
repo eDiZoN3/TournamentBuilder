@@ -163,6 +163,43 @@ describe("MatchCard", () => {
     expect(controlsLayer).not.toHaveClass("md:hidden");
   });
 
+  it("renders WB Round 1 label as Round 1 in English", () => {
+    render(<MatchCard match={makeMatch()} />);
+
+    expect(screen.getByText("Round 1")).toBeInTheDocument();
+    expect(screen.queryByText("WB Round 1")).not.toBeInTheDocument();
+  });
+
+  it("renders WB Semi-Final label as Semi-Final in English", () => {
+    render(<MatchCard match={makeMatch({ label: "WB Semi-Final" })} />);
+
+    expect(screen.getByText("Semi-Final")).toBeInTheDocument();
+    expect(screen.queryByText("WB Semi-Final")).not.toBeInTheDocument();
+  });
+
+  it("renders WB Final label as Final in English", () => {
+    render(<MatchCard match={makeMatch({ label: "WB Final", isWBFinal: true })} />);
+
+    expect(screen.getByText("Final")).toBeInTheDocument();
+    expect(screen.queryByText("WB Final")).not.toBeInTheDocument();
+  });
+
+  it("renders LB Final label retaining the LB prefix in English", () => {
+    render(<MatchCard match={makeMatch({ label: "LB Final", isLBFinal: true })} />);
+
+    expect(screen.getByText("LB Final")).toBeInTheDocument();
+  });
+
+  it("renders a place range unchanged in English", () => {
+    render(
+      <MatchCard
+        match={makeMatch({ label: "WB Final", isWBFinal: true, placeRange: "1st-2nd Place" })}
+      />,
+    );
+
+    expect(screen.getByText("1st-2nd Place")).toBeInTheDocument();
+  });
+
   it("suppresses animate-pulse on a pinned live match card (score entry open)", () => {
     const [teamA, teamB] = makeTeams(2);
 

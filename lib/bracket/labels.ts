@@ -1,3 +1,4 @@
+import { translate, type Locale } from "@/lib/i18n";
 import type { IMatch } from "@/lib/models/Tournament";
 
 type Bracket = IMatch["bracket"];
@@ -65,6 +66,52 @@ export function computeLabel(
   const totalLBRounds = Math.max(1, totalWBRounds * 2 - 3);
 
   return round === totalLBRounds - 1 ? "LB Semi-Final" : `LB Round ${round}`;
+}
+
+export function localizeLabel(label: string, locale: Locale): string {
+  if (/^lb final$/i.test(label.trim())) {
+    return translate(locale, "lbFinal");
+  }
+
+  if (/semi/i.test(label)) {
+    return translate(locale, "semiFinal");
+  }
+
+  if (/quarter/i.test(label)) {
+    return translate(locale, "quarterFinal");
+  }
+
+  if (/final/i.test(label)) {
+    return translate(locale, "final");
+  }
+
+  const roundMatch = /round\s+(\d+)/i.exec(label);
+
+  if (roundMatch) {
+    return `${translate(locale, "round")} ${roundMatch[1]}`;
+  }
+
+  return label;
+}
+
+export function localizePlaceRange(placeRange: string, locale: Locale): string {
+  if (!placeRange || locale === "en") {
+    return placeRange;
+  }
+
+  const rangeMatch = /^(\d+)(?:st|nd|rd|th)-(\d+)(?:st|nd|rd|th)\s+Place$/i.exec(placeRange);
+
+  if (rangeMatch) {
+    return `${rangeMatch[1]}.-${rangeMatch[2]}. Platz`;
+  }
+
+  const singleMatch = /^(\d+)(?:st|nd|rd|th)\s+Place$/i.exec(placeRange);
+
+  if (singleMatch) {
+    return `${singleMatch[1]}. Platz`;
+  }
+
+  return placeRange;
 }
 
 export function computePlaceRange(

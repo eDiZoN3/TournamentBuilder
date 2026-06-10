@@ -1,4 +1,4 @@
-import { computeLabel, computePlaceRange } from "@/lib/bracket/labels";
+import { computeLabel, computePlaceRange, localizeLabel, localizePlaceRange } from "@/lib/bracket/labels";
 
 describe("computeLabel", () => {
   it("labels every winner bracket match type", () => {
@@ -84,5 +84,86 @@ describe("computePlaceRange", () => {
       "5th-6th Place",
     );
     expect(computePlaceRange("loser", 2, false, false, 6, 8)).toBe("");
+  });
+});
+
+describe("localizeLabel", () => {
+  it("strips the WB prefix from winner bracket rounds in English", () => {
+    expect(localizeLabel("WB Round 1", "en")).toBe("Round 1");
+    expect(localizeLabel("WB Round 3", "en")).toBe("Round 3");
+  });
+
+  it("strips the LB prefix from loser bracket rounds in English", () => {
+    expect(localizeLabel("LB Round 2", "en")).toBe("Round 2");
+  });
+
+  it("renders WB Final as Final in English", () => {
+    expect(localizeLabel("WB Final", "en")).toBe("Final");
+  });
+
+  it("renders LB Final retaining the LB prefix in English", () => {
+    expect(localizeLabel("LB Final", "en")).toBe("LB Final");
+  });
+
+  it("renders semi-finals without bracket prefix in English", () => {
+    expect(localizeLabel("WB Semi-Final", "en")).toBe("Semi-Final");
+    expect(localizeLabel("LB Semi-Final", "en")).toBe("Semi-Final");
+  });
+
+  it("renders quarter-finals without bracket prefix in English", () => {
+    expect(localizeLabel("WB Quarter-Final", "en")).toBe("Quarter-Final");
+  });
+
+  it("renders rounds as Runde N in German", () => {
+    expect(localizeLabel("WB Round 1", "de")).toBe("Runde 1");
+    expect(localizeLabel("LB Round 2", "de")).toBe("Runde 2");
+  });
+
+  it("renders WB Final as Finale in German", () => {
+    expect(localizeLabel("WB Final", "de")).toBe("Finale");
+  });
+
+  it("renders LB Final with German prefix", () => {
+    expect(localizeLabel("LB Final", "de")).toBe("LB-Finale");
+  });
+
+  it("renders semi-finals as Halbfinale in German", () => {
+    expect(localizeLabel("WB Semi-Final", "de")).toBe("Halbfinale");
+    expect(localizeLabel("LB Semi-Final", "de")).toBe("Halbfinale");
+  });
+
+  it("renders quarter-finals as Viertelfinale in German", () => {
+    expect(localizeLabel("WB Quarter-Final", "de")).toBe("Viertelfinale");
+  });
+
+  it("passes unknown labels through unchanged for backward compatibility", () => {
+    expect(localizeLabel("Custom Label", "en")).toBe("Custom Label");
+    expect(localizeLabel("Custom Label", "de")).toBe("Custom Label");
+    expect(localizeLabel("", "en")).toBe("");
+  });
+});
+
+describe("localizePlaceRange", () => {
+  it("returns English place ranges unchanged", () => {
+    expect(localizePlaceRange("1st-2nd Place", "en")).toBe("1st-2nd Place");
+    expect(localizePlaceRange("3rd-4th Place", "en")).toBe("3rd-4th Place");
+    expect(localizePlaceRange("3rd Place", "en")).toBe("3rd Place");
+    expect(localizePlaceRange("7th-8th Place", "en")).toBe("7th-8th Place");
+  });
+
+  it("converts range place ranges to German ordinal format", () => {
+    expect(localizePlaceRange("1st-2nd Place", "de")).toBe("1.-2. Platz");
+    expect(localizePlaceRange("3rd-4th Place", "de")).toBe("3.-4. Platz");
+    expect(localizePlaceRange("7th-8th Place", "de")).toBe("7.-8. Platz");
+    expect(localizePlaceRange("13th-16th Place", "de")).toBe("13.-16. Platz");
+  });
+
+  it("converts a single-place range to German ordinal format", () => {
+    expect(localizePlaceRange("3rd Place", "de")).toBe("3. Platz");
+  });
+
+  it("passes empty strings through unchanged", () => {
+    expect(localizePlaceRange("", "en")).toBe("");
+    expect(localizePlaceRange("", "de")).toBe("");
   });
 });

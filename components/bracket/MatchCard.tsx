@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { localizeLabel, localizePlaceRange } from "@/lib/bracket/labels";
 import type { IMatch, ITeamSlot } from "@/lib/models/Tournament";
 
 interface MatchCardProps {
@@ -82,7 +83,7 @@ export function MatchCard({
   teamBIsCurrentPlayerTeam = false,
   teamBName,
 }: MatchCardProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const fallbackTeamName = t("toBeDetermined");
   const isCompleted = match.status === "completed" || match.isBye;
   const isLive = match.status === "in_progress" && !match.isBye;
@@ -131,10 +132,10 @@ export function MatchCard({
     >
       <header className="border-b border-slate-200 bg-slate-50 px-3 py-2 pr-16 dark:border-slate-700 dark:bg-slate-800">
         <p className="truncate text-xs font-semibold uppercase tracking-wide text-slate-600">
-          {match.label}
+          {localizeLabel(match.label, locale)}
         </p>
         {match.placeRange ? (
-          <p className="truncate text-xs text-slate-500">{match.placeRange}</p>
+          <p className="truncate text-xs text-slate-500">{localizePlaceRange(match.placeRange, locale)}</p>
         ) : null}
       </header>
       {isLive && match.courtNumber !== null ? (

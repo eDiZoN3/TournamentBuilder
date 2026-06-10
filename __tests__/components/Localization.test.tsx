@@ -6,6 +6,7 @@ import { makeMatch, makeTeams, makeTournament } from "@/__tests__/helpers/factor
 import NewTournamentPage from "@/app/admin/tournament/new/page";
 import { AdminDashboard, type TournamentSummary } from "@/components/admin/AdminDashboard";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
+import { MatchCard } from "@/components/bracket/MatchCard";
 import { JoinTournamentButton } from "@/components/player/JoinTournamentButton";
 import { PlayerAccountView } from "@/components/player/PlayerAccountView";
 import { StatsTable } from "@/components/stats/StatsTable";
@@ -210,6 +211,24 @@ describe("frontend localization", () => {
     expect(
       screen.getByRole("columnheader", { name: de("wins") }),
     ).toBeInTheDocument();
+  });
+
+  it("renders bracket match labels and place ranges in German", async () => {
+    renderGerman(
+      <>
+        <MatchCard match={makeMatch({ label: "WB Semi-Final" })} />
+        <MatchCard
+          match={makeMatch({ label: "WB Final", isWBFinal: true, placeRange: "1st-2nd Place" })}
+        />
+      </>,
+    );
+
+    expect(await screen.findByText(de("semiFinal"))).toBeInTheDocument();
+    expect(screen.getByText(de("final"))).toBeInTheDocument();
+    expect(screen.getByText("1.-2. Platz")).toBeInTheDocument();
+    expect(screen.queryByText("WB Semi-Final")).not.toBeInTheDocument();
+    expect(screen.queryByText("WB Final")).not.toBeInTheDocument();
+    expect(screen.queryByText("1st-2nd Place")).not.toBeInTheDocument();
   });
 
   it("translates player practice match account sections", async () => {

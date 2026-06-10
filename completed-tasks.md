@@ -16,6 +16,10 @@ Each task is atomic enough for a single coding session. TDD tasks write tests fi
 **Files**: `components/bracket/MatchCard.tsx`, `__tests__/components/MatchCard.test.tsx`
 **Description**: Removed `animate-pulse` from live match cards when `isPinned=true` (score entry open). Amber border and ring styling retained so in-progress status remains visible. Two new tests verify the suppression when pinned and retention when not pinned. All 518 tests pass.
 
+### T108 — Localized Bracket Labels and Place Ranges [COMPLETED]
+**Files**: `lib/bracket/labels.ts`, `components/bracket/MatchCard.tsx`, `components/bracket/WinnerBracket.tsx`, `components/bracket/LoserBracket.tsx`, `__tests__/lib/bracket/labels.test.ts`, `__tests__/components/MatchCard.test.tsx`, `__tests__/components/Localization.test.tsx`
+**Description**: Added `localizeLabel` and `localizePlaceRange` helpers to `labels.ts`. Match card headers and round headings in WinnerBracket/LoserBracket now render localized labels at display time (e.g. "WB Semi-Final" → "Semi-Final"/"Halbfinale", "WB Final" → "Final"/"Finale", "LB Final" → "LB Final"/"LB-Finale"). Place ranges convert to German ordinal format ("1st-2nd Place" → "1.-2. Platz"). Stored labels remain unchanged for backward compatibility. 22 new tests, all 540 tests pass.
+
 ---
 
 ## Phase 0 — Project Setup & Test Infrastructure

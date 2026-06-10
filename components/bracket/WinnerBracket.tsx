@@ -5,6 +5,7 @@ import { MatchCard } from "@/components/bracket/MatchCard";
 import { RoundTabs } from "@/components/bracket/RoundTabs";
 import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { localizeLabel } from "@/lib/bracket/labels";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
 
 interface WinnerBracketProps {
@@ -47,7 +48,7 @@ export function WinnerBracket({
   renderMatchControls,
   teams,
 }: WinnerBracketProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const rounds = roundsFor(matches, "winner");
   const [activeRound, setActiveRound] = useState(rounds[0]?.[0] ?? 1);
   const finalRound = rounds.at(-1)?.[0] ?? 1;
@@ -86,7 +87,9 @@ export function WinnerBracket({
             key={round}
           >
             <h3 className="mb-3 text-sm font-semibold text-slate-600 dark:text-slate-300">
-              {roundMatches[0]?.label ?? `${t("winnerBracket")} ${t("round")} ${round}`}
+              {roundMatches[0]
+                ? localizeLabel(roundMatches[0].label, locale)
+                : `${t("winnerBracket")} ${t("round")} ${round}`}
             </h3>
             <div
               className="flex flex-col"

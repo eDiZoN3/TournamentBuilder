@@ -41,10 +41,10 @@ async function renderStatsResetPanel(
   props: Partial<StatsResetPanelProps> = {},
 ) {
   const modulePath = "@/components/admin/StatsResetPanel";
-  const module = (await import(modulePath)) as {
+  const mod = (await import(modulePath)) as {
     StatsResetPanel: ComponentType<StatsResetPanelProps>;
   };
-  const StatsResetPanel = module.StatsResetPanel;
+  const StatsResetPanel = mod.StatsResetPanel;
 
   render(
     <StatsResetPanel

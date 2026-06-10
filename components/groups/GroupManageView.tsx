@@ -6,8 +6,14 @@ import { ScoreEntry } from "@/components/admin/ScoreEntry";
 import { GroupLeaderboard } from "@/components/groups/GroupLeaderboard";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { computeNextMatches } from "@/lib/groups/scheduler";
-import type { IGroupCategory } from "@/lib/models/TournamentGroup";
-import type { ITournamentGroup } from "@/lib/models/TournamentGroup";
+import type { IGroupCategory, IGroupTeam, ITournamentGroup } from "@/lib/models/TournamentGroup";
+import type { ITeamSlot } from "@/lib/models/Tournament";
+
+function resolveTeamName(teams: IGroupTeam[], slot: ITeamSlot | null): string {
+  if (!slot) return "TBD";
+  const team = teams.find((t) => t._id.toString() === slot.teamId.toString());
+  return team?.name ?? "TBD";
+}
 
 interface GroupManageViewProps {
   initialGroup: ITournamentGroup;
@@ -100,6 +106,7 @@ export function GroupManageView({ initialGroup }: GroupManageViewProps) {
                 categoryIndex={group.categories.indexOf(cat)}
                 activations={activations}
                 groupId={groupId}
+                teams={group.teams}
                 onEnterScores={(matchId, teamAName, teamBName) =>
                   setScoreEntry({ matchId, catId: cat._id.toString(), teamAName, teamBName })
                 }
@@ -127,6 +134,7 @@ interface CategoryLiveRowProps {
   categoryIndex: number;
   activations: ReturnType<typeof computeNextMatches>;
   groupId: string;
+  teams: IGroupTeam[];
   onEnterScores: (matchId: string, teamAName: string, teamBName: string) => void;
 }
 
@@ -134,6 +142,7 @@ function CategoryLiveRow({
   category,
   categoryIndex,
   activations,
+  teams,
   onEnterScores,
 }: CategoryLiveRowProps) {
   const { t } = useLocale();
@@ -154,15 +163,15 @@ function CategoryLiveRow({
       {activeMatch && (
         <div className="flex items-center gap-3">
           <span>
-            {activeMatch.teamA?.name ?? "TBD"} vs {activeMatch.teamB?.name ?? "TBD"}
+            {resolveTeamName(teams, activeMatch.teamA)} vs {resolveTeamName(teams, activeMatch.teamB)}
           </span>
           <button
             type="button"
             onClick={() =>
               onEnterScores(
                 activeMatch._id.toString(),
-                activeMatch.teamA?.name ?? "TBD",
-                activeMatch.teamB?.name ?? "TBD",
+                resolveTeamName(teams, activeMatch.teamA),
+                resolveTeamName(teams, activeMatch.teamB),
               )
             }
             className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"

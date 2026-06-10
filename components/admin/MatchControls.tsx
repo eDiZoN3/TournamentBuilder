@@ -92,7 +92,9 @@ export function MatchControls({
     return null;
   }
 
-  const courtsFull = currentMatchIds.length >= courtsAvailable;
+  const courtsFull =
+    matchResultMode !== "winner_only" &&
+    currentMatchIds.length >= courtsAvailable;
 
   function openScoreEntry() {
     scoreEntryOpenRef.current = true;

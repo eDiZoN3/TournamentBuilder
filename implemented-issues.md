@@ -26,3 +26,6 @@
 26. [implemented] when in point enter card it is pulsating the opacity of the card, remove that, it needs to be foreground with 100% opacity
 27. [implemented] add translations for tournament graph where e.g. WB semi final should be Semi-Final in eng and Halbfinale in DE. same as 1st 2nd place shuold have a german translation to e.g. 1.-2. Platz.
 28. [implemented] add a switch in tournament creation to check whether semi finale and final have bo3 or not.
+29. [implemented] als laufend markieren in winner only tournaments must work so that i can select wich match is played right now.
+30. [implemented] after change password redirect to the dashboard to be able to enter standings. and the dashboard button shuold display the management view for the tournament management and not change-password
+31. [implemented] live standings for group tournaments in the group tournaments visible for the whole thing would be nice (can be solved with a standings tab or something like that.)

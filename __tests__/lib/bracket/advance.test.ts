@@ -8,7 +8,11 @@ import {
 import { generateBracket } from "@/lib/bracket/generate";
 import type { IMatch, ITournament } from "@/lib/models/Tournament";
 
-function tournamentWithTeams(teamCount: number, courtsAvailable = 2) {
+function tournamentWithTeams(
+  teamCount: number,
+  courtsAvailable = 2,
+  matchResultMode: "points" | "winner_only" = "points",
+) {
   vi.spyOn(Math, "random").mockReturnValue(0.999);
   const teams = makeTeams(teamCount);
   const matches = generateBracket(teams, courtsAvailable);
@@ -20,7 +24,7 @@ function tournamentWithTeams(teamCount: number, courtsAvailable = 2) {
     format: "double_elimination",
     knockoutBracketType: "double_elimination",
     firstRoundPairingMode: "random",
-    matchResultMode: "points",
+    matchResultMode,
     knockoutMatchFormat: "bo3_semis_finals",
     roundRobinMatchFormat: "bo1",
     teamSize: 2,
@@ -120,6 +124,44 @@ describe("court assignment", () => {
     assignCourt(tournament, match);
 
     expect(tournament.currentMatchIds).toEqual([match._id]);
+  });
+});
+
+describe("winner_only court assignment", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("canMarkInProgress returns true even when every court is occupied", () => {
+    const tournament = tournamentWithTeams(4, 1, "winner_only");
+    const readyMatches = matchesIn(tournament, "winner", 1);
+
+    assignCourt(tournament, readyMatches[0]);
+
+    expect(canMarkInProgress(tournament)).toBe(true);
+  });
+
+  it("assignCourt succeeds even when all points-mode courts would be full", () => {
+    const tournament = tournamentWithTeams(4, 1, "winner_only");
+    const readyMatches = matchesIn(tournament, "winner", 1);
+
+    assignCourt(tournament, readyMatches[0]);
+
+    expect(() => assignCourt(tournament, readyMatches[1])).not.toThrow();
+    expect(readyMatches[1].status).toBe("in_progress");
+  });
+
+  it("assignCourt sets in_progress without assigning a court number", () => {
+    const tournament = tournamentWithTeams(4, 1, "winner_only");
+    const match = matchesIn(tournament, "winner", 1)[0];
+
+    assignCourt(tournament, match);
+
+    expect(match.status).toBe("in_progress");
+    expect(match.courtNumber).toBeNull();
+    expect(tournament.currentMatchIds.map((id) => id.toString())).toContain(
+      match._id.toString(),
+    );
   });
 });
 

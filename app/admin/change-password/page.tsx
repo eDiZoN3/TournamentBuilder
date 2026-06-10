@@ -2,10 +2,12 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useLocale } from "@/components/ui/LocaleProvider";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const { t } = useLocale();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -46,8 +48,8 @@ export default function ChangePasswordPage() {
         return;
       }
 
+      await updateSession({ mustChangePassword: false });
       router.push(body.role === "player" ? "/account" : "/admin/dashboard");
-      router.refresh();
     } catch {
       setError(t("unableToChangePassword"));
     } finally {

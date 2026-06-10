@@ -36,7 +36,7 @@ export function PublicGroupView({ initialGroup }: PublicGroupViewProps) {
     <section className="space-y-6">
       <h1 className="text-2xl font-bold">{group.name}</h1>
 
-      {group.status === "completed" && <GroupLeaderboard group={group} />}
+      {group.status !== "draft" && <GroupLeaderboard group={group} />}
 
       {group.status !== "draft" &&
         sortedCategories.map((cat) => (

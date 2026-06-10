@@ -91,6 +91,33 @@ describe("autoAssignReadyMatches", () => {
     ]);
   });
 
+  it("does not auto-assign any matches for winner_only tournaments", () => {
+    const teams = makeTeams(4);
+    const first = makeMatch({
+      position: 1,
+      status: "ready",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const second = makeMatch({
+      position: 2,
+      status: "ready",
+      teamA: { teamId: teams[2]._id, sets: [] },
+      teamB: { teamId: teams[3]._id, sets: [] },
+    });
+    const cup = tournament({
+      courtsAvailable: 4,
+      matchResultMode: "winner_only",
+      matches: [first, second],
+    });
+
+    const result = autoAssignReadyMatches(cup);
+
+    expect(result.autoStartedMatches).toEqual([]);
+    expect(first.status).toBe("ready");
+    expect(second.status).toBe("ready");
+  });
+
   it("ignores non-playable matches and returns no assignments when courts are full", () => {
     const teams = makeTeams(4);
     const live = makeMatch({

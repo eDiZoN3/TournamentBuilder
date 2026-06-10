@@ -10,6 +10,22 @@ Each task is atomic enough for a single coding session. TDD tasks write tests fi
 
 ---
 
+## Phase 16 — Open Issue Fixes (Issues 29–31)
+
+### T129 — Fix "Mark as In Progress" in Winner-Only Tournaments [COMPLETED]
+**Files**: `lib/bracket/advance.ts`, `lib/bracket/scheduler.ts`, `components/admin/MatchControls.tsx`, `__tests__/lib/bracket/advance.test.ts`, `__tests__/lib/bracket/scheduler.test.ts`
+**Description**: `canMarkInProgress` and `assignCourt` now bypass the court-capacity guard for `winner_only` tournaments. `assignCourt` sets `courtNumber = null` and proceeds without checking occupied courts. `autoAssignReadyMatches` returns immediately with no assignments for `winner_only` (admin picks manually). `MatchControls` computes `courtsFull = false` when `matchResultMode === "winner_only"`. 3 new advance tests, 1 new scheduler test, all passing.
+
+### T130 — Fix JWT Token Refresh After Password Change [COMPLETED]
+**Files**: `lib/auth.ts`, `app/admin/change-password/page.tsx`, `__tests__/lib/auth.test.ts`, `__tests__/components/ChangePasswordPage.test.tsx`
+**Description**: JWT callback now handles `trigger === "update"` — sets `token.mustChangePassword = false` when the session payload includes `mustChangePassword: false`. Change-password page calls `updateSession({ mustChangePassword: false })` from `useSession()` before navigating, replacing the ineffective `router.refresh()`. 2 new auth tests, component tests updated to mock `useSession` and assert `update` is called instead of `refresh`. All passing.
+
+### T131 — Show Live Standings for Active Tournament Groups [COMPLETED]
+**Files**: `lib/groups/leaderboard.ts`, `components/groups/GroupLeaderboard.tsx`, `components/groups/PublicGroupView.tsx`, `__tests__/lib/groups/leaderboard.test.ts`, `__tests__/components/GroupLeaderboard.test.tsx`
+**Description**: `computeLeaderboard` now iterates all `group.teams` (not just those in completed matches), aligns placements to sorted category positions, represents unknown placements as `null`, and sorts teams with no known placement to the bottom. `GroupLeaderboard` renders for `active` groups (hides only for `draft`). `PublicGroupView` shows the leaderboard whenever `status !== "draft"`. `LeaderboardRow.placements` type widened to `(number | null)[]`. 3 new leaderboard unit tests, existing empty-group test updated, component test updated. All passing.
+
+---
+
 ## Phase 15 — Tournament Groups (Roadmap Feature 10)
 
 ### T115 — TournamentGroup Mongoose Model [COMPLETED]

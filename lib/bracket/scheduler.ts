@@ -119,6 +119,10 @@ export function assignMatchToCourt(
 export function autoAssignReadyMatches(
   tournament: ITournament,
 ): AutoScheduleResult {
+  if ((tournament.matchResultMode ?? "points") === "winner_only") {
+    return { autoStartedMatches: [] };
+  }
+
   const autoStartedMatches: AutoStartedMatch[] = [];
   const readyMatches = tournament.matches
     .filter((match) => match.status === "ready" && !match.isBye)

@@ -242,6 +242,38 @@ describe("credentials authentication", () => {
     });
   });
 
+  it("clears mustChangePassword in the JWT when a session update sends false", async () => {
+    const jwt = authOptions.callbacks?.jwt;
+
+    const updatedToken = await jwt!({
+      token: { id: "admin-id", mustChangePassword: true, role: "admin" },
+      user: undefined as never,
+      account: null,
+      trigger: "update",
+      session: { mustChangePassword: false },
+      isNewUser: false,
+      profile: undefined,
+    });
+
+    expect(updatedToken.mustChangePassword).toBe(false);
+  });
+
+  it("leaves mustChangePassword unchanged when the session update does not include it", async () => {
+    const jwt = authOptions.callbacks?.jwt;
+
+    const updatedToken = await jwt!({
+      token: { id: "admin-id", mustChangePassword: true, role: "admin" },
+      user: undefined as never,
+      account: null,
+      trigger: "update",
+      session: {},
+      isNewUser: false,
+      profile: undefined,
+    });
+
+    expect(updatedToken.mustChangePassword).toBe(true);
+  });
+
   it("uses the shared login page for NextAuth sign-in redirects", () => {
     expect(authOptions.pages?.signIn).toBe("/login");
   });

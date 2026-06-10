@@ -63,7 +63,7 @@ describe("computeLeaderboard", () => {
     expect(computeLeaderboard(group)).toEqual([]);
   });
 
-  it("returns an empty array when no matches are completed", () => {
+  it("includes all teams with null placements when no matches are completed", () => {
     const [t1, t2] = [makeTeam("A"), makeTeam("B")];
     const final = makeMatch({
       _id: new Types.ObjectId(),
@@ -77,7 +77,86 @@ describe("computeLeaderboard", () => {
     const cat = makeCategory(0, [final]);
     const group = makeGroup([t1, t2], [cat]);
 
-    expect(computeLeaderboard(group)).toEqual([]);
+    const board = computeLeaderboard(group);
+
+    expect(board).toHaveLength(2);
+    expect(board[0].placements).toEqual([null]);
+    expect(board[1].placements).toEqual([null]);
+    expect(board[0].totalScore).toBe(0);
+    expect(board[0].totalWins).toBe(0);
+  });
+
+  it("shows null placement for an incomplete category while another is done", () => {
+    const [t1, t2] = [makeTeam("Alpha"), makeTeam("Beta")];
+
+    // Category A completed: t1 wins
+    const finalA = makeMatch({
+      _id: new Types.ObjectId(),
+      round: 1,
+      isWBFinal: true,
+      placeRange: "1st-2nd Place",
+      teamA: { teamId: t1._id, sets: [] },
+      teamB: { teamId: t2._id, sets: [] },
+      status: "completed",
+      winnerId: t1._id,
+      loserId: t2._id,
+    });
+    // Category B still pending
+    const finalB = makeMatch({
+      _id: new Types.ObjectId(),
+      round: 1,
+      isWBFinal: true,
+      placeRange: "1st-2nd Place",
+      teamA: { teamId: t1._id, sets: [] },
+      teamB: { teamId: t2._id, sets: [] },
+      status: "pending",
+    });
+
+    const catA = makeCategory(0, [finalA]);
+    const catB = makeCategory(1, [finalB]);
+    const group = makeGroup([t1, t2], [catA, catB]);
+
+    const board = computeLeaderboard(group);
+
+    expect(board).toHaveLength(2);
+
+    const row1 = board.find((r) => r.teamId === t1._id.toString())!;
+    const row2 = board.find((r) => r.teamId === t2._id.toString())!;
+
+    // t1: 1st in catA (score 1), null in catB
+    expect(row1.placements).toEqual([1, null]);
+    expect(row1.totalScore).toBe(1);
+
+    // t2: 2nd in catA (score 2), null in catB
+    expect(row2.placements).toEqual([2, null]);
+    expect(row2.totalScore).toBe(2);
+  });
+
+  it("sorts teams with no placements to the bottom", () => {
+    const [t1, t2, t3] = [makeTeam("A"), makeTeam("B"), makeTeam("C")];
+
+    // Only t1 and t2 have played; t3 has no matches at all
+    const final = makeMatch({
+      _id: new Types.ObjectId(),
+      round: 1,
+      isWBFinal: true,
+      placeRange: "1st-2nd Place",
+      teamA: { teamId: t1._id, sets: [] },
+      teamB: { teamId: t2._id, sets: [] },
+      status: "completed",
+      winnerId: t1._id,
+      loserId: t2._id,
+    });
+
+    const cat = makeCategory(0, [final]);
+    const group = makeGroup([t1, t2, t3], [cat]);
+
+    const board = computeLeaderboard(group);
+
+    expect(board).toHaveLength(3);
+    // t3 has no placement → sorts last
+    expect(board[2].teamId).toBe(t3._id.toString());
+    expect(board[2].placements).toEqual([null]);
   });
 
   it("ranks teams by placement in a single 2-team category", () => {

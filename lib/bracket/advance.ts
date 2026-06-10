@@ -110,12 +110,29 @@ function routeOutcome(
 }
 
 export function canMarkInProgress(tournament: ITournament): boolean {
+  if ((tournament.matchResultMode ?? "points") === "winner_only") return true;
   return tournament.currentMatchIds.length < tournament.courtsAvailable;
 }
 
-export function assignCourt(tournament: ITournament, match: IMatch): number {
+export function assignCourt(
+  tournament: ITournament,
+  match: IMatch,
+): number | null {
   if (match.status !== "ready") {
     throw new Error("Only ready matches can be marked in progress");
+  }
+
+  if ((tournament.matchResultMode ?? "points") === "winner_only") {
+    match.status = "in_progress";
+    match.courtNumber = null;
+    if (
+      !tournament.currentMatchIds.some((matchId) =>
+        idsEqual(matchId, match._id),
+      )
+    ) {
+      tournament.currentMatchIds.push(match._id);
+    }
+    return null;
   }
 
   if (!canMarkInProgress(tournament)) {

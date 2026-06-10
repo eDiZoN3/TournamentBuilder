@@ -5,7 +5,7 @@ export interface LeaderboardRow {
   teamName: string;
   totalScore: number;
   totalWins: number;
-  placements: number[];
+  placements: (number | null)[];
 }
 
 function getTeamPlacement(matches: IGroupMatch[], teamIdStr: string): number | null {
@@ -47,43 +47,29 @@ export function computeLeaderboard(group: ITournamentGroup): LeaderboardRow[] {
     group.teams.map((t) => [t._id.toString(), t]),
   );
 
-  // Collect all team IDs that appear in any category's completed matches
-  const allTeamIds = new Set<string>();
-  for (const category of group.categories) {
-    for (const match of category.matches) {
-      if (match.status === "completed" && !match.isBye) {
-        if (match.teamA) allTeamIds.add(match.teamA.teamId.toString());
-        if (match.teamB) allTeamIds.add(match.teamB.teamId.toString());
-      }
-    }
-  }
+  if (teamMap.size === 0) return [];
 
-  if (allTeamIds.size === 0) return [];
+  const sortedCategories = [...group.categories].sort(
+    (a, b) => a.position - b.position,
+  );
 
   const rows: LeaderboardRow[] = [];
 
-  for (const teamIdStr of allTeamIds) {
-    const team = teamMap.get(teamIdStr);
-    const placements: number[] = [];
+  for (const [teamIdStr, team] of teamMap) {
+    const placements: (number | null)[] = [];
     let totalWins = 0;
-    let hasAnyPlacement = false;
 
-    for (const category of group.categories) {
-      const placement = getTeamPlacement(category.matches, teamIdStr);
-      if (placement !== null) {
-        placements.push(placement);
-        hasAnyPlacement = true;
-      }
+    for (const category of sortedCategories) {
+      placements.push(getTeamPlacement(category.matches, teamIdStr));
       totalWins += countWins(category.matches, teamIdStr);
     }
 
-    if (!hasAnyPlacement) continue;
-
-    const totalScore = placements.reduce((sum, p) => sum + p, 0);
+    const knownPlacements = placements.filter((p): p is number => p !== null);
+    const totalScore = knownPlacements.reduce((sum, p) => sum + p, 0);
 
     rows.push({
       teamId: teamIdStr,
-      teamName: team?.name ?? teamIdStr,
+      teamName: team.name,
       totalScore,
       totalWins,
       placements,
@@ -91,6 +77,10 @@ export function computeLeaderboard(group: ITournamentGroup): LeaderboardRow[] {
   }
 
   rows.sort((a, b) => {
+    const aKnown = a.placements.some((p) => p !== null);
+    const bKnown = b.placements.some((p) => p !== null);
+    if (aKnown !== bKnown) return aKnown ? -1 : 1;
+    if (!aKnown) return 0;
     if (a.totalScore !== b.totalScore) return a.totalScore - b.totalScore;
     return b.totalWins - a.totalWins;
   });

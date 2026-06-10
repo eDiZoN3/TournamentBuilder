@@ -22,7 +22,7 @@ function ordinal(n: number): string {
 }
 
 export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
-  if (group.status !== "completed") return null;
+  if (group.status === "draft") return null;
 
   const rows = computeLeaderboard(group);
   const sortedCategories = [...group.categories].sort(

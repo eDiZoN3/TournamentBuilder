@@ -9,16 +9,23 @@ vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
 }));
 
+vi.mock("next-auth/react", () => ({
+  useSession: vi.fn(),
+}));
+
+const { useSession } = await import("next-auth/react");
+const mockedUseSession = vi.mocked(useSession);
 const mockedUseRouter = vi.mocked(useRouter);
 const push = vi.fn();
-const refresh = vi.fn();
+const update = vi.fn().mockResolvedValue(null);
 
 describe("ChangePasswordPage", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     push.mockReset();
-    refresh.mockReset();
-    mockedUseRouter.mockReturnValue({ push, refresh } as never);
+    update.mockReset().mockResolvedValue(null);
+    mockedUseRouter.mockReturnValue({ push } as never);
+    mockedUseSession.mockReturnValue({ update } as never);
   });
 
   it("submits a password change and redirects to the dashboard", async () => {
@@ -53,8 +60,8 @@ describe("ChangePasswordPage", () => {
           confirmPassword: "new-password",
         }),
       });
+      expect(update).toHaveBeenCalledWith({ mustChangePassword: false });
       expect(push).toHaveBeenCalledWith("/admin/dashboard");
-      expect(refresh).toHaveBeenCalled();
     });
   });
 
@@ -79,8 +86,8 @@ describe("ChangePasswordPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Change password" }));
 
     await waitFor(() => {
+      expect(update).toHaveBeenCalledWith({ mustChangePassword: false });
       expect(push).toHaveBeenCalledWith("/account");
-      expect(refresh).toHaveBeenCalled();
     });
   });
 

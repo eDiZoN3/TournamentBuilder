@@ -139,11 +139,22 @@ describe("GroupLeaderboard", () => {
     expect(screen.getByText(/^team$/i)).toBeInTheDocument();
   });
 
-  it("renders nothing when group status is not completed", async () => {
+  it("renders nothing when group status is draft", async () => {
     const { GroupLeaderboard } = await import("@/components/groups/GroupLeaderboard");
-    const group = makeGroup({ status: "active" });
+    const group = makeGroup({ status: "draft" });
     const { container } = render(<GroupLeaderboard group={group} />);
 
     expect(container.firstChild).toBeNull();
+  });
+
+  it("renders the leaderboard when group status is active", async () => {
+    const { computeLeaderboard } = await import("@/lib/groups/leaderboard");
+    vi.mocked(computeLeaderboard).mockReturnValue([makeRow()]);
+
+    const { GroupLeaderboard } = await import("@/components/groups/GroupLeaderboard");
+    const group = makeGroup({ status: "active" });
+    render(<GroupLeaderboard group={group} />);
+
+    expect(screen.getByRole("table")).toBeInTheDocument();
   });
 });

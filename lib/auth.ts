@@ -66,13 +66,20 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.mustChangePassword = user.mustChangePassword;
         token.playerDisplayName = user.playerDisplayName;
         token.playerProfileId = user.playerProfileId;
         token.role = user.role;
+      }
+
+      if (
+        trigger === "update" &&
+        (session as Record<string, unknown> | null)?.mustChangePassword === false
+      ) {
+        token.mustChangePassword = false;
       }
 
       return token;

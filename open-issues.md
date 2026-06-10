@@ -1,0 +1,9 @@
+35. the group admin management view needs to look exactly like the normal tournament management UI. each category should be a separate tab with the full bracket + match cards and admin controls (mark as in progress, mark winner). same visual as TournamentManageView. right now it's just a flat list of category rows — needs to be a proper tabbed bracket UI.
+
+36. there is no delete button for multi-category events in the admin UI. the API endpoint already exists (DELETE /api/groups/[id]) but there is no way to trigger it from the frontend. add a delete button with confirmation dialog to the group admin management page, same pattern as tournament deletion.
+
+37. multi-category tournaments should always use winner-only scoring — no point/set entry, just mark who won. same as single elimination without the points UI. never show the score entry form for group matches. the whole scoring flow must work without entering set scores.
+
+38. the public navbar link that goes to /groups currently shows "Groups" in English and "Gruppen" in German. rename it to "Events" in both languages.
+39. event bracket generation needs a real seeding algorithm: keep teams in entry order (no shuffle). the 1st team gets 4 bye rounds, 2nd gets 3, 3rd gets 2, every other team gets 1 bye, placed randomly across the category trees with at most 1 bye per category per team. after byes are fixed, fill each tree so teams play as many different opponents as possible across categories (minimize rematches; some are unavoidable). currently every category just shuffles independently.
+40. one central "up next" panel for events that always shows the next match for each category at a glance (live match if playing, otherwise the next queued match), shown above the per-category bracket tabs in both admin and public views.

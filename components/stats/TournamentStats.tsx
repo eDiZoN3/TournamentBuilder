@@ -22,6 +22,18 @@ export function TournamentStats({
     return null;
   }
 
+  // Event tournaments entered as teams only have team standings; entered as
+  // players they keep both player and team statistics.
+  const showPlayerStats = !(
+    tournament?.format === "event" &&
+    (tournament?.inputMode ?? "teams") === "teams"
+  );
+  // Winner-only tournaments record no sets or points, so drop the scoring
+  // columns and show only win/loss standings.
+  const showScoreStats = tournament
+    ? tournament.matchResultMode !== "winner_only"
+    : true;
+
   return (
     <section className="space-y-5">
       <div>
@@ -29,21 +41,25 @@ export function TournamentStats({
           {t("stats")}
         </h2>
       </div>
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="flex flex-wrap items-start gap-6">
         <StatsTable
           emptyTitle=""
           emptyTitleKey="noTeamStats"
           rows={resolvedStats.teams}
+          showScoreStats={showScoreStats}
           title=""
           titleKey="teamStats"
         />
-        <StatsTable
-          emptyTitle=""
-          emptyTitleKey="noPlayerStats"
-          rows={resolvedStats.players}
-          title=""
-          titleKey="playerStats"
-        />
+        {showPlayerStats ? (
+          <StatsTable
+            emptyTitle=""
+            emptyTitleKey="noPlayerStats"
+            rows={resolvedStats.players}
+            showScoreStats={showScoreStats}
+            title=""
+            titleKey="playerStats"
+          />
+        ) : null}
       </div>
     </section>
   );

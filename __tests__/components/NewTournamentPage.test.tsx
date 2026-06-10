@@ -341,6 +341,53 @@ describe("NewTournamentPage", () => {
     });
   });
 
+  it("submits event tournament counts with one court and winner-only scoring", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Event Cup" },
+    });
+    fireEvent.click(screen.getByLabelText("Event tournament"));
+    fireEvent.click(screen.getByLabelText("Enter player names"));
+    fireEvent.change(screen.getByLabelText("Participants"), {
+      target: { value: "12" },
+    });
+    fireEvent.change(screen.getByLabelText("Disciplines"), {
+      target: { value: "4" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          method: "POST",
+        }),
+      );
+      expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({
+        name: "Event Cup",
+        format: "event",
+        matchResultMode: "winner_only",
+        knockoutMatchFormat: "bo1",
+        eventParticipantCount: 12,
+        eventDisciplineCount: 4,
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "players",
+        allowSelfJoin: false,
+      });
+    });
+  });
+
   it("shows an inline API error", async () => {
     vi.stubGlobal(
       "fetch",

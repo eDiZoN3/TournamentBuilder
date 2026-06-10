@@ -48,12 +48,15 @@ export interface Match {
   isWBFinal: boolean;
   isLBFinal: boolean;
   courtNumber: number | null;
+  eventDisciplineIndex?: number | null;
+  eventDisciplineName?: string | null;
 }
 
 export type TournamentFormat =
   | "double_elimination"
   | "team_round_robin"
-  | "individual_mixer";
+  | "individual_mixer"
+  | "event";
 
 export interface Tournament {
   _id: Types.ObjectId;
@@ -69,6 +72,10 @@ export interface Tournament {
   courtsAvailable: number;
   inputMode: "teams" | "players";
   allowSelfJoin: boolean;
+  eventParticipantCount?: number;
+  eventDisciplineCount?: number;
+  eventDisciplines?: string[];
+  eventDrawSeed?: number;
   createdAt: Date;
   teams: Team[];
   joinedPlayers: Array<{
@@ -136,6 +143,8 @@ export function makeMatch(overrides: Partial<Match> = {}): Match {
     isWBFinal: false,
     isLBFinal: false,
     courtNumber: null,
+    eventDisciplineIndex: null,
+    eventDisciplineName: null,
     ...overrides,
   };
 }
@@ -157,6 +166,10 @@ export function makeTournament(
     courtsAvailable: 1,
     inputMode: "teams",
     allowSelfJoin: false,
+    eventParticipantCount: 2,
+    eventDisciplineCount: 1,
+    eventDisciplines: ["Discipline 1"],
+    eventDrawSeed: 1,
     createdAt: new Date(),
     teams: [],
     joinedPlayers: [],

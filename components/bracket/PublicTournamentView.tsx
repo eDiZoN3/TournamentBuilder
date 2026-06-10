@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { BracketView } from "@/components/bracket/BracketView";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { StandingsTable } from "@/components/bracket/StandingsTable";
+import { EventTournamentView } from "@/components/event/EventTournamentView";
 import { JoinTournamentButton } from "@/components/player/JoinTournamentButton";
 import { TournamentStats } from "@/components/stats/TournamentStats";
 import { RoundRobinView } from "@/components/tournament/RoundRobinView";
@@ -106,7 +107,7 @@ export function PublicTournamentView({
       {unableToRefresh ? (
         <ErrorBanner message={t("unableToRefresh")} onDismiss={() => setUnableToRefresh(false)} />
       ) : null}
-      {tournament.status === "completed" ? (
+      {tournament.status === "completed" && tournament.format !== "event" ? (
         <FinalStandings tournament={tournament} />
       ) : null}
       {isDraft ? (
@@ -154,6 +155,11 @@ export function PublicTournamentView({
       {!isDraft ? (
         showSkeleton ? (
           <BracketSkeleton />
+        ) : tournament.format === "event" ? (
+          <EventTournamentView
+            currentPlayerName={currentPlayerName}
+            tournament={tournament}
+          />
         ) : isNonKnockoutFormat(tournament.format) ? (
           <RoundRobinView
             currentPlayerName={currentPlayerName}

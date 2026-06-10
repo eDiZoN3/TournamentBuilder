@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
+import { defaultEventDisciplines } from "@/lib/eventTournament";
 import {
   Tournament,
   type FirstRoundPairingMode,
@@ -24,6 +25,10 @@ interface CreateTournamentBody {
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
   inputMode: "teams" | "players";
+  eventParticipantCount?: number;
+  eventDisciplineCount?: number;
+  eventDisciplines?: string[];
+  eventDrawSeed?: number;
 }
 
 function parseCreateBody(body: unknown): CreateTournamentBody | null {
@@ -43,6 +48,8 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     teamSize,
     courtsAvailable,
     inputMode,
+    eventParticipantCount,
+    eventDisciplineCount,
   } =
     body as Record<string, unknown>;
   const parsedAllowSelfJoin =
@@ -51,6 +58,7 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     format === undefined
       ? "double_elimination"
       : (format as TournamentFormat);
+  const isEventFormat = parsedFormat === "event";
   const parsedRoundRobinMatchFormat =
     roundRobinMatchFormat === undefined
       ? "bo1"
@@ -64,13 +72,21 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
       ? "random"
       : (firstRoundPairingMode as FirstRoundPairingMode);
   const parsedMatchResultMode =
-    matchResultMode === undefined ? "points" : (matchResultMode as MatchResultMode);
+    matchResultMode === undefined
+      ? isEventFormat
+        ? "winner_only"
+        : "points"
+      : (matchResultMode as MatchResultMode);
   const parsedKnockoutMatchFormat =
     knockoutMatchFormat === undefined
-      ? parsedMatchResultMode === "winner_only"
+      ? parsedMatchResultMode === "winner_only" || isEventFormat
         ? "bo1"
         : "bo3_semis_finals"
       : (knockoutMatchFormat as KnockoutMatchFormat);
+  const parsedEventParticipantCount =
+    eventParticipantCount === undefined ? 8 : eventParticipantCount;
+  const parsedEventDisciplineCount =
+    eventDisciplineCount === undefined ? 3 : eventDisciplineCount;
 
   if (
     typeof name !== "string" ||
@@ -81,7 +97,7 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     (courtsAvailable as number) < 1 ||
     (courtsAvailable as number) > 10 ||
     !["teams", "players"].includes(inputMode as string) ||
-    !["double_elimination", "team_round_robin", "individual_mixer"].includes(
+    !["double_elimination", "team_round_robin", "individual_mixer", "event"].includes(
       parsedFormat,
     ) ||
     !["double_elimination", "single_elimination"].includes(
@@ -92,11 +108,22 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     !["bo3_semis_finals", "bo1"].includes(parsedKnockoutMatchFormat) ||
     !["bo1", "bo3"].includes(parsedRoundRobinMatchFormat) ||
     (parsedFormat === "individual_mixer" && inputMode !== "players") ||
+    (isEventFormat &&
+      (!Number.isInteger(parsedEventParticipantCount) ||
+        (parsedEventParticipantCount as number) < 2 ||
+        (parsedEventParticipantCount as number) > 32 ||
+        !Number.isInteger(parsedEventDisciplineCount) ||
+        (parsedEventDisciplineCount as number) < 1 ||
+        (parsedEventDisciplineCount as number) > 10 ||
+        parsedMatchResultMode !== "winner_only" ||
+        parsedKnockoutMatchFormat !== "bo1" ||
+        parsedAllowSelfJoin)) ||
     (parsedAllowSelfJoin && inputMode !== "players") ||
     (parsedFormat !== "team_round_robin" &&
       roundRobinMatchFormat !== undefined &&
       parsedRoundRobinMatchFormat !== "bo1") ||
     (parsedFormat !== "double_elimination" &&
+      !isEventFormat &&
       (knockoutBracketType !== undefined ||
         firstRoundPairingMode !== undefined ||
         matchResultMode !== undefined ||
@@ -117,8 +144,18 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     name: name.trim(),
     roundRobinMatchFormat: parsedRoundRobinMatchFormat,
     teamSize: teamSize as 2 | 3 | 4,
-    courtsAvailable: courtsAvailable as number,
+    courtsAvailable: isEventFormat ? 1 : (courtsAvailable as number),
     inputMode: inputMode as "teams" | "players",
+    ...(isEventFormat
+      ? {
+          eventParticipantCount: parsedEventParticipantCount as number,
+          eventDisciplineCount: parsedEventDisciplineCount as number,
+          eventDisciplines: defaultEventDisciplines(
+            parsedEventDisciplineCount as number,
+          ),
+          eventDrawSeed: 1 + Math.floor(Math.random() * 1_000_000_000),
+        }
+      : {}),
   };
 }
 
@@ -141,6 +178,13 @@ export async function GET() {
         knockoutMatchFormat:
           tournament.knockoutMatchFormat ?? "bo3_semis_finals",
         roundRobinMatchFormat: tournament.roundRobinMatchFormat ?? "bo1",
+        eventParticipantCount: tournament.eventParticipantCount ?? 2,
+        eventDisciplineCount: tournament.eventDisciplineCount ?? 1,
+        eventDisciplines:
+          (tournament.eventDisciplines?.length ?? 0) > 0
+            ? tournament.eventDisciplines
+            : defaultEventDisciplines(tournament.eventDisciplineCount ?? 1),
+        eventDrawSeed: tournament.eventDrawSeed ?? 1,
         createdAt: tournament.createdAt.toISOString(),
         allowSelfJoin: tournament.allowSelfJoin,
         teamCount: tournament.teams.length,
@@ -191,6 +235,13 @@ export async function POST(request: NextRequest) {
         matchResultMode: tournament.matchResultMode,
         knockoutMatchFormat: tournament.knockoutMatchFormat,
         roundRobinMatchFormat: tournament.roundRobinMatchFormat,
+        eventParticipantCount: tournament.eventParticipantCount,
+        eventDisciplineCount: tournament.eventDisciplineCount,
+        eventDisciplines:
+          (tournament.eventDisciplines ?? []).length > 0
+            ? tournament.eventDisciplines
+            : defaultEventDisciplines(tournament.eventDisciplineCount ?? 1),
+        eventDrawSeed: tournament.eventDrawSeed,
         teamSize: tournament.teamSize,
         courtsAvailable: tournament.courtsAvailable,
         inputMode: tournament.inputMode,

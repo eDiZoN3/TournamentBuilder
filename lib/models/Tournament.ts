@@ -33,7 +33,8 @@ export interface IJoinedPlayer {
 export type TournamentFormat =
   | "double_elimination"
   | "team_round_robin"
-  | "individual_mixer";
+  | "individual_mixer"
+  | "event";
 
 export type RoundRobinMatchFormat = "bo1" | "bo3";
 export type KnockoutBracketType =
@@ -69,6 +70,8 @@ export interface IMatch {
   isWBFinal: boolean;
   isLBFinal: boolean;
   courtNumber: number | null;
+  eventDisciplineIndex?: number | null;
+  eventDisciplineName?: string | null;
 }
 
 export interface ITournament {
@@ -85,6 +88,10 @@ export interface ITournament {
   courtsAvailable: number;
   inputMode: "teams" | "players";
   allowSelfJoin: boolean;
+  eventParticipantCount?: number;
+  eventDisciplineCount?: number;
+  eventDisciplines?: string[];
+  eventDrawSeed?: number;
   createdAt: Date;
   updatedAt: Date;
   teams: ITeam[];
@@ -277,6 +284,16 @@ const matchSchema = new Schema<IMatch>({
     type: Number,
     default: null,
   },
+  eventDisciplineIndex: {
+    type: Number,
+    default: null,
+  },
+  eventDisciplineName: {
+    type: String,
+    default: null,
+    trim: true,
+    maxlength: 80,
+  },
 });
 
 const tournamentSchema = new Schema<ITournament>(
@@ -295,7 +312,7 @@ const tournamentSchema = new Schema<ITournament>(
     },
     format: {
       type: String,
-      enum: ["double_elimination", "team_round_robin", "individual_mixer"],
+      enum: ["double_elimination", "team_round_robin", "individual_mixer", "event"],
       default: "double_elimination",
       required: true,
     },
@@ -348,6 +365,29 @@ const tournamentSchema = new Schema<ITournament>(
     allowSelfJoin: {
       type: Boolean,
       default: false,
+      required: true,
+    },
+    eventParticipantCount: {
+      type: Number,
+      min: 2,
+      max: 32,
+      default: 2,
+      required: true,
+    },
+    eventDisciplineCount: {
+      type: Number,
+      min: 1,
+      max: 10,
+      default: 1,
+      required: true,
+    },
+    eventDisciplines: {
+      type: [String],
+      default: [],
+    },
+    eventDrawSeed: {
+      type: Number,
+      default: 1,
       required: true,
     },
     teams: {

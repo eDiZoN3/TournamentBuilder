@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
+import { defaultEventDisciplines } from "@/lib/eventTournament";
 import {
   Tournament,
   type IJoinedPlayer,
@@ -25,6 +26,7 @@ interface TeamInput {
 }
 
 interface UpdateBody {
+  eventDisciplines?: string[];
   name?: string;
   teams?: TeamInput[];
 }
@@ -90,6 +92,30 @@ function parseTeams(value: unknown): TeamInput[] | null {
   return teams;
 }
 
+function parseEventDisciplines(value: unknown): string[] | null {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 10) {
+    return null;
+  }
+
+  const disciplines: string[] = [];
+
+  for (const discipline of value) {
+    if (typeof discipline !== "string") {
+      return null;
+    }
+
+    const name = discipline.trim();
+
+    if (name.length === 0 || name.length > 80) {
+      return null;
+    }
+
+    disciplines.push(name);
+  }
+
+  return disciplines;
+}
+
 function parseUpdateBody(body: unknown): UpdateBody | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return null;
@@ -99,12 +125,12 @@ function parseUpdateBody(body: unknown): UpdateBody | null {
 
   if (
     entries.length === 0 ||
-    entries.some(([key]) => !["name", "teams"].includes(key))
+    entries.some(([key]) => !["eventDisciplines", "name", "teams"].includes(key))
   ) {
     return null;
   }
 
-  const { name, teams } = body as Record<string, unknown>;
+  const { eventDisciplines, name, teams } = body as Record<string, unknown>;
   const update: UpdateBody = {};
 
   if (name !== undefined) {
@@ -127,6 +153,16 @@ function parseUpdateBody(body: unknown): UpdateBody | null {
     }
 
     update.teams = parsedTeams;
+  }
+
+  if (eventDisciplines !== undefined) {
+    const parsedDisciplines = parseEventDisciplines(eventDisciplines);
+
+    if (!parsedDisciplines) {
+      return null;
+    }
+
+    update.eventDisciplines = parsedDisciplines;
   }
 
   return update;
@@ -219,6 +255,13 @@ function tournamentResponseBody(tournament: { toObject(): ITournament }) {
         ? "bo1"
         : "bo3_semis_finals"),
     roundRobinMatchFormat: responseBody.roundRobinMatchFormat ?? "bo1",
+    eventParticipantCount: responseBody.eventParticipantCount ?? 2,
+    eventDisciplineCount: responseBody.eventDisciplineCount ?? 1,
+    eventDisciplines:
+      (responseBody.eventDisciplines?.length ?? 0) > 0
+        ? responseBody.eventDisciplines
+        : defaultEventDisciplines(responseBody.eventDisciplineCount ?? 1),
+    eventDrawSeed: responseBody.eventDrawSeed ?? 1,
     joinedPlayers: publicJoinedPlayers(responseBody.joinedPlayers),
   };
 }
@@ -275,6 +318,27 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       );
     }
 
+    if (update.eventDisciplines && tournament.status !== "draft") {
+      return jsonError(
+        "Disciplines cannot be changed after a tournament has started",
+        "CONFLICT",
+        409,
+      );
+    }
+
+    if (update.eventDisciplines) {
+      if (
+        tournament.format !== "event" ||
+        update.eventDisciplines.length !== tournament.eventDisciplineCount
+      ) {
+        return jsonError(
+          "Invalid event disciplines",
+          "VALIDATION_ERROR",
+          422,
+        );
+      }
+    }
+
     if (update.name) {
       tournament.name = update.name;
     }
@@ -291,6 +355,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
 
       tournament.teams = resolvedTeams as ITeam[];
+    }
+
+    if (update.eventDisciplines) {
+      tournament.eventDisciplines = update.eventDisciplines;
     }
 
     await tournament.save();

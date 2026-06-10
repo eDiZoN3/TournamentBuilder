@@ -364,7 +364,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     exactPlayerCountRequirement:
       "Spieleranzahl muss durch die Teamgröße teilbar sein.",
     eventBrackets: "Brackets",
-    eventChampion: "Turniersieg",
+    eventChampion: "Disziplinsieger: ",
     eventOverview: "Event-Übersicht",
     eventSetupDescription:
       "Teilnehmer und Disziplinen für dieses Event eintragen.",

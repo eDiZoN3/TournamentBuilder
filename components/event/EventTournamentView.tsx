@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveTeamName } from "@/components/bracket/utils";
+import { TournamentStats } from "@/components/stats/TournamentStats";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { planEventSlots } from "@/lib/eventTournament";
@@ -368,8 +369,6 @@ export function EventTournamentView({
     const rowHeight = bracketSize > 16 ? 28 : 34;
     const matchWidth = 150;
     const joinerWidth = 26;
-    const finalWidth = 18;
-    const championWidth = 150;
     const columns: string[] = [];
 
     for (let round = 0; round < roundCount; round += 1) {
@@ -380,13 +379,8 @@ export function EventTournamentView({
       }
     }
 
-    columns.push(`${finalWidth}px`, `${championWidth}px`);
-
     const minWidth =
-      roundCount * matchWidth +
-      Math.max(roundCount - 1, 0) * joinerWidth +
-      finalWidth +
-      championWidth;
+      roundCount * matchWidth + Math.max(roundCount - 1, 0) * joinerWidth;
     const championMatch = group.matches.find(
       (match) => match.round === roundCount && match.position === 1,
     );
@@ -398,15 +392,33 @@ export function EventTournamentView({
     const joinerClass = "absolute border-slate-300 dark:border-slate-700";
 
     return (
-      <div className="overflow-x-auto pb-2">
+      <div>
         <div
-          className="mx-auto grid"
+          className="mb-3 inline-flex items-center gap-2 rounded-md border border-slate-200 px-3 py-1.5 dark:border-slate-700"
           style={{
-            gridTemplateColumns: columns.join(" "),
-            gridTemplateRows: `22px repeat(${bracketSize}, ${rowHeight}px)`,
-            width: `${minWidth}px`,
+            borderColor: championTeam ? color : undefined,
+            backgroundColor: championTeam ? `${color}1f` : undefined,
           }}
         >
+          <span
+            className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400"
+            style={{ color: championTeam ? color : undefined }}
+          >
+            {championTeam ? t("eventChampion") : t("titleOpen")}
+          </span>
+          <span className="text-sm font-bold text-slate-900 dark:text-white">
+            {championTeam ? championTeam.name : "–"}
+          </span>
+        </div>
+        <div className="overflow-x-auto pb-2">
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: columns.join(" "),
+              gridTemplateRows: `22px repeat(${bracketSize}, ${rowHeight}px)`,
+              width: `${minWidth}px`,
+            }}
+          >
           {Array.from({ length: roundCount }, (_value, round) => (
             <div
               className="self-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500"
@@ -487,37 +499,6 @@ export function EventTournamentView({
             ));
           })}
 
-          <div
-            className="pointer-events-none relative"
-            style={{
-              gridColumn: 2 * roundCount,
-              gridRow: `2 / span ${bracketSize}`,
-            }}
-          >
-            <div
-              className={joinerClass}
-              style={{ left: 0, right: 0, top: "50%", borderTopWidth: 1.5 }}
-            />
-          </div>
-
-          <div
-            className="self-center rounded-md border border-slate-200 p-2 text-center dark:border-slate-700"
-            style={{
-              gridColumn: 2 * roundCount + 1,
-              gridRow: `2 / span ${bracketSize}`,
-              borderColor: championTeam ? color : undefined,
-              backgroundColor: championTeam ? `${color}1f` : undefined,
-            }}
-          >
-            <div
-              className="text-[10px] font-semibold uppercase tracking-widest"
-              style={{ color: championTeam ? color : undefined }}
-            >
-              {championTeam ? t("eventChampion") : t("titleOpen")}
-            </div>
-            <div className="mt-1 truncate text-sm font-bold text-slate-900 dark:text-white">
-              {championTeam ? championTeam.name : "–"}
-            </div>
           </div>
         </div>
       </div>
@@ -566,73 +547,80 @@ export function EventTournamentView({
         </div>
       </section>
 
-      <section>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {t("upNext")}
-          </h2>
-          {nextSlot ? (
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-              {t("slot")} {nextSlot.index}
-            </span>
-          ) : null}
-        </div>
-        {nextSlot ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {nextSlot.matches.map(renderSlotMatch)}
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-            {t("noPlayableEventMatches")}
-          </p>
-        )}
-      </section>
-
-      <section>
-        <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {t("eventBrackets")}
-        </h2>
-        {disciplineGroups.length > 0 ? (
-          <>
-            <div
-              aria-label={t("eventBrackets")}
-              className="mt-4 flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700"
-              role="tablist"
-            >
-              {disciplineGroups.map((group, index) => {
-                const isActive = index === selectedDisciplineIndex;
-
-                return (
-                  <button
-                    aria-selected={isActive}
-                    className={`flex items-center gap-2 rounded-t-md px-4 py-2 text-sm font-semibold ${
-                      isActive
-                        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950"
-                        : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                    }`}
-                    key={group.index}
-                    onClick={() => setActiveDiscipline(index)}
-                    role="tab"
-                    type="button"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: disciplineColor(group.index) }}
-                    />
-                    {group.name}
-                  </button>
-                );
-              })}
-            </div>
-            {selectedGroup ? (
-              <div className="mt-4" role="tabpanel">
-                {renderBracketTree(selectedGroup)}
-              </div>
+      <div className="mx-auto w-fit max-w-full space-y-6">
+        <section>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {t("upNext")}
+            </h2>
+            {nextSlot ? (
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                {t("slot")} {nextSlot.index}
+              </span>
             ) : null}
-          </>
-        ) : null}
-      </section>
+          </div>
+          {nextSlot ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {nextSlot.matches.map(renderSlotMatch)}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+              {t("noPlayableEventMatches")}
+            </p>
+          )}
+        </section>
+
+        <section>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {t("eventBrackets")}
+          </h2>
+          {disciplineGroups.length > 0 ? (
+            <div className="mt-4 lg:flex lg:items-start lg:gap-24">
+              <div className="min-w-0">
+                <div
+                  aria-label={t("eventBrackets")}
+                  className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700"
+                  role="tablist"
+                >
+                {disciplineGroups.map((group, index) => {
+                  const isActive = index === selectedDisciplineIndex;
+
+                  return (
+                    <button
+                      aria-selected={isActive}
+                      className={`flex items-center gap-2 rounded-t-md px-4 py-2 text-sm font-semibold ${
+                        isActive
+                          ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950"
+                          : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                      }`}
+                      key={group.index}
+                      onClick={() => setActiveDiscipline(index)}
+                      role="tab"
+                      type="button"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="inline-block h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: disciplineColor(group.index) }}
+                      />
+                      {group.name}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedGroup ? (
+                <div className="mt-4" role="tabpanel">
+                  {renderBracketTree(selectedGroup)}
+                </div>
+              ) : null}
+            </div>
+              <div className="mt-8 lg:mt-0 lg:flex-none">
+                <TournamentStats tournament={tournament} />
+              </div>
+            </div>
+          ) : null}
+        </section>
+      </div>
     </section>
   );
 }

@@ -173,7 +173,9 @@ export function PublicTournamentView({
           />
         )
       ) : null}
-      {!isDraft ? <TournamentStats tournament={tournament} /> : null}
+      {!isDraft && tournament.format !== "event" ? (
+        <TournamentStats tournament={tournament} />
+      ) : null}
     </section>
   );
 }

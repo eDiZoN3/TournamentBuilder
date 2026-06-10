@@ -77,6 +77,7 @@ export type TranslationKey =
   | "enterPlayerNames"
   | "enterScores"
   | "enterTeamNames"
+  | "eventDeleted"
   | "exactPlayerCountRequirement"
   | "final"
   | "finalStandings"
@@ -268,6 +269,7 @@ export type TranslationKey =
   | "unableToCreateAdminAccount"
   | "unableToCreatePlayerAccount"
   | "unableToCreateTournament"
+  | "unableToDeleteGroup"
   | "unableToDeletePracticeMatch"
   | "unableToDeleteTournament"
   | "unableToGenerateTeams"
@@ -369,6 +371,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterMinPlayers: "Geben Sie mindestens {n} Spieler ein.",
     enterPlayerNames: "Spielernamen eingeben",
     enterTeamNames: "Teamnamen eingeben",
+    eventDeleted: "Event gelöscht",
     exactPlayerCountRequirement:
       "Spieleranzahl muss durch die Teamgröße teilbar sein.",
     findRegisteredPlayer: "Registrierten Spieler suchen",
@@ -618,6 +621,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToCreateAdminAccount: "Konnte Admin-Konto nicht erstellen.",
     unableToCreatePlayerAccount: "Konnte Spielerkonto nicht erstellen.",
     unableToCreateTournament: "Konnte Turnier nicht erstellen.",
+    unableToDeleteGroup: "Event konnte nicht gelöscht werden.",
     unableToDeletePracticeMatch: "Konnte Trainingsspiel nicht löschen.",
     unableToDeleteTournament: "Konnte Turnier nicht löschen.",
     unableToJoinTournament: "Konnte Turnier nicht beitreten.",
@@ -644,7 +648,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     completedNonByeMatches: "Gespielte Matches",
     individualMixer: "Einzel-Mixer",
     tournamentGroups: "Multi-Kategorie Turniere",
-    groups: "Gruppen",
+    groups: "Events",
     group: "Gruppe",
     newGroup: "Neues Event",
     groupName: "Gruppenname",
@@ -709,6 +713,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterMinPlayers: "Enter at least {n} players.",
     enterPlayerNames: "Enter player names",
     enterTeamNames: "Enter team names",
+    eventDeleted: "Event deleted",
     exactPlayerCountRequirement: "Player count must be divisible by team size.",
     findRegisteredPlayer: "Find registered player",
     finalStandings: "Final standings",
@@ -954,6 +959,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToCreateAdminAccount: "Unable to create admin account.",
     unableToCreatePlayerAccount: "Unable to create player account.",
     unableToCreateTournament: "Unable to create tournament.",
+    unableToDeleteGroup: "Unable to delete event.",
     unableToDeletePracticeMatch: "Unable to delete practice match.",
     unableToDeleteTournament: "Unable to delete tournament.",
     unableToJoinTournament: "Unable to join tournament.",
@@ -978,7 +984,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     completedNonByeMatches: "Completed non-bye matches",
     individualMixer: "Individual mixer",
     tournamentGroups: "Multi-Category Tournaments",
-    groups: "Groups",
+    groups: "Events",
     group: "Group",
     newGroup: "New event",
     groupName: "Group name",

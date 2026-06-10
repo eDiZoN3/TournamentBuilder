@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
+import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
 import { GroupLeaderboard } from "@/components/groups/GroupLeaderboard";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { computeNextMatches } from "@/lib/groups/scheduler";
@@ -12,7 +14,7 @@ import type { ITeamSlot } from "@/lib/models/Tournament";
 function resolveTeamName(teams: IGroupTeam[], slot: ITeamSlot | null): string {
   if (!slot) return "TBD";
   const team = teams.find((t) => t._id.toString() === slot.teamId.toString());
-  return team?.name ?? "TBD";
+  return team?.name ?? (slot as ITeamSlot & { name?: string }).name ?? "TBD";
 }
 
 interface GroupManageViewProps {
@@ -35,6 +37,7 @@ interface ActiveScoreEntry {
 export function GroupManageView({ initialGroup }: GroupManageViewProps) {
   const groupId = initialGroup._id.toString();
   const { t } = useLocale();
+  const router = useRouter();
   const refreshFailures = useRef(0);
   const [scoreEntry, setScoreEntry] = useState<ActiveScoreEntry | null>(null);
   const [starting, setStarting] = useState(false);
@@ -77,18 +80,27 @@ export function GroupManageView({ initialGroup }: GroupManageViewProps) {
 
   return (
     <section className="space-y-6">
-      <header className="flex items-center justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{group.name}</h1>
-        {group.status === "draft" && (
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={starting}
-            className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
-          >
-            {t("startGroup")}
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {group.status === "draft" && (
+            <button
+              type="button"
+              onClick={handleStart}
+              disabled={starting}
+              className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {t("startGroup")}
+            </button>
+          )}
+          <TournamentDeleteControl
+            deletedLabelKey="eventDeleted"
+            deleteUrl={`/api/groups/${groupId}`}
+            onDeleted={() => router.push("/admin/groups")}
+            tournament={group}
+            unableToDeleteKey="unableToDeleteGroup"
+          />
+        </div>
       </header>
 
       {startError && <p className="text-red-600 text-sm">{startError}</p>}

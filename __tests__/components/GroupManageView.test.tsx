@@ -147,6 +147,80 @@ describe("GroupManageView", () => {
     expect(screen.getByText("Cat B")).toBeInTheDocument();
   });
 
+  it("deletes a draft group after confirmation and returns to the groups list", async () => {
+    const groupId = new Types.ObjectId();
+    const group = makeGroup({
+      _id: groupId,
+      name: "Draft Event",
+      status: "draft",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<GroupManageView initialGroup={group} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Draft Event" }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirm Delete Draft Event" }),
+    );
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/admin/groups");
+    });
+    expect(fetchMock).toHaveBeenCalledWith(`/api/groups/${groupId.toString()}`, {
+      method: "DELETE",
+    });
+  });
+
+  it("requires the exact group name before deleting a completed group", async () => {
+    const groupId = new Types.ObjectId();
+    const group = makeGroup({
+      _id: groupId,
+      name: "Completed Event",
+      status: "completed",
+    });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<GroupManageView initialGroup={group} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete Completed Event" }));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("Type Completed Event to confirm deletion."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Confirm Delete Completed Event" }),
+    ).toBeDisabled();
+
+    fireEvent.change(
+      screen.getByLabelText("Type Completed Event to confirm deletion"),
+      {
+        target: { value: "Completed Event" },
+      },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirm Delete Completed Event" }),
+    );
+
+    await waitFor(() => {
+      expect(push).toHaveBeenCalledWith("/admin/groups");
+    });
+    expect(fetchMock).toHaveBeenCalledWith(`/api/groups/${groupId.toString()}`, {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        confirmationName: "Completed Event",
+      }),
+    });
+  });
+
   it("shows active match with team names and enter scores button", () => {
     const matchId = new Types.ObjectId();
     const activeMatch = makeMatch({

@@ -3,18 +3,20 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { useLocale } from "@/components/ui/LocaleProvider";
-import { translate } from "@/lib/i18n";
-import type { ITournament } from "@/lib/models/Tournament";
+import { translate, type TranslationKey } from "@/lib/i18n";
 
 interface TournamentDeleteTarget {
   _id: string | { toString(): string };
   name: string;
-  status: ITournament["status"];
+  status: "draft" | "active" | "completed";
 }
 
 interface TournamentDeleteControlProps {
+  deletedLabelKey?: TranslationKey;
+  deleteUrl?: string;
   onDeleted: () => void | Promise<void>;
   tournament: TournamentDeleteTarget;
+  unableToDeleteKey?: TranslationKey;
 }
 
 interface ApiError {
@@ -32,8 +34,11 @@ async function apiError(response: Response, fallback: string) {
 }
 
 export function TournamentDeleteControl({
+  deletedLabelKey = "tournamentDeleted",
+  deleteUrl,
   onDeleted,
   tournament,
+  unableToDeleteKey = "unableToDeleteTournament",
 }: TournamentDeleteControlProps) {
   const { showToast } = useToast();
   const { locale } = useLocale();
@@ -41,6 +46,7 @@ export function TournamentDeleteControl({
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const tournamentId = tournament._id.toString();
+  const endpoint = deleteUrl ?? `/api/tournaments/${tournamentId}`;
   const requiresTypedConfirmation = tournament.status !== "draft";
   const confirmationMatches = confirmationName === tournament.name;
   const typedConfirmationMessage = translate(locale, 'deleteIncorrectName').replace('{name}', tournament.name);
@@ -65,7 +71,7 @@ export function TournamentDeleteControl({
     setIsDeleting(true);
 
     try {
-      const response = await fetch(`/api/tournaments/${tournamentId}`, {
+      const response = await fetch(endpoint, {
         method: "DELETE",
         ...(requiresTypedConfirmation
           ? {
@@ -82,7 +88,7 @@ export function TournamentDeleteControl({
       if (!response.ok) {
         const message = await apiError(
           response,
-          translate(locale, "unableToDeleteTournament"),
+          translate(locale, unableToDeleteKey),
         );
 
         showToast({
@@ -97,13 +103,13 @@ export function TournamentDeleteControl({
       setIsConfirming(false);
       setConfirmationName("");
       showToast({
-        message: `${tournament.name} ${translate(locale, 'tournamentDeleted')}.`,
-        title: translate(locale, 'tournamentDeleted'),
+        message: `${tournament.name} ${translate(locale, deletedLabelKey)}.`,
+        title: translate(locale, deletedLabelKey),
         type: "success",
       });
     } catch {
       showToast({
-        message: translate(locale, "unableToDeleteTournament"),
+        message: translate(locale, unableToDeleteKey),
         title: translate(locale, 'deleteFailed'),
         type: "error",
       });

@@ -4,13 +4,21 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
 import {
   Tournament,
+  type FirstRoundPairingMode,
+  type KnockoutBracketType,
+  type KnockoutMatchFormat,
+  type MatchResultMode,
   type RoundRobinMatchFormat,
   type TournamentFormat,
 } from "@/lib/models/Tournament";
 
 interface CreateTournamentBody {
   allowSelfJoin: boolean;
+  firstRoundPairingMode: FirstRoundPairingMode;
   format: TournamentFormat;
+  knockoutBracketType: KnockoutBracketType;
+  knockoutMatchFormat: KnockoutMatchFormat;
+  matchResultMode: MatchResultMode;
   name: string;
   roundRobinMatchFormat: RoundRobinMatchFormat;
   teamSize: 2 | 3 | 4;
@@ -25,7 +33,11 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
 
   const {
     allowSelfJoin,
+    firstRoundPairingMode,
     format,
+    knockoutBracketType,
+    knockoutMatchFormat,
+    matchResultMode,
     name,
     roundRobinMatchFormat,
     teamSize,
@@ -43,6 +55,22 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     roundRobinMatchFormat === undefined
       ? "bo1"
       : (roundRobinMatchFormat as RoundRobinMatchFormat);
+  const parsedKnockoutBracketType =
+    knockoutBracketType === undefined
+      ? "double_elimination"
+      : (knockoutBracketType as KnockoutBracketType);
+  const parsedFirstRoundPairingMode =
+    firstRoundPairingMode === undefined
+      ? "random"
+      : (firstRoundPairingMode as FirstRoundPairingMode);
+  const parsedMatchResultMode =
+    matchResultMode === undefined ? "points" : (matchResultMode as MatchResultMode);
+  const parsedKnockoutMatchFormat =
+    knockoutMatchFormat === undefined
+      ? parsedMatchResultMode === "winner_only"
+        ? "bo1"
+        : "bo3_semis_finals"
+      : (knockoutMatchFormat as KnockoutMatchFormat);
 
   if (
     typeof name !== "string" ||
@@ -56,19 +84,36 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     !["double_elimination", "team_round_robin", "individual_mixer"].includes(
       parsedFormat,
     ) ||
+    !["double_elimination", "single_elimination"].includes(
+      parsedKnockoutBracketType,
+    ) ||
+    !["random", "manual"].includes(parsedFirstRoundPairingMode) ||
+    !["points", "winner_only"].includes(parsedMatchResultMode) ||
+    !["bo3_semis_finals", "bo1"].includes(parsedKnockoutMatchFormat) ||
     !["bo1", "bo3"].includes(parsedRoundRobinMatchFormat) ||
     (parsedFormat === "individual_mixer" && inputMode !== "players") ||
     (parsedAllowSelfJoin && inputMode !== "players") ||
     (parsedFormat !== "team_round_robin" &&
       roundRobinMatchFormat !== undefined &&
-      parsedRoundRobinMatchFormat !== "bo1")
+      parsedRoundRobinMatchFormat !== "bo1") ||
+    (parsedFormat !== "double_elimination" &&
+      (knockoutBracketType !== undefined ||
+        firstRoundPairingMode !== undefined ||
+        matchResultMode !== undefined ||
+        knockoutMatchFormat !== undefined)) ||
+    (parsedMatchResultMode === "winner_only" &&
+      parsedKnockoutMatchFormat !== "bo1")
   ) {
     return null;
   }
 
   return {
     allowSelfJoin: parsedAllowSelfJoin,
+    firstRoundPairingMode: parsedFirstRoundPairingMode,
     format: parsedFormat,
+    knockoutBracketType: parsedKnockoutBracketType,
+    knockoutMatchFormat: parsedKnockoutMatchFormat,
+    matchResultMode: parsedMatchResultMode,
     name: name.trim(),
     roundRobinMatchFormat: parsedRoundRobinMatchFormat,
     teamSize: teamSize as 2 | 3 | 4,
@@ -89,6 +134,12 @@ export async function GET() {
         name: tournament.name,
         status: tournament.status,
         format: tournament.format ?? "double_elimination",
+        knockoutBracketType:
+          tournament.knockoutBracketType ?? "double_elimination",
+        firstRoundPairingMode: tournament.firstRoundPairingMode ?? "random",
+        matchResultMode: tournament.matchResultMode ?? "points",
+        knockoutMatchFormat:
+          tournament.knockoutMatchFormat ?? "bo3_semis_finals",
         roundRobinMatchFormat: tournament.roundRobinMatchFormat ?? "bo1",
         createdAt: tournament.createdAt.toISOString(),
         allowSelfJoin: tournament.allowSelfJoin,
@@ -135,6 +186,10 @@ export async function POST(request: NextRequest) {
         name: tournament.name,
         status: tournament.status,
         format: tournament.format,
+        knockoutBracketType: tournament.knockoutBracketType,
+        firstRoundPairingMode: tournament.firstRoundPairingMode,
+        matchResultMode: tournament.matchResultMode,
+        knockoutMatchFormat: tournament.knockoutMatchFormat,
         roundRobinMatchFormat: tournament.roundRobinMatchFormat,
         teamSize: tournament.teamSize,
         courtsAvailable: tournament.courtsAvailable,

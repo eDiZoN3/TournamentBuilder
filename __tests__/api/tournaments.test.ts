@@ -80,6 +80,10 @@ describe("/api/tournaments", () => {
       expect.arrayContaining([
         expect.objectContaining({
           format: "double_elimination",
+          knockoutBracketType: "double_elimination",
+          firstRoundPairingMode: "random",
+          matchResultMode: "points",
+          knockoutMatchFormat: "bo3_semis_finals",
           roundRobinMatchFormat: "bo1",
           name: "First Cup",
           status: "draft",
@@ -88,6 +92,10 @@ describe("/api/tournaments", () => {
         }),
         expect.objectContaining({
           format: "double_elimination",
+          knockoutBracketType: "double_elimination",
+          firstRoundPairingMode: "random",
+          matchResultMode: "points",
+          knockoutMatchFormat: "bo3_semis_finals",
           roundRobinMatchFormat: "bo1",
           name: "Second Cup",
           status: "draft",
@@ -115,11 +123,46 @@ describe("/api/tournaments", () => {
       name: "Summer Cup",
       status: "draft",
       format: "double_elimination",
+      knockoutBracketType: "double_elimination",
+      firstRoundPairingMode: "random",
+      matchResultMode: "points",
+      knockoutMatchFormat: "bo3_semis_finals",
       roundRobinMatchFormat: "bo1",
       teamSize: 3,
       courtsAvailable: 2,
     });
     await expect(Tournament.countDocuments()).resolves.toBe(1);
+  });
+
+  it("creates a single-elimination manual winner-only knockout tournament", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Manual KO Cup",
+        format: "double_elimination",
+        knockoutBracketType: "single_elimination",
+        firstRoundPairingMode: "manual",
+        matchResultMode: "winner_only",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "teams",
+      }),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(body._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body).toMatchObject({
+      knockoutBracketType: "single_elimination",
+      firstRoundPairingMode: "manual",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+    });
+    expect(saved).toMatchObject({
+      knockoutBracketType: "single_elimination",
+      firstRoundPairingMode: "manual",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+    });
   });
 
   it("creates an empty draft without teams or matches", async () => {
@@ -284,6 +327,27 @@ describe("/api/tournaments", () => {
         inputMode: "teams",
       },
     ],
+    [
+      "invalid knockout bracket type",
+      {
+        name: "Bad Knockout Type",
+        knockoutBracketType: "triple_elimination",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      },
+    ],
+    [
+      "winner-only with BO3 knockout finals",
+      {
+        name: "Bad Winner Only",
+        matchResultMode: "winner_only",
+        knockoutMatchFormat: "bo3_semis_finals",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      },
+    ],
   ])("rejects incompatible format settings: %s", async (_label, body) => {
     const response = await createTournament(
       request("http://localhost:3000/api/tournaments", "POST", body),
@@ -413,6 +477,10 @@ describe("/api/tournaments/[id]", () => {
     expect(body).toMatchObject({
       _id: tournament._id.toString(),
       format: "double_elimination",
+      knockoutBracketType: "double_elimination",
+      firstRoundPairingMode: "random",
+      matchResultMode: "points",
+      knockoutMatchFormat: "bo3_semis_finals",
       roundRobinMatchFormat: "bo1",
       inputMode: "teams",
       teams: expect.any(Array),

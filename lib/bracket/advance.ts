@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { determineMatchWinner } from "@/lib/scoring";
+import { determineMatchWinner, type TeamSide } from "@/lib/scoring";
 import type { IMatch, ITournament } from "@/lib/models/Tournament";
 
 type Slot = "A" | "B";
@@ -154,6 +154,7 @@ export function assignCourt(tournament: ITournament, match: IMatch): number {
 export function onMatchComplete(
   tournament: ITournament,
   match: IMatch,
+  selectedWinnerSide?: TeamSide,
 ): MatchCompletionResult {
   if (match.status !== "in_progress") {
     throw new Error("Only in-progress matches can be completed");
@@ -163,8 +164,21 @@ export function onMatchComplete(
     throw new Error("Both teams are required to complete a match");
   }
 
-  const sets = match.teamA.sets.length > 0 ? match.teamA.sets : match.teamB.sets;
-  const winner = determineMatchWinner(sets, match.format);
+  let winner: TeamSide | null = null;
+
+  if (selectedWinnerSide) {
+    if ((tournament.matchResultMode ?? "points") !== "winner_only") {
+      throw new Error("Winner-only completion is not enabled");
+    }
+
+    winner = selectedWinnerSide;
+  } else if ((tournament.matchResultMode ?? "points") === "winner_only") {
+    throw new Error("Winner side is required");
+  } else {
+    const sets =
+      match.teamA.sets.length > 0 ? match.teamA.sets : match.teamB.sets;
+    winner = determineMatchWinner(sets, match.format);
+  }
 
   if (!winner) {
     throw new Error("Match winner has not been determined");

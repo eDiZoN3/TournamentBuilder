@@ -18,6 +18,7 @@ export type TranslationKey =
   | "assigning"
   | "allCourtsOccupied"
   | "bestOfThree"
+  | "bestOfThreeSemisFinal"
   | "bestOfOne"
   | "bracketSelection"
   | "cancel"
@@ -85,6 +86,8 @@ export type TranslationKey =
   | "generateMinTeams"
   | "generateTeams"
   | "globalStats"
+  | "knockoutBracket"
+  | "knockoutMatchOptions"
   | "invalidCredentials"
   | "joinedAs"
   | "joinedPlayers"
@@ -105,6 +108,7 @@ export type TranslationKey =
   | "loserBracketRounds"
   | "lost"
   | "losses"
+  | "manualFirstRoundPairing"
   | "markAsInProgress"
   | "matchCompleted"
   | "matchConfirmed"
@@ -169,6 +173,7 @@ export type TranslationKey =
   | "pointsAgainst"
   | "pointsDiff"
   | "pointsFor"
+  | "pointsScoring"
   | "primaryNavigation"
   | "publicTournamentList"
   | "publicTournaments"
@@ -195,6 +200,7 @@ export type TranslationKey =
   | "round"
   | "roundRobinMatchFormat"
   | "rosterSaved"
+  | "randomFirstRoundPairing"
   | "saving"
   | "savePracticeMatch"
   | "saveRoster"
@@ -203,6 +209,7 @@ export type TranslationKey =
   | "score"
   | "scoreSaved"
   | "semiFinal"
+  | "singleElimination"
   | "setOwnPassword"
   | "set"
   | "setSaved"
@@ -284,8 +291,10 @@ export type TranslationKey =
   | "winRate"
   | "won"
   | "winner"
+  | "winnerOnly"
   | "winnerBracket"
   | "winnerBracketRounds"
+  | "teamWon"
   | "changingWinnerWarning"
   | "wins"
   | "yourScore"
@@ -303,6 +312,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     allowPlayerSelfJoin: "Spieler selbst beitreten lassen",
     assignCourt: "Feld zuweisen",
     bestOfThree: "Best of three",
+    bestOfThreeSemisFinal: "Best-of-three Halbfinale und Finale",
     cancel: "Abbrechen",
     changePassword: "Passwort ändern",
     changePasswordDescription:
@@ -346,6 +356,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     generateMinTeams: "Generieren Sie mindestens zwei benannte Teams.",
     generateTeams: "Teams generieren",
     globalStats: "Globale Statistiken",
+    knockoutBracket: "KO-System",
+    knockoutMatchOptions: "KO-Spieloptionen",
     invalidCredentials: "Ungültige E-Mail oder Passwort.",
     joinedPlayers: "Beigetretene Spieler",
     joinPhase: "Beitrittphase",
@@ -357,6 +369,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     logOut: "Abmelden",
     lost: "Verloren",
     losses: "Niederlagen",
+    manualFirstRoundPairing: "Erstrunden-Paarungen manuell",
     matchUpdated: "Spiel aktualisiert",
     match: "Spiel",
     matches: "Spiele",
@@ -401,6 +414,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     practiceStats: "Trainingsstatistiken",
     points: "Punkte",
     pointsAgainst: "Punkte gegen",
+    pointsScoring: "Mit Punkten",
     pointsFor: "Punkte für",
     publicTournaments: "Öffentliche Turniere",
     raroVolleyball: "Turnier Manager",
@@ -420,11 +434,13 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     round: "Runde",
     roundRobinMatchFormat: "Round-Robin-Spielformat",
     rosterSaved: "Kader gespeichert.",
+    randomFirstRoundPairing: "Erstrunden-Paarungen zufällig",
     saving: "Speichern...",
     savePracticeMatch: "Trainingsspiel speichern",
     saveRoster: "Kader speichern",
     schedule: "Spielplan",
     score: "Ergebnis",
+    singleElimination: "Single Elimination",
     setOwnPassword:
       "Legen Sie Ihr eigenes Passwort fest, bevor Sie fortfahren.",
     setupTournamentTitle: "Richten Sie {name} ein",
@@ -474,6 +490,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     volleyballTournaments: "Turniere",
     winRate: "Siegquote",
     won: "Gewonnen",
+    winnerOnly: "Nur Sieger",
     wins: "Siege",
     yourScore: "Deine Punkte",
     accounts: "Konten",
@@ -591,6 +608,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     updating: "Aktualisieren...",
     versus: "vs",
     winner: "Sieger",
+    teamWon: "{team} hat gewonnen",
     winnerBracket: "Gewinnerbaum",
     winnerBracketRounds: "Runden im Gewinnerbaum",
     changingWinnerWarning:
@@ -612,6 +630,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     allowPlayerSelfJoin: "Allow player account self-join",
     assignCourt: "Assign court",
     bestOfThree: "Best of three",
+    bestOfThreeSemisFinal: "Best-of-three semi-finals and final",
     cancel: "Cancel",
     changePassword: "Change password",
     changePasswordDescription: "Set your own password before continuing.",
@@ -653,6 +672,8 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     generateMinTeams: "Generate at least two named teams.",
     generateTeams: "Generate teams",
     globalStats: "Global stats",
+    knockoutBracket: "Knockout bracket",
+    knockoutMatchOptions: "Knockout match options",
     invalidCredentials: "Invalid email or password.",
     joinedPlayers: "Joined players",
     joinPhase: "Join phase",
@@ -664,6 +685,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     logOut: "Log out",
     lost: "Lost",
     losses: "Losses",
+    manualFirstRoundPairing: "Manual first-round pairing",
     matchUpdated: "Match updated",
     match: "Match",
     matches: "Matches",
@@ -708,6 +730,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     practiceStats: "Practice stats",
     points: "Points",
     pointsAgainst: "Points Against",
+    pointsScoring: "Points scoring",
     pointsFor: "Points For",
     publicTournaments: "Public tournaments",
     raroVolleyball: "Tournament Manager",
@@ -726,11 +749,13 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     round: "Round",
     roundRobinMatchFormat: "Round-robin match format",
     rosterSaved: "Roster saved.",
+    randomFirstRoundPairing: "Random first-round pairing",
     saving: "Saving...",
     savePracticeMatch: "Save practice match",
     saveRoster: "Save roster",
     schedule: "Schedule",
     score: "Score",
+    singleElimination: "Single elimination",
     setOwnPassword: "Set your own password before continuing.",
     setupTournamentTitle: "Set up {name}",
     signIn: "Sign in",
@@ -779,6 +804,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     volleyballTournaments: "Tournaments",
     winRate: "Win rate",
     won: "Won",
+    winnerOnly: "Winner only",
     wins: "Wins",
     yourScore: "Your score",
     accounts: "Accounts",
@@ -895,6 +921,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     updating: "Updating...",
     versus: "vs",
     winner: "Winner",
+    teamWon: "{team} won",
     winnerBracket: "Winner bracket",
     winnerBracketRounds: "Winner bracket rounds",
     changingWinnerWarning: "Changing the winner will reset downstream matches.",

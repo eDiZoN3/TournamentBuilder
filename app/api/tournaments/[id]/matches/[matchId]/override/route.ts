@@ -6,7 +6,11 @@ import { onMatchComplete } from "@/lib/bracket/advance";
 import { rollbackCompletedMatch } from "@/lib/bracket/rollback";
 import { connectDB } from "@/lib/db";
 import { Tournament, type ISetScore } from "@/lib/models/Tournament";
-import { determineMatchWinner, validateSet } from "@/lib/scoring";
+import {
+  determineMatchWinner,
+  validateSet,
+  type TeamSide,
+} from "@/lib/scoring";
 
 interface RouteContext {
   params: Promise<{
@@ -31,12 +35,29 @@ type ParsedSets =
       error: string;
     };
 
-function parseBody(body: unknown): RawSetScore[] | null {
+type ParsedBody =
+  | {
+      kind: "sets";
+      sets: RawSetScore[];
+    }
+  | {
+      kind: "winner";
+      winnerSide: TeamSide;
+    };
+
+function parseBody(body: unknown): ParsedBody | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return null;
   }
 
-  const { sets } = body as Record<string, unknown>;
+  const { sets, winnerSide } = body as Record<string, unknown>;
+
+  if (winnerSide === "A" || winnerSide === "B") {
+    return {
+      kind: "winner",
+      winnerSide,
+    };
+  }
 
   if (!Array.isArray(sets) || sets.length === 0) {
     return null;
@@ -58,7 +79,10 @@ function parseBody(body: unknown): RawSetScore[] | null {
     parsedSets.push({ scoreA, scoreB });
   }
 
-  return parsedSets;
+  return {
+    kind: "sets",
+    sets: parsedSets,
+  };
 }
 
 function validateSets(
@@ -129,9 +153,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return jsonError("Invalid request body", "VALIDATION_ERROR", 422);
   }
 
-  const rawSets = parseBody(body);
+  const parsedBody = parseBody(body);
 
-  if (!rawSets) {
+  if (!parsedBody) {
     return jsonError("Invalid override details", "VALIDATION_ERROR", 422);
   }
 
@@ -169,14 +193,50 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const validation = validateSets(rawSets, match.format);
+    const isWinnerOnly =
+      (tournament.matchResultMode ?? "points") === "winner_only";
 
-    if (!validation.valid) {
-      return jsonError(validation.error, "VALIDATION_ERROR", 422);
+    if (isWinnerOnly && parsedBody.kind !== "winner") {
+      return jsonError("Winner side is required", "VALIDATION_ERROR", 422);
     }
 
+    if (!isWinnerOnly && parsedBody.kind !== "sets") {
+      return jsonError(
+        "Winner-only completion is not enabled",
+        "VALIDATION_ERROR",
+        422,
+      );
+    }
+
+    let matchWinner: TeamSide;
+
+    if (isWinnerOnly) {
+      if (parsedBody.kind !== "winner") {
+        return jsonError("Winner side is required", "VALIDATION_ERROR", 422);
+      }
+
+      matchWinner = parsedBody.winnerSide;
+    } else {
+      if (parsedBody.kind !== "sets") {
+        return jsonError(
+          "Winner-only completion is not enabled",
+          "VALIDATION_ERROR",
+          422,
+        );
+      }
+
+      const validation = validateSets(parsedBody.sets, match.format);
+
+      if (!validation.valid) {
+        return jsonError(validation.error, "VALIDATION_ERROR", 422);
+      }
+
+      match.teamA.sets = validation.sets;
+      match.teamB.sets = [];
+      matchWinner = validation.matchWinner;
+    }
     const correctedWinnerId =
-      validation.matchWinner === "A" ? match.teamA.teamId : match.teamB.teamId;
+      matchWinner === "A" ? match.teamA.teamId : match.teamB.teamId;
     const winnerChanged = !idsEqual(match.winnerId, correctedWinnerId);
     let affectedMatchIds: string[] = [];
 
@@ -190,11 +250,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       match.courtNumber = null;
     }
 
-    match.teamA.sets = validation.sets;
-    match.teamB.sets = [];
+    if (isWinnerOnly) {
+      match.teamA.sets = [];
+      match.teamB.sets = [];
+    }
 
     if (winnerChanged) {
-      onMatchComplete(tournament, match);
+      onMatchComplete(tournament, match, isWinnerOnly ? matchWinner : undefined);
     }
 
     await tournament.save();
@@ -205,7 +267,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       affectedMatchIds,
       tournamentStatus: tournament.status,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error) {
+      return jsonError(error.message, "VALIDATION_ERROR", 422);
+    }
+
     return jsonError("Unable to override match", "INTERNAL_ERROR", 500);
   }
 }

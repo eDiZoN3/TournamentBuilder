@@ -18,6 +18,10 @@ function tournamentWithTeams(teamCount: number, courtsAvailable = 2) {
     name: "Test Tournament",
     status: "active",
     format: "double_elimination",
+    knockoutBracketType: "double_elimination",
+    firstRoundPairingMode: "random",
+    matchResultMode: "points",
+    knockoutMatchFormat: "bo3_semis_finals",
     roundRobinMatchFormat: "bo1",
     teamSize: 2,
     courtsAvailable,
@@ -194,6 +198,40 @@ describe("onMatchComplete", () => {
     expect(tournament.currentMatchIds).toEqual([]);
     expect(tournament.status).toBe("completed");
     expect(result.tournamentCompleted).toBe(true);
+  });
+
+  it("completes a match by selected winner without scores", () => {
+    const tournament = tournamentWithTeams(2, 1);
+    const wbFinal = matchesIn(tournament, "winner", 1)[0];
+
+    tournament.matchResultMode = "winner_only";
+    wbFinal.status = "in_progress";
+    wbFinal.courtNumber = 1;
+    tournament.currentMatchIds.push(wbFinal._id);
+
+    const result = onMatchComplete(tournament, wbFinal, "B");
+
+    expect(wbFinal).toMatchObject({
+      status: "completed",
+      winnerId: wbFinal.teamB?.teamId,
+      loserId: wbFinal.teamA?.teamId,
+      courtNumber: null,
+    });
+    expect(wbFinal.teamA?.sets).toEqual([]);
+    expect(wbFinal.teamB?.sets).toEqual([]);
+    expect(tournament.currentMatchIds).toEqual([]);
+    expect(result.tournamentCompleted).toBe(true);
+  });
+
+  it("rejects winner-only completion for point-scored tournaments", () => {
+    const tournament = tournamentWithTeams(2, 1);
+    const wbFinal = matchesIn(tournament, "winner", 1)[0];
+
+    wbFinal.status = "in_progress";
+
+    expect(() => onMatchComplete(tournament, wbFinal, "A")).toThrow(
+      "Winner-only completion is not enabled",
+    );
   });
 
   it("records LB final placements without routing its loser", () => {

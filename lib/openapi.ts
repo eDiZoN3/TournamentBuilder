@@ -203,6 +203,22 @@ export const openApiDocument: OpenApiDocument = {
         type: "string",
         enum: ["bo1", "bo3"],
       },
+      KnockoutBracketType: {
+        type: "string",
+        enum: ["double_elimination", "single_elimination"],
+      },
+      FirstRoundPairingMode: {
+        type: "string",
+        enum: ["random", "manual"],
+      },
+      MatchResultMode: {
+        type: "string",
+        enum: ["points", "winner_only"],
+      },
+      KnockoutMatchFormat: {
+        type: "string",
+        enum: ["bo3_semis_finals", "bo1"],
+      },
       Team: {
         type: "object",
         required: ["_id", "name", "players"],
@@ -416,6 +432,10 @@ export const openApiDocument: OpenApiDocument = {
           "name",
           "status",
           "format",
+          "knockoutBracketType",
+          "firstRoundPairingMode",
+          "matchResultMode",
+          "knockoutMatchFormat",
           "roundRobinMatchFormat",
           "createdAt",
           "allowSelfJoin",
@@ -430,6 +450,10 @@ export const openApiDocument: OpenApiDocument = {
           },
           status: ref("TournamentStatus"),
           format: ref("TournamentFormat"),
+          knockoutBracketType: ref("KnockoutBracketType"),
+          firstRoundPairingMode: ref("FirstRoundPairingMode"),
+          matchResultMode: ref("MatchResultMode"),
+          knockoutMatchFormat: ref("KnockoutMatchFormat"),
           roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           createdAt: {
             type: "string",
@@ -453,6 +477,10 @@ export const openApiDocument: OpenApiDocument = {
           "name",
           "status",
           "format",
+          "knockoutBracketType",
+          "firstRoundPairingMode",
+          "matchResultMode",
+          "knockoutMatchFormat",
           "roundRobinMatchFormat",
           "teamSize",
           "courtsAvailable",
@@ -467,6 +495,10 @@ export const openApiDocument: OpenApiDocument = {
           },
           status: ref("TournamentStatus"),
           format: ref("TournamentFormat"),
+          knockoutBracketType: ref("KnockoutBracketType"),
+          firstRoundPairingMode: ref("FirstRoundPairingMode"),
+          matchResultMode: ref("MatchResultMode"),
+          knockoutMatchFormat: ref("KnockoutMatchFormat"),
           roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           teamSize: {
             type: "integer",
@@ -501,6 +533,10 @@ export const openApiDocument: OpenApiDocument = {
             maxLength: 100,
           },
           format: ref("TournamentFormat"),
+          knockoutBracketType: ref("KnockoutBracketType"),
+          firstRoundPairingMode: ref("FirstRoundPairingMode"),
+          matchResultMode: ref("MatchResultMode"),
+          knockoutMatchFormat: ref("KnockoutMatchFormat"),
           roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           teamSize: {
             type: "integer",
@@ -562,6 +598,12 @@ export const openApiDocument: OpenApiDocument = {
             type: "string",
             enum: ["ready", "in_progress", "completed"],
           },
+          winnerSide: {
+            type: "string",
+            enum: ["A", "B"],
+            description:
+              "Required when completing winner-only tournament matches.",
+          },
         },
       },
       CourtUpdateRequest: {
@@ -577,6 +619,11 @@ export const openApiDocument: OpenApiDocument = {
       OverrideMatchRequest: {
         type: "object",
         properties: {
+          winnerSide: {
+            type: "string",
+            enum: ["A", "B"],
+            description: "Winner side for winner-only tournaments.",
+          },
           winnerId: ref("ObjectId"),
           teamA: ref("MatchTeamScore"),
           teamB: ref("MatchTeamScore"),

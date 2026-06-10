@@ -4,6 +4,10 @@ import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import type {
+  FirstRoundPairingMode,
+  KnockoutBracketType,
+  KnockoutMatchFormat,
+  MatchResultMode,
   RoundRobinMatchFormat,
   TournamentFormat,
 } from "@/lib/models/Tournament";
@@ -17,6 +21,14 @@ export default function NewTournamentPage() {
   const { t } = useLocale();
   const [name, setName] = useState("");
   const [format, setFormat] = useState<TournamentFormat>("double_elimination");
+  const [knockoutBracketType, setKnockoutBracketType] =
+    useState<KnockoutBracketType>("double_elimination");
+  const [firstRoundPairingMode, setFirstRoundPairingMode] =
+    useState<FirstRoundPairingMode>("random");
+  const [matchResultMode, setMatchResultMode] =
+    useState<MatchResultMode>("points");
+  const [knockoutMatchFormat, setKnockoutMatchFormat] =
+    useState<KnockoutMatchFormat>("bo3_semis_finals");
   const [roundRobinMatchFormat, setRoundRobinMatchFormat] =
     useState<RoundRobinMatchFormat>("bo1");
   const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
@@ -39,6 +51,13 @@ export default function NewTournamentPage() {
     }
   }
 
+  function updateMatchResultMode(nextMode: MatchResultMode) {
+    setMatchResultMode(nextMode);
+    setKnockoutMatchFormat(
+      nextMode === "winner_only" ? "bo1" : "bo3_semis_finals",
+    );
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -53,6 +72,17 @@ export default function NewTournamentPage() {
         body: JSON.stringify({
           name,
           format,
+          ...(format === "double_elimination"
+            ? {
+                knockoutBracketType,
+                firstRoundPairingMode,
+                matchResultMode,
+                knockoutMatchFormat:
+                  matchResultMode === "winner_only"
+                    ? "bo1"
+                    : knockoutMatchFormat,
+              }
+            : {}),
           teamSize,
           courtsAvailable,
           inputMode,
@@ -122,6 +152,82 @@ export default function NewTournamentPage() {
             ))}
           </div>
         </fieldset>
+
+        {format === "double_elimination" ? (
+          <>
+            <fieldset>
+              <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t("knockoutBracket")}
+              </legend>
+              <div className="mt-2 space-y-2">
+                {([
+                  ["double_elimination", t("doubleElimination")],
+                  ["single_elimination", t("singleElimination")],
+                ] as const).map(([value, label]) => (
+                  <label className="flex items-center gap-2" key={value}>
+                    <input
+                      checked={knockoutBracketType === value}
+                      name="knockoutBracketType"
+                      onChange={() => setKnockoutBracketType(value)}
+                      type="radio"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t("knockoutMatchOptions")}
+              </legend>
+              <div className="mt-2 space-y-2">
+                {([
+                  ["random", t("randomFirstRoundPairing")],
+                  ["manual", t("manualFirstRoundPairing")],
+                ] as const).map(([value, label]) => (
+                  <label className="flex items-center gap-2" key={value}>
+                    <input
+                      checked={firstRoundPairingMode === value}
+                      name="firstRoundPairingMode"
+                      onChange={() => setFirstRoundPairingMode(value)}
+                      type="radio"
+                    />
+                    {label}
+                  </label>
+                ))}
+                {([
+                  ["points", t("pointsScoring")],
+                  ["winner_only", t("winnerOnly")],
+                ] as const).map(([value, label]) => (
+                  <label className="flex items-center gap-2" key={value}>
+                    <input
+                      checked={matchResultMode === value}
+                      name="matchResultMode"
+                      onChange={() => updateMatchResultMode(value)}
+                      type="radio"
+                    />
+                    {label}
+                  </label>
+                ))}
+                {matchResultMode === "points" ? (
+                  <label className="flex items-center gap-2">
+                    <input
+                      checked={knockoutMatchFormat === "bo3_semis_finals"}
+                      onChange={(event) =>
+                        setKnockoutMatchFormat(
+                          event.target.checked ? "bo3_semis_finals" : "bo1",
+                        )
+                      }
+                      type="checkbox"
+                    />
+                    {t("bestOfThreeSemisFinal")}
+                  </label>
+                ) : null}
+              </div>
+            </fieldset>
+          </>
+        ) : null}
 
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">

@@ -93,4 +93,40 @@ describe("/api/openapi", () => {
       { $ref: "#/components/schemas/InputMode" },
     );
   });
+
+  it("documents knockout variant configuration fields", async () => {
+    const response = await GET();
+    const body = await response.json();
+
+    expect(body.components.schemas.KnockoutBracketType).toMatchObject({
+      type: "string",
+      enum: ["double_elimination", "single_elimination"],
+    });
+    expect(body.components.schemas.FirstRoundPairingMode).toMatchObject({
+      type: "string",
+      enum: ["random", "manual"],
+    });
+    expect(body.components.schemas.MatchResultMode).toMatchObject({
+      type: "string",
+      enum: ["points", "winner_only"],
+    });
+    expect(body.components.schemas.KnockoutMatchFormat).toMatchObject({
+      type: "string",
+      enum: ["bo3_semis_finals", "bo1"],
+    });
+    expect(
+      body.components.schemas.CreateTournamentRequest.properties,
+    ).toMatchObject({
+      knockoutBracketType: { $ref: "#/components/schemas/KnockoutBracketType" },
+      firstRoundPairingMode: { $ref: "#/components/schemas/FirstRoundPairingMode" },
+      matchResultMode: { $ref: "#/components/schemas/MatchResultMode" },
+      knockoutMatchFormat: { $ref: "#/components/schemas/KnockoutMatchFormat" },
+    });
+    expect(body.components.schemas.Tournament.properties).toMatchObject({
+      knockoutBracketType: { $ref: "#/components/schemas/KnockoutBracketType" },
+      firstRoundPairingMode: { $ref: "#/components/schemas/FirstRoundPairingMode" },
+      matchResultMode: { $ref: "#/components/schemas/MatchResultMode" },
+      knockoutMatchFormat: { $ref: "#/components/schemas/KnockoutMatchFormat" },
+    });
+  });
 });

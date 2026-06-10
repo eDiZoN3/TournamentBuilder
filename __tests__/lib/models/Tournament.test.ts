@@ -13,6 +13,10 @@ describe("Tournament model", () => {
       name: "Summer Cup",
       status: "draft",
       format: "double_elimination",
+      knockoutBracketType: "double_elimination",
+      firstRoundPairingMode: "random",
+      matchResultMode: "points",
+      knockoutMatchFormat: "bo3_semis_finals",
       roundRobinMatchFormat: "bo1",
       teamSize: 2,
       courtsAvailable: 3,
@@ -69,6 +73,44 @@ describe("Tournament model", () => {
       Tournament.create({
         name: "Bad Format Cup",
         format: "single_elimination",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("accepts knockout tournament variant settings", async () => {
+    const tournament = await Tournament.create({
+      name: "Single Cup",
+      format: "double_elimination",
+      knockoutBracketType: "single_elimination",
+      firstRoundPairingMode: "manual",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "teams",
+    });
+
+    expect(tournament).toMatchObject({
+      knockoutBracketType: "single_elimination",
+      firstRoundPairingMode: "manual",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+    });
+  });
+
+  it.each([
+    ["knockoutBracketType", "triple_elimination"],
+    ["firstRoundPairingMode", "seeded"],
+    ["matchResultMode", "coin_flip"],
+    ["knockoutMatchFormat", "bo5_finals"],
+  ])("rejects invalid %s values", async (field, value) => {
+    await expect(
+      Tournament.create({
+        name: "Bad Knockout Cup",
+        [field]: value,
         teamSize: 2,
         courtsAvailable: 1,
         inputMode: "teams",

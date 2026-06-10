@@ -111,6 +111,53 @@ describe("POST /api/tournaments/[id]/start", () => {
     expect(body.autoStartedMatches).toHaveLength(1);
   });
 
+  it("starts a configured single-elimination manual knockout tournament", async () => {
+    const teams = makeTeams(6);
+    const tournament = await Tournament.create({
+      name: "Manual KO Cup",
+      knockoutBracketType: "single_elimination",
+      firstRoundPairingMode: "manual",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 2,
+      inputMode: "teams",
+      teams,
+    });
+
+    const response = await startTournament(
+      request(tournament._id.toString()),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+    const savedTournament = await Tournament.findById(tournament._id);
+    const firstRound = savedTournament?.matches
+      .filter((match) => match.bracket === "winner" && match.round === 1)
+      .sort((a, b) => a.position - b.position);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      matchesGenerated: 7,
+      byeCount: 2,
+    });
+    expect(savedTournament?.matches.some((match) => match.bracket === "loser")).toBe(false);
+    expect(savedTournament?.matches.every((match) => match.format === "bo1")).toBe(true);
+    expect(
+      firstRound?.map((match) => [
+        match.teamA
+          ? teams.findIndex((team) => team._id.equals(match.teamA?.teamId)) + 1
+          : null,
+        match.teamB
+          ? teams.findIndex((team) => team._id.equals(match.teamB?.teamId)) + 1
+          : null,
+      ]),
+    ).toEqual([
+      [1, 2],
+      [3, 4],
+      [5, null],
+      [6, null],
+    ]);
+  });
+
   it("starts a team round-robin tournament with every team pairing", async () => {
     const teams = makeTeams(4);
     const tournament = await Tournament.create({

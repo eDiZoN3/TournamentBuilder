@@ -7,12 +7,13 @@ import { ScoreEntry } from "@/components/admin/ScoreEntry";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formatTranslation } from "@/lib/i18n";
-import type { IMatch } from "@/lib/models/Tournament";
+import type { IMatch, MatchResultMode } from "@/lib/models/Tournament";
 
 interface MatchControlsProps {
   courtsAvailable: number;
   currentMatchIds: Array<string | { toString(): string }>;
   match: IMatch;
+  matchResultMode?: MatchResultMode;
   onScoreEntryClose?: () => void;
   onScoreEntryOpen?: (matchId: string) => void;
   onUpdated: () => void | Promise<void>;
@@ -39,6 +40,7 @@ export function MatchControls({
   courtsAvailable,
   currentMatchIds,
   match,
+  matchResultMode = "points",
   onScoreEntryClose,
   onScoreEntryOpen,
   onUpdated,
@@ -72,6 +74,7 @@ export function MatchControls({
     return (
       <CompletedMatchControls
         match={match}
+        matchResultMode={matchResultMode}
         onScoreEntryClose={onScoreEntryClose}
         onScoreEntryOpen={onScoreEntryOpen}
         onUpdated={onUpdated}
@@ -155,6 +158,54 @@ export function MatchControls({
     }
   }
 
+  async function completeWinnerOnly(winnerSide: "A" | "B") {
+    setIsUpdating(true);
+
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournamentId}/matches/${match._id.toString()}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "completed",
+            winnerSide,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const message = await apiError(response, t("unableToConfirmMatch"));
+
+        showToast({
+          message,
+          title: t("unableToConfirmMatch"),
+          type: "error",
+        });
+        return;
+      }
+
+      await onUpdated();
+      showToast({
+        message: formatTranslation(locale, "matchCompleted", {
+          match: match.label,
+        }),
+        title: t("matchConfirmed"),
+        type: "success",
+      });
+    } catch {
+      showToast({
+        message: t("unableToConfirmMatch"),
+        title: t("unableToConfirmMatch"),
+        type: "error",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
   return (
     <div
       className="border-t border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
@@ -170,6 +221,23 @@ export function MatchControls({
         >
           {isUpdating ? t("updating") : t("markAsInProgress")}
         </button>
+      ) : matchResultMode === "winner_only" ? (
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            ["A", teamAName],
+            ["B", teamBName],
+          ] as const).map(([side, teamName]) => (
+            <button
+              className="rounded-md bg-emerald-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+              disabled={isUpdating}
+              key={side}
+              onClick={() => void completeWinnerOnly(side)}
+              type="button"
+            >
+              {formatTranslation(locale, "teamWon", { team: teamName })}
+            </button>
+          ))}
+        </div>
       ) : (
         <button
           className="w-full rounded-md bg-amber-600 px-3 py-2 text-xs font-semibold text-white"

@@ -406,6 +406,117 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/status", () => {
     expect(saved?.status).toBe("completed");
   });
 
+  it("completes a winner-only match when a winner side is selected", async () => {
+    const teams = makeTeams(2);
+    const final = makeMatch({
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const tournament = await Tournament.create({
+      name: "Winner Only Cup",
+      status: "active",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [final],
+      currentMatchIds: [final._id],
+    });
+
+    const response = await updateStatus(
+      request(tournament._id.toString(), final._id.toString(), {
+        status: "completed",
+        winnerSide: "B",
+      }),
+      context(tournament._id.toString(), final._id.toString()),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      status: "completed",
+      winnerId: teams[1]._id.toString(),
+      loserId: teams[0]._id.toString(),
+      tournamentCompleted: true,
+    });
+    expect(saved?.matches[0].teamA?.sets).toEqual([]);
+    expect(saved?.matches[0].teamB?.sets).toEqual([]);
+  });
+
+  it("rejects winner-only completion for point-scored tournaments", async () => {
+    const teams = makeTeams(2);
+    const final = makeMatch({
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const tournament = await Tournament.create({
+      name: "Point Cup",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [final],
+      currentMatchIds: [final._id],
+    });
+
+    const response = await updateStatus(
+      request(tournament._id.toString(), final._id.toString(), {
+        status: "completed",
+        winnerSide: "A",
+      }),
+      context(tournament._id.toString(), final._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+      error: "Winner-only completion is not enabled",
+    });
+  });
+
+  it("rejects winner-only completion without a selected side", async () => {
+    const teams = makeTeams(2);
+    const final = makeMatch({
+      status: "in_progress",
+      courtNumber: 1,
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const tournament = await Tournament.create({
+      name: "Winner Only Cup",
+      status: "active",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [final],
+      currentMatchIds: [final._id],
+    });
+
+    const response = await updateStatus(
+      request(tournament._id.toString(), final._id.toString(), {
+        status: "completed",
+      }),
+      context(tournament._id.toString(), final._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+      error: "Winner side is required",
+    });
+  });
+
   it("returns 404 for an unknown match", async () => {
     const tournament = await Tournament.create({
       name: "Summer Cup",

@@ -1,8 +1,21 @@
 import { Types } from "mongoose";
 import { computeLabel, computePlaceRange } from "@/lib/bracket/labels";
-import type { IMatch, ITeam, ITeamSlot } from "@/lib/models/Tournament";
+import type {
+  FirstRoundPairingMode,
+  IMatch,
+  ITeam,
+  ITeamSlot,
+  KnockoutBracketType,
+  KnockoutMatchFormat,
+} from "@/lib/models/Tournament";
 
 type Slot = "A" | "B";
+
+export interface GenerateBracketOptions {
+  firstRoundPairingMode?: FirstRoundPairingMode;
+  knockoutBracketType?: KnockoutBracketType;
+  knockoutMatchFormat?: KnockoutMatchFormat;
+}
 
 function nextPowerOfTwo(value: number): number {
   let result = 1;
@@ -79,12 +92,15 @@ function assignFormatsAndLabels(
   totalWBRounds: number,
   teamCount: number,
   bracketSize: number,
+  knockoutMatchFormat: KnockoutMatchFormat,
 ) {
   for (const match of matches) {
     match.format =
-      (match.bracket === "winner" &&
-        match.round >= Math.max(1, totalWBRounds - 1)) ||
-      match.isLBFinal
+      knockoutMatchFormat === "bo1"
+        ? "bo1"
+        : (match.bracket === "winner" &&
+            match.round >= Math.max(1, totalWBRounds - 1)) ||
+          match.isLBFinal
         ? "bo3"
         : "bo1";
     match.label = computeLabel(
@@ -103,6 +119,53 @@ function assignFormatsAndLabels(
       bracketSize,
     );
   }
+}
+
+function assignSeededFirstRoundTeams(
+  wbR1: IMatch[],
+  teams: ITeam[],
+  bracketSize: number,
+) {
+  const seedPositions = generateSeedPositions(bracketSize);
+
+  wbR1.forEach((match, index) => {
+    const firstPosition = seedPositions[index];
+    const secondPosition = bracketSize + 1 - firstPosition;
+    const firstTeam = teams[firstPosition - 1];
+    const secondTeam = teams[secondPosition - 1];
+
+    match.teamA = firstTeam ? teamSlot(firstTeam) : null;
+    match.teamB = secondTeam ? teamSlot(secondTeam) : null;
+  });
+}
+
+function assignManualFirstRoundTeams(
+  wbR1: IMatch[],
+  teams: ITeam[],
+  bracketSize: number,
+) {
+  const byeCount = bracketSize - teams.length;
+  const pairedTeamCount = Math.max(0, teams.length - byeCount);
+  let teamIndex = 0;
+
+  wbR1.forEach((match) => {
+    if (teamIndex < pairedTeamCount) {
+      match.teamA = teamSlot(teams[teamIndex]);
+      match.teamB = teamSlot(teams[teamIndex + 1]);
+      teamIndex += 2;
+      return;
+    }
+
+    if (teamIndex < teams.length) {
+      match.teamA = teamSlot(teams[teamIndex]);
+      match.teamB = null;
+      teamIndex += 1;
+      return;
+    }
+
+    match.teamA = null;
+    match.teamB = null;
+  });
 }
 
 function processGeneratedByes(matches: IMatch[], wbR1: IMatch[]) {
@@ -225,6 +288,7 @@ export function generateSeedPositions(bracketSize: number): number[] {
 export function generateBracket(
   teams: ITeam[],
   courtsAvailable: number,
+  options: GenerateBracketOptions = {},
 ): IMatch[] {
   if (teams.length < 2) {
     throw new Error("At least 2 teams are required");
@@ -238,14 +302,18 @@ export function generateBracket(
     throw new Error("Courts available must be between 1 and 10");
   }
 
-  const shuffledTeams = shuffle(teams);
-  const bracketSize = nextPowerOfTwo(shuffledTeams.length);
+  const firstRoundPairingMode = options.firstRoundPairingMode ?? "random";
+  const knockoutBracketType = options.knockoutBracketType ?? "double_elimination";
+  const knockoutMatchFormat = options.knockoutMatchFormat ?? "bo3_semis_finals";
+  const orderedTeams =
+    firstRoundPairingMode === "manual" ? [...teams] : shuffle(teams);
+  const bracketSize = nextPowerOfTwo(orderedTeams.length);
   const totalWBRounds = Math.log2(bracketSize);
   const matches: IMatch[] = [];
   const wbRounds = new Map<number, IMatch[]>();
   const lbRounds = new Map<number, IMatch[]>();
 
-  shuffledTeams.forEach((team, index) => {
+  orderedTeams.forEach((team, index) => {
     team.seed = index + 1;
   });
 
@@ -266,17 +334,12 @@ export function generateBracket(
   }
 
   const wbR1 = wbRounds.get(1) ?? [];
-  const seedPositions = generateSeedPositions(bracketSize);
 
-  wbR1.forEach((match, index) => {
-    const firstPosition = seedPositions[index];
-    const secondPosition = bracketSize + 1 - firstPosition;
-    const firstTeam = shuffledTeams[firstPosition - 1];
-    const secondTeam = shuffledTeams[secondPosition - 1];
-
-    match.teamA = firstTeam ? teamSlot(firstTeam) : null;
-    match.teamB = secondTeam ? teamSlot(secondTeam) : null;
-  });
+  if (firstRoundPairingMode === "manual") {
+    assignManualFirstRoundTeams(wbR1, orderedTeams, bracketSize);
+  } else {
+    assignSeededFirstRoundTeams(wbR1, orderedTeams, bracketSize);
+  }
 
   for (let round = 1; round < totalWBRounds; round += 1) {
     const currentRound = wbRounds.get(round) ?? [];
@@ -291,7 +354,7 @@ export function generateBracket(
     });
   }
 
-  if (totalWBRounds >= 2) {
+  if (knockoutBracketType === "double_elimination" && totalWBRounds >= 2) {
     const lbR1 = Array.from(
       {
         length: bracketSize / 4,
@@ -367,8 +430,9 @@ export function generateBracket(
   assignFormatsAndLabels(
     matches,
     totalWBRounds,
-    shuffledTeams.length,
+    orderedTeams.length,
     bracketSize,
+    knockoutMatchFormat,
   );
   processGeneratedByes(matches, wbR1);
 

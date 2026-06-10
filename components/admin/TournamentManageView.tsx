@@ -105,6 +105,7 @@ export function TournamentManageView({
               currentMatchIds={tournament.currentMatchIds}
               key={match._id.toString()}
               match={match}
+              matchResultMode={tournament.matchResultMode ?? "points"}
               onScoreEntryClose={() => setPinnedMatchId(null)}
               onScoreEntryOpen={setPinnedMatchId}
               onUpdated={async () => {
@@ -127,6 +128,7 @@ export function TournamentManageView({
               currentMatchIds={tournament.currentMatchIds}
               key={match._id.toString()}
               match={match}
+              matchResultMode={tournament.matchResultMode ?? "points"}
               onScoreEntryClose={() => setPinnedMatchId(null)}
               onScoreEntryOpen={setPinnedMatchId}
               onUpdated={async () => {

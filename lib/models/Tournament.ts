@@ -36,6 +36,12 @@ export type TournamentFormat =
   | "individual_mixer";
 
 export type RoundRobinMatchFormat = "bo1" | "bo3";
+export type KnockoutBracketType =
+  | "double_elimination"
+  | "single_elimination";
+export type FirstRoundPairingMode = "random" | "manual";
+export type MatchResultMode = "points" | "winner_only";
+export type KnockoutMatchFormat = "bo3_semis_finals" | "bo1";
 
 export interface ITeamSlot {
   teamId: Types.ObjectId;
@@ -70,6 +76,10 @@ export interface ITournament {
   name: string;
   status: "draft" | "active" | "completed";
   format: TournamentFormat;
+  knockoutBracketType: KnockoutBracketType;
+  firstRoundPairingMode: FirstRoundPairingMode;
+  matchResultMode: MatchResultMode;
+  knockoutMatchFormat: KnockoutMatchFormat;
   roundRobinMatchFormat: RoundRobinMatchFormat;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
@@ -287,6 +297,30 @@ const tournamentSchema = new Schema<ITournament>(
       type: String,
       enum: ["double_elimination", "team_round_robin", "individual_mixer"],
       default: "double_elimination",
+      required: true,
+    },
+    knockoutBracketType: {
+      type: String,
+      enum: ["double_elimination", "single_elimination"],
+      default: "double_elimination",
+      required: true,
+    },
+    firstRoundPairingMode: {
+      type: String,
+      enum: ["random", "manual"],
+      default: "random",
+      required: true,
+    },
+    matchResultMode: {
+      type: String,
+      enum: ["points", "winner_only"],
+      default: "points",
+      required: true,
+    },
+    knockoutMatchFormat: {
+      type: String,
+      enum: ["bo3_semis_finals", "bo1"],
+      default: "bo3_semis_finals",
       required: true,
     },
     roundRobinMatchFormat: {

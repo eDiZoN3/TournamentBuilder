@@ -173,6 +173,53 @@ describe("MatchControls", () => {
     expect(screen.getByTestId("score-entry")).toBeInTheDocument();
   });
 
+  it("completes winner-only matches by selecting a winner", async () => {
+    const teams = makeTeams(2);
+    const match = makeMatch({
+      status: "in_progress",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const onUpdated = vi.fn();
+    const fetch = vi.fn().mockResolvedValue(
+      jsonResponse({
+        status: "completed",
+        winnerId: teams[1]._id.toString(),
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <MatchControls
+        courtsAvailable={1}
+        currentMatchIds={[]}
+        match={match}
+        matchResultMode="winner_only"
+        onUpdated={onUpdated}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Enter scores" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Beta won" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringMatching(/\/status$/),
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            status: "completed",
+            winnerSide: "B",
+          }),
+        }),
+      );
+      expect(onUpdated).toHaveBeenCalled();
+    });
+  });
+
   it("hides manual court override for one-court in-progress matches", () => {
     const teams = makeTeams(2);
 

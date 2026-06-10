@@ -253,6 +253,16 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       matches = generateBracket(
         tournament.teams as ITeam[],
         tournament.courtsAvailable,
+        {
+          knockoutBracketType:
+            tournament.knockoutBracketType ?? "double_elimination",
+          firstRoundPairingMode: tournament.firstRoundPairingMode ?? "random",
+          knockoutMatchFormat:
+            tournament.knockoutMatchFormat ??
+            (tournament.matchResultMode === "winner_only"
+              ? "bo1"
+              : "bo3_semis_finals"),
+        },
       );
     }
 

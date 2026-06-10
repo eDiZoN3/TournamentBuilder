@@ -1508,3 +1508,26 @@ Tests cover saving without start, existing separate start redirect behavior, rea
 Tests cover draft join-phase rendering, no bracket/stat rendering before start, self-join success state, active bracket rendering after start, and existing no-email response coverage.
 
 ---
+
+## Phase 14 - Roadmap Item 9
+
+Archived from `task.md` after roadmap item 9 and issue 28 were implemented.
+
+### T109-T113 - Knockout Tournament Variants (TDD First)
+**Files**: `lib/models/Tournament.ts`, `lib/bracket/generate.ts`, `lib/bracket/advance.ts`, `app/api/tournaments/route.ts`, `app/api/tournaments/[id]/route.ts`, `app/api/tournaments/[id]/start/route.ts`, `app/api/tournaments/[id]/matches/[matchId]/status/route.ts`, `app/api/tournaments/[id]/matches/[matchId]/scores/route.ts`, `app/api/tournaments/[id]/matches/[matchId]/override/route.ts`, `app/admin/tournament/new/page.tsx`, `components/admin/MatchControls.tsx`, `components/admin/CompletedMatchControls.tsx`, `components/admin/TournamentManageView.tsx`, `lib/i18n.ts`, `lib/openapi.ts`
+**Depends on**: T104
+**TDD**: Tests written before implementation
+**Description**: Implemented configurable knockout tournaments:
+- Added persisted knockout configuration for bracket type, first-round pairing mode, result mode, and knockout match format.
+- Generated single-elimination brackets without loser-bracket matches while preserving existing double-elimination defaults.
+- Added manual first-round pairing with trailing byes and BO1-all knockout generation when BO3 finals are disabled.
+- Added winner-only match completion and winner-only override support without synthetic score sets.
+- Rejected score entry for winner-only tournaments and winner-only completion for point-scored tournaments.
+- Added tournament creation controls for single elimination, manual pairing, winner-only results, and the BO3 semi-final/final switch.
+- Documented the new API fields in OpenAPI and moved roadmap item 9 plus issue 28 to the implemented backlog files.
+
+Tests cover model/API defaults and validation, OpenAPI schema fields, single-elimination/manual bracket generation, start route persistence, winner-only completion and overrides, score rejection, stats without point totals, and creation/manage UI controls.
+
+Validation: `npm run typecheck`, `npm run test:coverage`, and `npm run build` passed.
+
+---

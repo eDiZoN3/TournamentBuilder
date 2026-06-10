@@ -210,6 +210,14 @@ function tournamentResponseBody(tournament: { toObject(): ITournament }) {
   return {
     ...responseBody,
     format: responseBody.format ?? "double_elimination",
+    knockoutBracketType: responseBody.knockoutBracketType ?? "double_elimination",
+    firstRoundPairingMode: responseBody.firstRoundPairingMode ?? "random",
+    matchResultMode: responseBody.matchResultMode ?? "points",
+    knockoutMatchFormat:
+      responseBody.knockoutMatchFormat ??
+      (responseBody.matchResultMode === "winner_only"
+        ? "bo1"
+        : "bo3_semis_finals"),
     roundRobinMatchFormat: responseBody.roundRobinMatchFormat ?? "bo1",
     joinedPlayers: publicJoinedPlayers(responseBody.joinedPlayers),
   };

@@ -121,6 +121,57 @@ describe("calculateTournamentStats", () => {
     );
   });
 
+  it("counts winner-only matches without adding set or point totals", () => {
+    const teams = makeTeams(2);
+    teams[0].players = ["Alice"];
+    teams[1].players = ["Bob"];
+    const cup = tournament({
+      matchResultMode: "winner_only",
+      teams,
+      matches: [
+        makeMatch({
+          status: "completed",
+          teamA: { teamId: teams[0]._id, sets: [] },
+          teamB: { teamId: teams[1]._id, sets: [] },
+          winnerId: teams[1]._id,
+          loserId: teams[0]._id,
+        }),
+      ],
+    });
+
+    const stats = calculateTournamentStats(cup);
+
+    expect(stats.teams).toEqual([
+      expect.objectContaining({
+        name: "Team B",
+        matchesPlayed: 1,
+        matchesWon: 1,
+        setsWon: 0,
+        setsLost: 0,
+        pointsFor: 0,
+        pointsAgainst: 0,
+      }),
+      expect.objectContaining({
+        name: "Team A",
+        matchesPlayed: 1,
+        matchesLost: 1,
+        setsWon: 0,
+        setsLost: 0,
+        pointsFor: 0,
+        pointsAgainst: 0,
+      }),
+    ]);
+    expect(stats.players).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Bob",
+          matchesWon: 1,
+          pointsFor: 0,
+        }),
+      ]),
+    );
+  });
+
   it("excludes byes and incomplete matches but keeps rostered zero rows", () => {
     const teams = makeTeams(3);
     const cup = tournament({

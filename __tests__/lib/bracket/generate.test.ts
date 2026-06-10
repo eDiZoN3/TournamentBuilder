@@ -167,6 +167,54 @@ describe("generateBracket", () => {
     });
   });
 
+  it("creates single-elimination brackets without loser matches", () => {
+    const matches = generateBracket(makeTeams(6), 2, {
+      knockoutBracketType: "single_elimination",
+      firstRoundPairingMode: "manual",
+      knockoutMatchFormat: "bo1",
+    });
+
+    expect(matches).toHaveLength(7);
+    expect(matches.some((match) => match.bracket === "loser")).toBe(false);
+    expect(matches.filter((match) => match.isWBFinal)).toHaveLength(1);
+    expect(matches.every((match) => match.format === "bo1")).toBe(true);
+  });
+
+  it("preserves manual first-round pair order and gives trailing teams byes", () => {
+    const teams = makeTeams(6);
+    const matches = generateBracket(teams, 2, {
+      knockoutBracketType: "single_elimination",
+      firstRoundPairingMode: "manual",
+      knockoutMatchFormat: "bo1",
+    });
+    const firstRound = matchesIn(matches, "winner", 1);
+
+    expect(
+      firstRound.map((match) => [
+        match.teamA
+          ? teams.findIndex((team) => team._id.equals(match.teamA?.teamId)) + 1
+          : null,
+        match.teamB
+          ? teams.findIndex((team) => team._id.equals(match.teamB?.teamId)) + 1
+          : null,
+      ]),
+    ).toEqual([
+      [1, 2],
+      [3, 4],
+      [5, null],
+      [6, null],
+    ]);
+    expect(firstRound.slice(2).every((match) => match.isBye)).toBe(true);
+  });
+
+  it("keeps all knockout matches BO1 when BO3 finals are disabled", () => {
+    const matches = generateBracket(makeTeams(8), 2, {
+      knockoutMatchFormat: "bo1",
+    });
+
+    expect(matches.every((match) => match.format === "bo1")).toBe(true);
+  });
+
   it("auto-completes WB byes and propagates lucky-loser byes", () => {
     const matches = orderedBracket(3);
     const wbR1 = matchesIn(matches, "winner", 1);

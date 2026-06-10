@@ -119,6 +119,29 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/scores", () => {
     });
   });
 
+  it("rejects score entry for winner-only tournaments", async () => {
+    const { tournament, match } = await createTournamentWithMatch();
+
+    tournament.matchResultMode = "winner_only";
+    tournament.knockoutMatchFormat = "bo1";
+    await tournament.save();
+
+    const response = await saveScore(
+      request(tournament._id.toString(), match._id.toString(), {
+        setIndex: 0,
+        scoreA: 11,
+        scoreB: 9,
+      }),
+      context(tournament._id.toString(), match._id.toString()),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "CONFLICT",
+      error: "Scores are disabled for winner-only tournaments",
+    });
+  });
+
   it.each([
     ["an out-of-bounds BO3 set", { setIndex: 3, scoreA: 11, scoreB: 9 }],
     ["a skipped set", { setIndex: 1, scoreA: 11, scoreB: 9 }],

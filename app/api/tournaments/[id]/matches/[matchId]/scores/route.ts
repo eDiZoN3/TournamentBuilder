@@ -83,6 +83,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return jsonError("Match not found", "NOT_FOUND", 404);
     }
 
+    if ((tournament.matchResultMode ?? "points") === "winner_only") {
+      return jsonError(
+        "Scores are disabled for winner-only tournaments",
+        "CONFLICT",
+        409,
+      );
+    }
+
     if (match.status !== "in_progress") {
       return jsonError(
         "Scores can only be entered for in-progress matches",

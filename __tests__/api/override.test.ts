@@ -156,6 +156,69 @@ describe("POST /api/tournaments/[id]/matches/[matchId]/override", () => {
     expect(saved?.status).toBe("active");
   });
 
+  it("overrides a completed winner-only match by selected winner side", async () => {
+    const teams = makeTeams(3);
+    const downstream = makeMatch({
+      round: 2,
+      status: "completed",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[2]._id, sets: [] },
+      winnerId: teams[0]._id,
+      loserId: teams[2]._id,
+    });
+    const source = makeMatch({
+      status: "completed",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+      winnerId: teams[0]._id,
+      loserId: teams[1]._id,
+      winnerNextMatchId: downstream._id,
+      winnerNextSlot: "A",
+    });
+    const tournament = await Tournament.create({
+      name: "Winner Only Cup",
+      status: "completed",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [source, downstream],
+    });
+
+    const response = await overrideMatch(
+      request(tournament._id.toString(), source._id.toString(), {
+        winnerSide: "B",
+      }),
+      context(tournament._id.toString(), source._id.toString()),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      matchId: source._id.toString(),
+      winnerChanged: true,
+      affectedMatchIds: [downstream._id.toString()],
+      tournamentStatus: "active",
+    });
+    expect(saved?.matches[0]).toMatchObject({
+      status: "completed",
+      winnerId: teams[1]._id,
+      loserId: teams[0]._id,
+    });
+    expect(saved?.matches[0].teamA?.sets).toEqual([]);
+    expect(saved?.matches[0].teamB?.sets).toEqual([]);
+    expect(saved?.matches[1]).toMatchObject({
+      status: "ready",
+      teamA: { teamId: teams[1]._id, sets: [] },
+      teamB: { teamId: teams[2]._id, sets: [] },
+      winnerId: null,
+      loserId: null,
+    });
+  });
+
   it("rejects invalid override scores", async () => {
     const { tournament, source } = await createCompletedTournament();
 

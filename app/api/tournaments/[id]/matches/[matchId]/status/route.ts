@@ -6,6 +6,7 @@ import { assignCourt, onMatchComplete } from "@/lib/bracket/advance";
 import { autoAssignReadyMatches } from "@/lib/bracket/scheduler";
 import { connectDB } from "@/lib/db";
 import { Tournament } from "@/lib/models/Tournament";
+import type { TeamSide } from "@/lib/scoring";
 
 interface RouteContext {
   params: Promise<{
@@ -16,14 +17,34 @@ interface RouteContext {
 
 type RequestedStatus = "in_progress" | "completed";
 
-function parseStatus(body: unknown): RequestedStatus | null {
+interface ParsedStatus {
+  status: RequestedStatus;
+  winnerSide?: TeamSide;
+}
+
+function parseStatus(body: unknown): ParsedStatus | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return null;
   }
 
-  const { status } = body as Record<string, unknown>;
+  const { status, winnerSide } = body as Record<string, unknown>;
 
-  return status === "in_progress" || status === "completed" ? status : null;
+  if (status !== "in_progress" && status !== "completed") {
+    return null;
+  }
+
+  if (
+    winnerSide !== undefined &&
+    winnerSide !== "A" &&
+    winnerSide !== "B"
+  ) {
+    return null;
+  }
+
+  return {
+    status,
+    ...(winnerSide === "A" || winnerSide === "B" ? { winnerSide } : {}),
+  };
 }
 
 function errorMessage(error: unknown, fallback: string): string {
@@ -74,7 +95,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       matchId: string;
     }> = [];
 
-    if (requestedStatus === "in_progress") {
+    if (requestedStatus.status === "in_progress") {
       try {
         assignCourt(tournament, match);
       } catch (error) {
@@ -102,7 +123,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
 
       try {
-        const completion = onMatchComplete(tournament, match);
+        const completion = onMatchComplete(
+          tournament,
+          match,
+          requestedStatus.winnerSide,
+        );
 
         tournamentCompleted = completion.tournamentCompleted;
         nextMatchesReady = completion.nextMatchesReady;
@@ -114,7 +139,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       } catch (error) {
         if (
           error instanceof Error &&
-          error.message === "Match winner has not been determined"
+          [
+            "Match winner has not been determined",
+            "Winner-only completion is not enabled",
+            "Winner side is required",
+          ].includes(error.message)
         ) {
           return jsonError(error.message, "VALIDATION_ERROR", 422);
         }

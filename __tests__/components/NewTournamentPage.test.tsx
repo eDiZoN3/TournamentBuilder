@@ -60,6 +60,10 @@ describe("NewTournamentPage", () => {
         body: JSON.stringify({
           name: "Summer Cup",
           format: "double_elimination",
+          knockoutBracketType: "double_elimination",
+          firstRoundPairingMode: "random",
+          matchResultMode: "points",
+          knockoutMatchFormat: "bo3_semis_finals",
           teamSize: 3,
           courtsAvailable: 2,
           inputMode: "players",
@@ -96,6 +100,10 @@ describe("NewTournamentPage", () => {
           body: JSON.stringify({
             name: "Open Cup",
             format: "double_elimination",
+            knockoutBracketType: "double_elimination",
+            firstRoundPairingMode: "random",
+            matchResultMode: "points",
+            knockoutMatchFormat: "bo3_semis_finals",
             teamSize: 2,
             courtsAvailable: 1,
             inputMode: "players",
@@ -136,6 +144,87 @@ describe("NewTournamentPage", () => {
             inputMode: "teams",
             allowSelfJoin: false,
             roundRobinMatchFormat: "bo1",
+          }),
+        }),
+      );
+    });
+  });
+
+  it("submits single-elimination manual winner-only knockout settings", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Manual KO Cup" },
+    });
+    fireEvent.click(screen.getByLabelText("Single elimination"));
+    fireEvent.click(screen.getByLabelText("Manual first-round pairing"));
+    fireEvent.click(screen.getByLabelText("Winner only"));
+    expect(screen.queryByLabelText("Best-of-three semi-finals and final")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: "Manual KO Cup",
+            format: "double_elimination",
+            knockoutBracketType: "single_elimination",
+            firstRoundPairingMode: "manual",
+            matchResultMode: "winner_only",
+            knockoutMatchFormat: "bo1",
+            teamSize: 2,
+            courtsAvailable: 1,
+            inputMode: "teams",
+            allowSelfJoin: false,
+          }),
+        }),
+      );
+    });
+  });
+
+  it("submits BO1 knockout matches when the BO3 finals switch is disabled", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "BO1 Cup" },
+    });
+    fireEvent.click(screen.getByLabelText("Best-of-three semi-finals and final"));
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        "/api/tournaments",
+        expect.objectContaining({
+          body: JSON.stringify({
+            name: "BO1 Cup",
+            format: "double_elimination",
+            knockoutBracketType: "double_elimination",
+            firstRoundPairingMode: "random",
+            matchResultMode: "points",
+            knockoutMatchFormat: "bo1",
+            teamSize: 2,
+            courtsAvailable: 1,
+            inputMode: "teams",
+            allowSelfJoin: false,
           }),
         }),
       );

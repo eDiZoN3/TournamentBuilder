@@ -20,6 +20,12 @@ export interface TeamSlot {
 }
 
 export type RoundRobinMatchFormat = "bo1" | "bo3";
+export type KnockoutBracketType =
+  | "double_elimination"
+  | "single_elimination";
+export type FirstRoundPairingMode = "random" | "manual";
+export type MatchResultMode = "points" | "winner_only";
+export type KnockoutMatchFormat = "bo3_semis_finals" | "bo1";
 
 export interface Match {
   _id: Types.ObjectId;
@@ -54,6 +60,10 @@ export interface Tournament {
   name: string;
   status: "draft" | "active" | "completed";
   format: TournamentFormat;
+  knockoutBracketType: KnockoutBracketType;
+  firstRoundPairingMode: FirstRoundPairingMode;
+  matchResultMode: MatchResultMode;
+  knockoutMatchFormat: KnockoutMatchFormat;
   roundRobinMatchFormat: RoundRobinMatchFormat;
   teamSize: 2 | 3 | 4;
   courtsAvailable: number;
@@ -138,6 +148,10 @@ export function makeTournament(
     name: "Test Tournament",
     status: "draft",
     format: "double_elimination",
+    knockoutBracketType: "double_elimination",
+    firstRoundPairingMode: "random",
+    matchResultMode: "points",
+    knockoutMatchFormat: "bo3_semis_finals",
     roundRobinMatchFormat: "bo1",
     teamSize: 2,
     courtsAvailable: 1,

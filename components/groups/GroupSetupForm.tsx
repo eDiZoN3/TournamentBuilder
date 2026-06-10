@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface TeamRow {
   id: number;
@@ -20,6 +21,7 @@ function nextId() {
 
 export function GroupSetupForm() {
   const router = useRouter();
+  const { t } = useLocale();
   const [groupName, setGroupName] = useState("");
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -31,11 +33,11 @@ export function GroupSetupForm() {
   }
 
   function removeTeam(id: number) {
-    setTeams((prev) => prev.filter((t) => t.id !== id));
+    setTeams((prev) => prev.filter((team) => team.id !== id));
   }
 
   function updateTeam(id: number, name: string) {
-    setTeams((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
+    setTeams((prev) => prev.map((team) => (team.id === id ? { ...team, name } : team)));
   }
 
   function addCategory() {
@@ -43,34 +45,33 @@ export function GroupSetupForm() {
   }
 
   function removeCategory(id: number) {
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+    setCategories((prev) => prev.filter((cat) => cat.id !== id));
   }
 
   function updateCategory(id: number, name: string) {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, name } : c)));
+    setCategories((prev) => prev.map((cat) => (cat.id === id ? { ...cat, name } : cat)));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const validTeams = teams.filter((t) => t.name.trim().length > 0);
-    const validCategories = categories.filter((c) => c.name.trim().length > 0);
+    const validTeams = teams.filter((team) => team.name.trim().length > 0);
+    const validCategories = categories.filter((cat) => cat.name.trim().length > 0);
 
     if (validTeams.length < 2) {
-      setError("At least 2 teams are required.");
+      setError(t("atLeastTwoTeamsRequired"));
       return;
     }
 
     if (validCategories.length < 1) {
-      setError("At least 1 category is required.");
+      setError(t("atLeastOneCategoryRequired"));
       return;
     }
 
     setSubmitting(true);
 
     try {
-      // 1. Create the group
       const createRes = await fetch("/api/groups", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -78,27 +79,25 @@ export function GroupSetupForm() {
       });
 
       if (!createRes.ok) {
-        setError("Failed to create group.");
+        setError(t("failedToCreateGroup"));
         return;
       }
 
       const { _id: groupId } = (await createRes.json()) as { _id: string };
 
-      // 2. Set teams
       const teamsRes = await fetch(`/api/groups/${groupId}/teams`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          teams: validTeams.map((t) => ({ name: t.name.trim(), players: [] })),
+          teams: validTeams.map((team) => ({ name: team.name.trim(), players: [] })),
         }),
       });
 
       if (!teamsRes.ok) {
-        setError("Failed to save teams.");
+        setError(t("failedToSaveTeams"));
         return;
       }
 
-      // 3. Create categories
       for (const cat of validCategories) {
         const catRes = await fetch(`/api/groups/${groupId}/categories`, {
           method: "POST",
@@ -107,7 +106,7 @@ export function GroupSetupForm() {
         });
 
         if (!catRes.ok) {
-          setError("Failed to save categories.");
+          setError(t("failedToSaveCategories"));
           return;
         }
       }
@@ -122,7 +121,7 @@ export function GroupSetupForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label htmlFor="group-name" className="block font-medium mb-1">
-          Group name
+          {t("groupName")}
         </label>
         <input
           id="group-name"
@@ -135,21 +134,21 @@ export function GroupSetupForm() {
       </div>
 
       <div>
-        <h2 className="font-semibold mb-2">Teams</h2>
+        <h2 className="font-semibold mb-2">{t("teams")}</h2>
         <div className="space-y-2">
-          {teams.map((t) => (
-            <div key={t.id} className="flex gap-2">
+          {teams.map((team) => (
+            <div key={team.id} className="flex gap-2">
               <input
                 type="text"
-                placeholder="Team name"
-                value={t.name}
-                onChange={(e) => updateTeam(t.id, e.target.value)}
+                placeholder={t("teamNameField").replace(" {n}", "")}
+                value={team.name}
+                onChange={(e) => updateTeam(team.id, e.target.value)}
                 className="flex-1 border rounded px-3 py-1"
               />
               <button
                 type="button"
-                onClick={() => removeTeam(t.id)}
-                aria-label="Remove team"
+                onClick={() => removeTeam(team.id)}
+                aria-label={t("remove") + " team"}
                 className="text-red-500 px-2"
               >
                 ✕
@@ -162,26 +161,26 @@ export function GroupSetupForm() {
           onClick={addTeam}
           className="mt-2 text-blue-600 hover:underline text-sm"
         >
-          Add team
+          {t("addTeam")}
         </button>
       </div>
 
       <div>
-        <h2 className="font-semibold mb-2">Categories</h2>
+        <h2 className="font-semibold mb-2">{t("categories")}</h2>
         <div className="space-y-2">
-          {categories.map((c) => (
-            <div key={c.id} className="flex gap-2">
+          {categories.map((cat) => (
+            <div key={cat.id} className="flex gap-2">
               <input
                 type="text"
-                placeholder="Category name"
-                value={c.name}
-                onChange={(e) => updateCategory(c.id, e.target.value)}
+                placeholder={t("categoryName")}
+                value={cat.name}
+                onChange={(e) => updateCategory(cat.id, e.target.value)}
                 className="flex-1 border rounded px-3 py-1"
               />
               <button
                 type="button"
-                onClick={() => removeCategory(c.id)}
-                aria-label="Remove category"
+                onClick={() => removeCategory(cat.id)}
+                aria-label={t("remove") + " category"}
                 className="text-red-500 px-2"
               >
                 ✕
@@ -194,7 +193,7 @@ export function GroupSetupForm() {
           onClick={addCategory}
           className="mt-2 text-blue-600 hover:underline text-sm"
         >
-          Add category
+          {t("addCategory")}
         </button>
       </div>
 
@@ -205,7 +204,7 @@ export function GroupSetupForm() {
         disabled={submitting}
         className="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        Create group
+        {t("createGroup")}
       </button>
     </form>
   );

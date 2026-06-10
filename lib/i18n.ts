@@ -315,7 +315,15 @@ export type TranslationKey =
   | "totalScore"
   | "idleWaitingForTeams"
   | "nextQueuedMatch"
-  | "noGroupsYet";
+  | "noGroupsYet"
+  | "createGroup"
+  | "rank"
+  | "failedToStartGroup"
+  | "failedToCreateGroup"
+  | "failedToSaveTeams"
+  | "failedToSaveCategories"
+  | "atLeastTwoTeamsRequired"
+  | "atLeastOneCategoryRequired";
 
 const translations: Record<Locale, Record<TranslationKey, string>> = {
   de: {
@@ -635,10 +643,10 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Fügen Sie Teilnehmer hinzu und bestätigen Sie die Teams, bevor Sie das Turnier starten.",
     completedNonByeMatches: "Gespielte Matches",
     individualMixer: "Einzel-Mixer",
-    tournamentGroups: "Turniergruppen",
+    tournamentGroups: "Multi-Kategorie Turniere",
     groups: "Gruppen",
     group: "Gruppe",
-    newGroup: "Neue Gruppe",
+    newGroup: "Neues Event",
     groupName: "Gruppenname",
     categories: "Kategorien",
     category: "Kategorie",
@@ -649,7 +657,15 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     totalScore: "Gesamtpunktzahl",
     idleWaitingForTeams: "Wartend — Teams belegt",
     nextQueuedMatch: "Nächstes Spiel",
-    noGroupsYet: "Noch keine Turniergruppen.",
+    noGroupsYet: "Noch keine Multi-Kategorie Events.",
+    createGroup: "Gruppe erstellen",
+    rank: "Rang",
+    failedToStartGroup: "Gruppe konnte nicht gestartet werden.",
+    failedToCreateGroup: "Gruppe konnte nicht erstellt werden.",
+    failedToSaveTeams: "Teams konnten nicht gespeichert werden.",
+    failedToSaveCategories: "Kategorien konnten nicht gespeichert werden.",
+    atLeastTwoTeamsRequired: "Mindestens 2 Teams erforderlich.",
+    atLeastOneCategoryRequired: "Mindestens 1 Kategorie erforderlich.",
   },
   en: {
     account: "Account",
@@ -961,10 +977,10 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Add participants and confirm the teams before starting the tournament.",
     completedNonByeMatches: "Completed non-bye matches",
     individualMixer: "Individual mixer",
-    tournamentGroups: "Tournament Groups",
+    tournamentGroups: "Multi-Category Tournaments",
     groups: "Groups",
     group: "Group",
-    newGroup: "New group",
+    newGroup: "New event",
     groupName: "Group name",
     categories: "Categories",
     category: "Category",
@@ -975,7 +991,15 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     totalScore: "Total score",
     idleWaitingForTeams: "Waiting — teams occupied",
     nextQueuedMatch: "Next up",
-    noGroupsYet: "No tournament groups yet.",
+    noGroupsYet: "No multi-category events yet.",
+    createGroup: "Create group",
+    rank: "Rank",
+    failedToStartGroup: "Failed to start group.",
+    failedToCreateGroup: "Failed to create group.",
+    failedToSaveTeams: "Failed to save teams.",
+    failedToSaveCategories: "Failed to save categories.",
+    atLeastTwoTeamsRequired: "At least 2 teams are required.",
+    atLeastOneCategoryRequired: "At least 1 category is required.",
   },
 };
 
@@ -997,4 +1021,21 @@ export function formatTranslation(
       ? String(values[name])
       : placeholder,
   );
+}
+
+export function localizeOrdinal(n: number, locale: Locale): string {
+  if (locale === "de") {
+    return `${n}.`;
+  }
+  const suffix =
+    n % 100 >= 11 && n % 100 <= 13
+      ? "th"
+      : n % 10 === 1
+        ? "st"
+        : n % 10 === 2
+          ? "nd"
+          : n % 10 === 3
+            ? "rd"
+            : "th";
+  return `${n}${suffix}`;
 }

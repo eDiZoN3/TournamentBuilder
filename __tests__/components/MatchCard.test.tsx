@@ -36,7 +36,7 @@ describe("MatchCard", () => {
     expect(screen.queryByText(/Court/)).not.toBeInTheDocument();
   });
 
-  it("highlights a live match and shows its assigned court", () => {
+  it("highlights a live match with amber border (no pulse) and shows its assigned court", () => {
     const [teamA, teamB] = makeTeams(2);
 
     render(
@@ -54,7 +54,8 @@ describe("MatchCard", () => {
 
     expect(screen.getByText("LIVE")).toBeInTheDocument();
     expect(screen.getByText("Court 2")).toBeInTheDocument();
-    expect(screen.getByTestId("match-card")).toHaveClass("animate-pulse");
+    expect(screen.getByTestId("match-card")).not.toHaveClass("animate-pulse");
+    expect(screen.getByTestId("match-card")).toHaveClass("border-amber-400");
   });
 
   it("shows played BO3 sets and emphasizes the completed winner", () => {
@@ -200,7 +201,7 @@ describe("MatchCard", () => {
     expect(screen.getByText("1st-2nd Place")).toBeInTheDocument();
   });
 
-  it("suppresses animate-pulse on a pinned live match card (score entry open)", () => {
+  it("pinned live match card has no animate-pulse and retains amber border", () => {
     const [teamA, teamB] = makeTeams(2);
 
     render(
@@ -223,7 +224,7 @@ describe("MatchCard", () => {
     expect(card).toHaveClass("border-amber-400");
   });
 
-  it("retains animate-pulse on a live match card that is not pinned", () => {
+  it("live match card has no animate-pulse even when not pinned", () => {
     const [teamA, teamB] = makeTeams(2);
 
     render(
@@ -239,6 +240,7 @@ describe("MatchCard", () => {
       />,
     );
 
-    expect(screen.getByTestId("match-card")).toHaveClass("animate-pulse");
+    expect(screen.getByTestId("match-card")).not.toHaveClass("animate-pulse");
+    expect(screen.getByTestId("match-card")).toHaveClass("border-amber-400");
   });
 });

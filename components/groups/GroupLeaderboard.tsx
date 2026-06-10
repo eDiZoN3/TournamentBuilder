@@ -1,27 +1,17 @@
 "use client";
 
 import { computeLeaderboard } from "@/lib/groups/leaderboard";
+import { localizeOrdinal } from "@/lib/i18n";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import type { ITournamentGroup } from "@/lib/models/TournamentGroup";
 
 interface GroupLeaderboardProps {
   group: ITournamentGroup;
 }
 
-function ordinal(n: number): string {
-  const suffix =
-    n % 100 >= 11 && n % 100 <= 13
-      ? "th"
-      : n % 10 === 1
-        ? "st"
-        : n % 10 === 2
-          ? "nd"
-          : n % 10 === 3
-            ? "rd"
-            : "th";
-  return `${n}${suffix}`;
-}
-
 export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
+  const { locale, t } = useLocale();
+
   if (group.status === "draft") return null;
 
   const rows = computeLeaderboard(group);
@@ -34,14 +24,14 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
       <table className="w-full text-left">
         <thead>
           <tr>
-            <th className="py-2 pr-4">Rank</th>
-            <th className="py-2 pr-4">Team</th>
+            <th className="py-2 pr-4">{t("rank")}</th>
+            <th className="py-2 pr-4">{t("team")}</th>
             {sortedCategories.map((cat) => (
               <th key={cat._id.toString()} className="py-2 pr-4">
                 {cat.name}
               </th>
             ))}
-            <th className="py-2 pr-4">Total Score</th>
+            <th className="py-2 pr-4">{t("totalScore")}</th>
           </tr>
         </thead>
         <tbody>
@@ -65,7 +55,7 @@ export function GroupLeaderboard({ group }: GroupLeaderboardProps) {
                 {sortedCategories.map((cat, catIndex) => (
                   <td key={cat._id.toString()} className="py-2 pr-4">
                     {row.placements[catIndex] != null
-                      ? ordinal(row.placements[catIndex])
+                      ? localizeOrdinal(row.placements[catIndex] as number, locale)
                       : "—"}
                   </td>
                 ))}

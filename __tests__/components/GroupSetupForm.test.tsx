@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { TournamentGroup } from "@/lib/models/TournamentGroup";
 import AdminGroupsListPage from "@/app/admin/groups/page";
+import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(),
@@ -66,6 +67,7 @@ describe("GroupSetupForm", () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     vi.resetModules();
+    window.localStorage.removeItem(LOCALE_STORAGE_KEY);
   });
 
   it("renders name input, team rows section, and category rows section", () => {
@@ -212,6 +214,56 @@ describe("GroupSetupForm", () => {
     expect(teamsCall[1].method).toBe("PUT");
     expect(catCall[0]).toBe(`/api/groups/${groupId}/categories`);
     expect(catCall[1].method).toBe("POST");
+  });
+
+  it("renders 'Gruppe erstellen' submit button in German locale", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "de");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+    render(<LocaleProvider><GroupSetupForm /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Gruppe erstellen" })).toBeInTheDocument(),
+    );
+  });
+
+  it("renders 'Create group' submit button in English locale", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+    render(<LocaleProvider><GroupSetupForm /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Create group" })).toBeInTheDocument(),
+    );
+  });
+
+  it("shows German validation error when fewer than 2 teams are entered", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "de");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+    render(<LocaleProvider><GroupSetupForm /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Gruppe erstellen" })).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByLabelText(/gruppen/i), {
+      target: { value: "My Cup" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /team hinzufügen/i }));
+    fireEvent.change(screen.getAllByPlaceholderText(/team/i)[0], {
+      target: { value: "Solo" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /kategorie hinzufügen/i }));
+    fireEvent.change(screen.getAllByPlaceholderText(/kategorie/i)[0], {
+      target: { value: "Cat A" },
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Gruppe erstellen" }));
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText("Mindestens 2 Teams erforderlich.")).toBeInTheDocument(),
+    );
   });
 
   it("redirects to the group management page after successful creation", async () => {

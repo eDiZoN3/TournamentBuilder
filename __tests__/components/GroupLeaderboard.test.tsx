@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { Types } from "mongoose";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, afterEach } from "vitest";
 import type { ITournamentGroup } from "@/lib/models/TournamentGroup";
 import type { LeaderboardRow } from "@/lib/groups/leaderboard";
+import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 
 vi.mock("@/lib/groups/leaderboard", () => ({
   computeLeaderboard: vi.fn(() => [] as LeaderboardRow[]),
@@ -38,6 +39,11 @@ function makeRow(overrides: Partial<LeaderboardRow> = {}): LeaderboardRow {
 }
 
 describe("GroupLeaderboard", () => {
+  afterEach(() => {
+    window.localStorage.removeItem(LOCALE_STORAGE_KEY);
+    vi.resetModules();
+  });
+
   it("renders category names as column headers", async () => {
     const { computeLeaderboard } = await import("@/lib/groups/leaderboard");
     vi.mocked(computeLeaderboard).mockReturnValue([makeRow()]);
@@ -156,5 +162,61 @@ describe("GroupLeaderboard", () => {
     render(<GroupLeaderboard group={group} />);
 
     expect(screen.getByRole("table")).toBeInTheDocument();
+  });
+
+  it("renders 'Rang' column header in German locale", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "de");
+    const { computeLeaderboard } = await import("@/lib/groups/leaderboard");
+    vi.mocked(computeLeaderboard).mockReturnValue([makeRow()]);
+    const { GroupLeaderboard } = await import("@/components/groups/GroupLeaderboard");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+
+    render(<LocaleProvider><GroupLeaderboard group={makeGroup()} /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByText("Rang")).toBeInTheDocument(),
+    );
+  });
+
+  it("renders 'Rank' column header in English locale", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en");
+    const { computeLeaderboard } = await import("@/lib/groups/leaderboard");
+    vi.mocked(computeLeaderboard).mockReturnValue([makeRow()]);
+    const { GroupLeaderboard } = await import("@/components/groups/GroupLeaderboard");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+
+    render(<LocaleProvider><GroupLeaderboard group={makeGroup()} /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByText("Rank")).toBeInTheDocument(),
+    );
+  });
+
+  it("renders '1.' placement in German locale for 1st place", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "de");
+    const { computeLeaderboard } = await import("@/lib/groups/leaderboard");
+    vi.mocked(computeLeaderboard).mockReturnValue([makeRow({ placements: [1, 2] })]);
+    const { GroupLeaderboard } = await import("@/components/groups/GroupLeaderboard");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+
+    render(<LocaleProvider><GroupLeaderboard group={makeGroup()} /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByText("1.")).toBeInTheDocument(),
+    );
+  });
+
+  it("renders '1st' placement in English locale for 1st place", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "en");
+    const { computeLeaderboard } = await import("@/lib/groups/leaderboard");
+    vi.mocked(computeLeaderboard).mockReturnValue([makeRow({ placements: [1, 2] })]);
+    const { GroupLeaderboard } = await import("@/components/groups/GroupLeaderboard");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+
+    render(<LocaleProvider><GroupLeaderboard group={makeGroup()} /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByText("1st")).toBeInTheDocument(),
+    );
   });
 });

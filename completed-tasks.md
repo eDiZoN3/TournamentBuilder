@@ -10,6 +10,22 @@ Each task is atomic enough for a single coding session. TDD tasks write tests fi
 
 ---
 
+## Phase 17 — Open Issue Fixes (Issues 32–34)
+
+### T132 — Make Tournament Groups Accessible and Rename Feature [COMPLETED]
+**Files**: `components/ui/AdminSidebar.tsx`, `app/admin/groups/page.tsx`, `components/groups/GroupsListView.tsx`, `lib/i18n.ts`
+**Description**: Added `/admin/groups` navigation link to `AdminSidebar.tsx` using `t("tournamentGroups")`. Renamed i18n display values: `tournamentGroups` → "Multi-Category Tournaments"/"Multi-Kategorie Turniere", `newGroup` → "New event"/"Neues Event", `noGroupsYet` → "No multi-category events yet."/"Noch keine Multi-Kategorie Events.". Extracted display logic from the server page into a new `GroupsListView` client component with dark-mode styling, consistent Tailwind card/table patterns, and `useLocale()`. Server page serializes lean Mongoose docs before passing to client.
+
+### T133 — Remove Pulsating Animation from Live Match Cards [COMPLETED]
+**Files**: `components/bracket/MatchCard.tsx`, `__tests__/components/MatchCard.test.tsx`
+**Description**: Removed `animate-pulse` from live match cards entirely (including the `isPinned` conditional that was only there to suppress the pulse). Amber border/ring styling kept as the live indicator. Updated 3 tests (tests renamed; now assert `not.toHaveClass("animate-pulse")` and `toHaveClass("border-amber-400")` in both pinned and unpinned states). All 15 MatchCard tests pass.
+
+### T134 — Localize All Group UI Components [COMPLETED]
+**Files**: `components/groups/GroupSetupForm.tsx`, `components/groups/GroupManageView.tsx`, `components/groups/GroupLeaderboard.tsx`, `lib/i18n.ts`, `__tests__/lib/i18n.test.ts`, `__tests__/components/GroupSetupForm.test.tsx`, `__tests__/components/GroupManageView.test.tsx`, `__tests__/components/GroupLeaderboard.test.tsx`
+**Description**: All group UI components now call `useLocale()`. Added 8 new i18n keys (`createGroup`, `rank`, `failedToStartGroup`, `failedToCreateGroup`, `failedToSaveTeams`, `failedToSaveCategories`, `atLeastTwoTeamsRequired`, `atLeastOneCategoryRequired`) with DE+EN translations. Added `localizeOrdinal(n, locale)` to `lib/i18n.ts` — German uses `"${n}."`, English uses existing suffix logic. `GroupLeaderboard` now uses `localizeOrdinal` and `t("rank")`/`t("totalScore")`. All hardcoded English strings replaced with `t()` calls. 9 new tests (including `localizeOrdinal` unit tests and locale-switching tests for all three components). All 687 tests pass.
+
+---
+
 ## Phase 16 — Open Issue Fixes (Issues 29–31)
 
 ### T129 — Fix "Mark as In Progress" in Winner-Only Tournaments [COMPLETED]

@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 import { ScoreEntry } from "@/components/admin/ScoreEntry";
 import { GroupLeaderboard } from "@/components/groups/GroupLeaderboard";
+import { useLocale } from "@/components/ui/LocaleProvider";
 import { computeNextMatches } from "@/lib/groups/scheduler";
 import type { IGroupCategory } from "@/lib/models/TournamentGroup";
 import type { ITournamentGroup } from "@/lib/models/TournamentGroup";
@@ -27,6 +28,7 @@ interface ActiveScoreEntry {
 
 export function GroupManageView({ initialGroup }: GroupManageViewProps) {
   const groupId = initialGroup._id.toString();
+  const { t } = useLocale();
   const refreshFailures = useRef(0);
   const [scoreEntry, setScoreEntry] = useState<ActiveScoreEntry | null>(null);
   const [starting, setStarting] = useState(false);
@@ -52,7 +54,7 @@ export function GroupManageView({ initialGroup }: GroupManageViewProps) {
     try {
       const res = await fetch(`/api/groups/${groupId}/start`, { method: "POST" });
       if (!res.ok) {
-        setStartError("Failed to start group.");
+        setStartError(t("failedToStartGroup"));
       } else {
         await mutate();
       }
@@ -78,7 +80,7 @@ export function GroupManageView({ initialGroup }: GroupManageViewProps) {
             disabled={starting}
             className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
           >
-            Start group
+            {t("startGroup")}
           </button>
         )}
       </header>
@@ -134,6 +136,7 @@ function CategoryLiveRow({
   activations,
   onEnterScores,
 }: CategoryLiveRowProps) {
+  const { t } = useLocale();
   const activeMatch = category.matches.find((m) => m.status === "in_progress");
   const activation = activations.find((a) => a.categoryIndex === categoryIndex);
   const nextMatch = activation
@@ -164,19 +167,19 @@ function CategoryLiveRow({
             }
             className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
           >
-            Enter scores
+            {t("enterScores")}
           </button>
         </div>
       )}
 
       {nextMatch && !activeMatch && (
         <p className="text-sm text-gray-600">
-          <span className="font-medium">Next up:</span> {nextMatch.label}
+          <span className="font-medium">{t("nextQueuedMatch")}:</span> {nextMatch.label}
         </p>
       )}
 
       {isIdle && (
-        <p className="text-sm text-amber-600">Waiting — teams occupied</p>
+        <p className="text-sm text-amber-600">{t("idleWaitingForTeams")}</p>
       )}
     </div>
   );

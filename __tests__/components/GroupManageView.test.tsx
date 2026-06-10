@@ -6,6 +6,7 @@ import { Types } from "mongoose";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ITournamentGroup } from "@/lib/models/TournamentGroup";
 import type { MatchActivation } from "@/lib/groups/scheduler";
+import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 
 // ── Hoisted mocks ─────────────────────────────────────────────────────────────
 
@@ -121,6 +122,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   vi.resetModules();
+  window.localStorage.removeItem(LOCALE_STORAGE_KEY);
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -311,6 +313,38 @@ describe("GroupManageView", () => {
     render(<GroupManageView initialGroup={group} />);
 
     expect(screen.queryByText("Cat A")).not.toBeInTheDocument();
+  });
+
+  it("renders 'Gruppe starten' start button in German locale", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "de");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+    const groupId = new Types.ObjectId();
+    const group = makeGroup({ _id: groupId, status: "draft" });
+    render(<LocaleProvider><GroupManageView initialGroup={group} /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Gruppe starten" })).toBeInTheDocument(),
+    );
+  });
+
+  it("renders 'Ergebnisse eingeben' button in German locale for active match", async () => {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, "de");
+    const { LocaleProvider } = await import("@/components/ui/LocaleProvider");
+    const matchId = new Types.ObjectId();
+    const activeMatch = makeMatch({
+      _id: matchId,
+      status: "in_progress",
+      teamA: makeTeamSlot("Alpha"),
+      teamB: makeTeamSlot("Beta"),
+    });
+    const group = makeGroup({
+      categories: [makeCategory("Cat A", 0, [activeMatch]) as never],
+    });
+    render(<LocaleProvider><GroupManageView initialGroup={group} /></LocaleProvider>);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Ergebnisse eingeben" })).toBeInTheDocument(),
+    );
   });
 
   it("SWR is called with refreshInterval that stops when completed", () => {

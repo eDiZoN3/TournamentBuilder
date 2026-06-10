@@ -111,7 +111,7 @@ export function MatchCard({
       ? "border-slate-200 opacity-60"
       : "border-slate-300",
     isLive
-      ? `${isPinned ? "" : "animate-pulse "}border-amber-400 ring-2 ring-amber-200 dark:border-amber-500 dark:ring-amber-700`
+      ? "border-amber-400 ring-2 ring-amber-200 dark:border-amber-500 dark:ring-amber-700"
       : "",
   ]
     .filter(Boolean)

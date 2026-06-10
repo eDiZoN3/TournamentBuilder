@@ -77,13 +77,6 @@ export function AdminSidebar() {
         </Link>
         <Link
           className="rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 hover:text-white"
-          href="/admin/groups"
-          onClick={() => setIsOpen(false)}
-        >
-          {t("tournamentGroups")}
-        </Link>
-        <Link
-          className="rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 hover:text-white"
           href="/"
           onClick={() => setIsOpen(false)}
         >

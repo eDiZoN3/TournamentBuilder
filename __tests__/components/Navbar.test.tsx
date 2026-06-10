@@ -29,6 +29,13 @@ describe("Navbar", () => {
     expect(screen.queryByRole("link", { name: "Admin login" })).not.toBeInTheDocument();
     expect(linkHrefs("Sign up")).toContain("/signup");
     expect(linkHrefs("Stats")).toContain("/stats");
+    expect(screen.queryByRole("link", { name: "Events" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Groups" })).not.toBeInTheDocument();
+    expect(
+      screen
+        .queryAllByRole("link")
+        .some((link) => link.getAttribute("href") === "/groups"),
+    ).toBe(false);
     expect(screen.getByLabelText("Switch to dark mode")).toBeInTheDocument();
   });
 

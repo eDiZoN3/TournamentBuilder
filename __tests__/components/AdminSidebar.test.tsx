@@ -27,6 +27,14 @@ describe("AdminSidebar", () => {
       "href",
       "/",
     );
+    expect(
+      screen.queryByRole("link", { name: "Multi-Category Tournaments" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen
+        .queryAllByRole("link")
+        .some((link) => link.getAttribute("href") === "/admin/groups"),
+    ).toBe(false);
     expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
     expect(screen.getByLabelText("Switch to dark mode")).toBeInTheDocument();
   });

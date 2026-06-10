@@ -77,7 +77,6 @@ export type TranslationKey =
   | "enterPlayerNames"
   | "enterScores"
   | "enterTeamNames"
-  | "eventDeleted"
   | "exactPlayerCountRequirement"
   | "final"
   | "finalStandings"
@@ -269,7 +268,6 @@ export type TranslationKey =
   | "unableToCreateAdminAccount"
   | "unableToCreatePlayerAccount"
   | "unableToCreateTournament"
-  | "unableToDeleteGroup"
   | "unableToDeletePracticeMatch"
   | "unableToDeleteTournament"
   | "unableToGenerateTeams"
@@ -302,30 +300,7 @@ export type TranslationKey =
   | "yourScore"
   | "addParticipantsNote"
   | "completedNonByeMatches"
-  | "individualMixer"
-  | "tournamentGroups"
-  | "groups"
-  | "group"
-  | "newGroup"
-  | "groupName"
-  | "categories"
-  | "category"
-  | "addCategory"
-  | "categoryName"
-  | "startGroup"
-  | "groupLeaderboard"
-  | "totalScore"
-  | "idleWaitingForTeams"
-  | "nextQueuedMatch"
-  | "noGroupsYet"
-  | "createGroup"
-  | "rank"
-  | "failedToStartGroup"
-  | "failedToCreateGroup"
-  | "failedToSaveTeams"
-  | "failedToSaveCategories"
-  | "atLeastTwoTeamsRequired"
-  | "atLeastOneCategoryRequired";
+  | "individualMixer";
 
 const translations: Record<Locale, Record<TranslationKey, string>> = {
   de: {
@@ -371,7 +346,6 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterMinPlayers: "Geben Sie mindestens {n} Spieler ein.",
     enterPlayerNames: "Spielernamen eingeben",
     enterTeamNames: "Teamnamen eingeben",
-    eventDeleted: "Event gelöscht",
     exactPlayerCountRequirement:
       "Spieleranzahl muss durch die Teamgröße teilbar sein.",
     findRegisteredPlayer: "Registrierten Spieler suchen",
@@ -621,7 +595,6 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToCreateAdminAccount: "Konnte Admin-Konto nicht erstellen.",
     unableToCreatePlayerAccount: "Konnte Spielerkonto nicht erstellen.",
     unableToCreateTournament: "Konnte Turnier nicht erstellen.",
-    unableToDeleteGroup: "Event konnte nicht gelöscht werden.",
     unableToDeletePracticeMatch: "Konnte Trainingsspiel nicht löschen.",
     unableToDeleteTournament: "Konnte Turnier nicht löschen.",
     unableToJoinTournament: "Konnte Turnier nicht beitreten.",
@@ -647,29 +620,6 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Fügen Sie Teilnehmer hinzu und bestätigen Sie die Teams, bevor Sie das Turnier starten.",
     completedNonByeMatches: "Gespielte Matches",
     individualMixer: "Einzel-Mixer",
-    tournamentGroups: "Multi-Kategorie Turniere",
-    groups: "Events",
-    group: "Gruppe",
-    newGroup: "Neues Event",
-    groupName: "Gruppenname",
-    categories: "Kategorien",
-    category: "Kategorie",
-    addCategory: "Kategorie hinzufügen",
-    categoryName: "Kategoriename",
-    startGroup: "Gruppe starten",
-    groupLeaderboard: "Gruppenrangliste",
-    totalScore: "Gesamtpunktzahl",
-    idleWaitingForTeams: "Wartend — Teams belegt",
-    nextQueuedMatch: "Nächstes Spiel",
-    noGroupsYet: "Noch keine Multi-Kategorie Events.",
-    createGroup: "Gruppe erstellen",
-    rank: "Rang",
-    failedToStartGroup: "Gruppe konnte nicht gestartet werden.",
-    failedToCreateGroup: "Gruppe konnte nicht erstellt werden.",
-    failedToSaveTeams: "Teams konnten nicht gespeichert werden.",
-    failedToSaveCategories: "Kategorien konnten nicht gespeichert werden.",
-    atLeastTwoTeamsRequired: "Mindestens 2 Teams erforderlich.",
-    atLeastOneCategoryRequired: "Mindestens 1 Kategorie erforderlich.",
   },
   en: {
     account: "Account",
@@ -713,7 +663,6 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     enterMinPlayers: "Enter at least {n} players.",
     enterPlayerNames: "Enter player names",
     enterTeamNames: "Enter team names",
-    eventDeleted: "Event deleted",
     exactPlayerCountRequirement: "Player count must be divisible by team size.",
     findRegisteredPlayer: "Find registered player",
     finalStandings: "Final standings",
@@ -959,7 +908,6 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToCreateAdminAccount: "Unable to create admin account.",
     unableToCreatePlayerAccount: "Unable to create player account.",
     unableToCreateTournament: "Unable to create tournament.",
-    unableToDeleteGroup: "Unable to delete event.",
     unableToDeletePracticeMatch: "Unable to delete practice match.",
     unableToDeleteTournament: "Unable to delete tournament.",
     unableToJoinTournament: "Unable to join tournament.",
@@ -983,29 +931,6 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Add participants and confirm the teams before starting the tournament.",
     completedNonByeMatches: "Completed non-bye matches",
     individualMixer: "Individual mixer",
-    tournamentGroups: "Multi-Category Tournaments",
-    groups: "Events",
-    group: "Group",
-    newGroup: "New event",
-    groupName: "Group name",
-    categories: "Categories",
-    category: "Category",
-    addCategory: "Add category",
-    categoryName: "Category name",
-    startGroup: "Start group",
-    groupLeaderboard: "Group leaderboard",
-    totalScore: "Total score",
-    idleWaitingForTeams: "Waiting — teams occupied",
-    nextQueuedMatch: "Next up",
-    noGroupsYet: "No multi-category events yet.",
-    createGroup: "Create group",
-    rank: "Rank",
-    failedToStartGroup: "Failed to start group.",
-    failedToCreateGroup: "Failed to create group.",
-    failedToSaveTeams: "Failed to save teams.",
-    failedToSaveCategories: "Failed to save categories.",
-    atLeastTwoTeamsRequired: "At least 2 teams are required.",
-    atLeastOneCategoryRequired: "At least 1 category is required.",
   },
 };
 
@@ -1029,19 +954,3 @@ export function formatTranslation(
   );
 }
 
-export function localizeOrdinal(n: number, locale: Locale): string {
-  if (locale === "de") {
-    return `${n}.`;
-  }
-  const suffix =
-    n % 100 >= 11 && n % 100 <= 13
-      ? "th"
-      : n % 10 === 1
-        ? "st"
-        : n % 10 === 2
-          ? "nd"
-          : n % 10 === 3
-            ? "rd"
-            : "th";
-  return `${n}${suffix}`;
-}

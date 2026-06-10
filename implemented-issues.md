@@ -28,7 +28,5 @@
 28. [implemented] add a switch in tournament creation to check whether semi finale and final have bo3 or not.
 29. [implemented] als laufend markieren in winner only tournaments must work so that i can select wich match is played right now.
 30. [implemented] after change password redirect to the dashboard to be able to enter standings. and the dashboard button shuold display the management view for the tournament management and not change-password
-31. [implemented] live standings for group tournaments in the group tournaments visible for the whole thing would be nice (can be solved with a standings tab or something like that.)
-32. [implemented] no possibility yet to create tournament groups (this is feature breaking, tournament mangagers and admins need to be able to create tournament groups and in the groups then add the categories in which are competed. fix this), rename groups in the frontend to something better describing the functionality. add the translation to the whole group functionality.
 33. [implemented] i dont want the active match to pulsate. just be highlighted with the yellow line like right now but no pulsating.
 34. [implemented] make sure there is a meaningfull german translation everywhere in the frontend available

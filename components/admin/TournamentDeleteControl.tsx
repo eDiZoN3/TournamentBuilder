@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { useLocale } from "@/components/ui/LocaleProvider";
-import { translate, type TranslationKey } from "@/lib/i18n";
+import { translate } from "@/lib/i18n";
 
 interface TournamentDeleteTarget {
   _id: string | { toString(): string };
@@ -12,11 +12,8 @@ interface TournamentDeleteTarget {
 }
 
 interface TournamentDeleteControlProps {
-  deletedLabelKey?: TranslationKey;
-  deleteUrl?: string;
   onDeleted: () => void | Promise<void>;
   tournament: TournamentDeleteTarget;
-  unableToDeleteKey?: TranslationKey;
 }
 
 interface ApiError {
@@ -34,11 +31,8 @@ async function apiError(response: Response, fallback: string) {
 }
 
 export function TournamentDeleteControl({
-  deletedLabelKey = "tournamentDeleted",
-  deleteUrl,
   onDeleted,
   tournament,
-  unableToDeleteKey = "unableToDeleteTournament",
 }: TournamentDeleteControlProps) {
   const { showToast } = useToast();
   const { locale } = useLocale();
@@ -46,7 +40,7 @@ export function TournamentDeleteControl({
   const [isConfirming, setIsConfirming] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const tournamentId = tournament._id.toString();
-  const endpoint = deleteUrl ?? `/api/tournaments/${tournamentId}`;
+  const endpoint = `/api/tournaments/${tournamentId}`;
   const requiresTypedConfirmation = tournament.status !== "draft";
   const confirmationMatches = confirmationName === tournament.name;
   const typedConfirmationMessage = translate(locale, 'deleteIncorrectName').replace('{name}', tournament.name);
@@ -88,7 +82,7 @@ export function TournamentDeleteControl({
       if (!response.ok) {
         const message = await apiError(
           response,
-          translate(locale, unableToDeleteKey),
+          translate(locale, "unableToDeleteTournament"),
         );
 
         showToast({
@@ -103,13 +97,13 @@ export function TournamentDeleteControl({
       setIsConfirming(false);
       setConfirmationName("");
       showToast({
-        message: `${tournament.name} ${translate(locale, deletedLabelKey)}.`,
-        title: translate(locale, deletedLabelKey),
+        message: `${tournament.name} ${translate(locale, "tournamentDeleted")}.`,
+        title: translate(locale, "tournamentDeleted"),
         type: "success",
       });
     } catch {
       showToast({
-        message: translate(locale, unableToDeleteKey),
+        message: translate(locale, "unableToDeleteTournament"),
         title: translate(locale, 'deleteFailed'),
         type: "error",
       });

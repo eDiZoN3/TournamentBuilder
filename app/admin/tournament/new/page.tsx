@@ -91,7 +91,6 @@ export default function NewTournamentPage() {
 
     if (nextFormat === "event") {
       setCourtsAvailable(1);
-      setAllowSelfJoin(false);
       setMatchResultMode("winner_only");
       setKnockoutMatchFormat("bo1");
     }
@@ -144,7 +143,7 @@ export default function NewTournamentPage() {
           teamSize,
           courtsAvailable: format === "event" ? 1 : courtsAvailable,
           inputMode,
-          allowSelfJoin: format === "event" ? false : allowSelfJoin,
+          allowSelfJoin,
           ...(format === "team_round_robin" ? { roundRobinMatchFormat } : {}),
         }),
       });
@@ -482,7 +481,7 @@ export default function NewTournamentPage() {
           <OptionCard
             checked={allowSelfJoin}
             description={t("allowPlayerSelfJoinHint")}
-            disabled={inputMode !== "players" || format === "event"}
+            disabled={inputMode !== "players"}
             onChange={() => setAllowSelfJoin(!allowSelfJoin)}
             title={t("allowPlayerSelfJoin")}
             type="checkbox"

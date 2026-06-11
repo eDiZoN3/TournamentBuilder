@@ -388,6 +388,42 @@ describe("NewTournamentPage", () => {
     });
   });
 
+  it("enables self-join for player-mode event tournaments", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Open Event" },
+    });
+    fireEvent.click(screen.getByLabelText("Event tournament"));
+    fireEvent.click(screen.getByLabelText("Enter player names"));
+    fireEvent.click(screen.getByLabelText("Allow player account self-join"));
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({
+        name: "Open Event",
+        format: "event",
+        matchResultMode: "winner_only",
+        knockoutMatchFormat: "bo1",
+        eventParticipantCount: 8,
+        eventDisciplineCount: 3,
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "players",
+        allowSelfJoin: true,
+      });
+    });
+  });
+
   it("shows an inline API error", async () => {
     vi.stubGlobal(
       "fetch",

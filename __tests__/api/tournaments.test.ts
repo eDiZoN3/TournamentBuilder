@@ -338,6 +338,48 @@ describe("/api/tournaments", () => {
     });
   });
 
+  it("creates a self-joinable player-entry event tournament", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Open Event",
+        format: "event",
+        eventParticipantCount: 8,
+        eventDisciplineCount: 2,
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "players",
+        allowSelfJoin: true,
+      }),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(body._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body).toMatchObject({
+      format: "event",
+      inputMode: "players",
+      allowSelfJoin: true,
+    });
+    expect(saved?.allowSelfJoin).toBe(true);
+  });
+
+  it("rejects self-join for team-entry event tournaments", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Closed Event",
+        format: "event",
+        eventParticipantCount: 8,
+        eventDisciplineCount: 2,
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+        allowSelfJoin: true,
+      }),
+    );
+
+    expect(response.status).toBe(422);
+  });
+
   it.each([
     [
       "individual mixer with teams",

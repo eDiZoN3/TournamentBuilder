@@ -193,6 +193,44 @@ export function TournamentSetupForm({
     });
   }, [joinedEntries, joinedPlayerNames.length, tournament.inputMode]);
 
+  useEffect(() => {
+    if (
+      !isEventTournament ||
+      tournament.inputMode !== "players" ||
+      joinedPlayerNames.length === 0
+    ) {
+      return;
+    }
+
+    setEventParticipantNames((current) => {
+      const filled = [...current];
+      const taken = new Set(
+        filled.map((name) => name.trim().toLowerCase()).filter(Boolean),
+      );
+      let changed = false;
+
+      for (const name of joinedPlayerNames) {
+        const key = name.trim().toLowerCase();
+
+        if (!key || taken.has(key)) {
+          continue;
+        }
+
+        const emptySlot = filled.findIndex((value) => value.trim().length === 0);
+
+        if (emptySlot === -1) {
+          break;
+        }
+
+        filled[emptySlot] = name;
+        taken.add(key);
+        changed = true;
+      }
+
+      return changed ? filled : current;
+    });
+  }, [isEventTournament, joinedPlayerNames, tournament.inputMode]);
+
   const playerNames = playerEntries.map((player) => player.displayName);
   const selectedPlayerProfileIds = playerEntries
     .map((player) => player.playerProfileId)

@@ -54,11 +54,11 @@ export function StatsTable({
   }
 
   return (
-    <section className="space-y-3">
+    <section className="min-w-0 space-y-3">
       <h3 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
         {displayTitle}
       </h3>
-      <div className="w-fit max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <div className="max-w-full overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         <table className="min-w-max divide-y divide-slate-200 text-sm dark:divide-slate-700">
           <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-300">
             <tr>

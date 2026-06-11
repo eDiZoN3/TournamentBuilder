@@ -468,6 +468,56 @@ describe("TournamentSetupForm", () => {
     });
   });
 
+  it("prefills event participants with self-joined players", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Open Event",
+          format: "event",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: true,
+          eventParticipantCount: 3,
+          eventDisciplineCount: 2,
+          eventDisciplines: ["Discipline 1", "Discipline 2"],
+          joinedPlayers: [
+            {
+              userId: "user-1",
+              playerProfileId: "profile-1",
+              firstName: "Alice",
+              surname: "Example",
+              displayName: "Alice Example",
+              email: "alice@example.com",
+              joinedAt: "2026-06-03T12:00:00.000Z",
+            },
+            {
+              userId: "user-2",
+              playerProfileId: "profile-2",
+              firstName: "Bob",
+              surname: "Example",
+              displayName: "Bob Example",
+              email: "bob@example.com",
+              joinedAt: "2026-06-03T12:05:00.000Z",
+            },
+          ],
+          teams: [],
+        }}
+      />,
+    );
+
+    expect(
+      (screen.getByLabelText("Participant 1 name") as HTMLInputElement).value,
+    ).toBe("Alice Example");
+    expect(
+      (screen.getByLabelText("Participant 2 name") as HTMLInputElement).value,
+    ).toBe("Bob Example");
+    expect(
+      (screen.getByLabelText("Participant 3 name") as HTMLInputElement).value,
+    ).toBe("");
+  });
+
   it("loads the tournament for the setup route", async () => {
     vi.stubGlobal(
       "fetch",

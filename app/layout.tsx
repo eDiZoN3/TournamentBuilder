@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import { LocaleProvider } from "@/components/ui/LocaleProvider";
 import { ThemeProvider } from "@/components/ui/ThemeProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Tournament Manager",
@@ -60,7 +67,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className="light"
+      className={`light ${inter.variable}`}
       data-locale="en"
       data-theme="light"
       lang="en"

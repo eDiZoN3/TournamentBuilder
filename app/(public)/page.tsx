@@ -27,7 +27,7 @@ export default async function HomePage() {
         <div className="mt-8 grid gap-4">
           {tournaments.map((tournament) => (
             <Link
-              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-500"
+              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-500 dark:focus-visible:ring-offset-slate-950"
               href={`/tournament/${tournament._id.toString()}`}
               key={tournament._id.toString()}
             >

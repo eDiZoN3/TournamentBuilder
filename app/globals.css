@@ -17,18 +17,51 @@
 html {
   min-height: 100%;
   background: var(--app-background);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
   min-height: 100vh;
   background: var(--app-background);
   color: var(--app-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smoothly cross-fade surface colors when toggling light/dark. */
+body,
+.bg-white,
+.bg-slate-50,
+.bg-slate-100,
+.bg-slate-200 {
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 input,
 select,
 textarea {
   color: inherit;
+}
+
+/* Consistent brand accent for native radios, checkboxes and number steppers. */
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: #0f172a;
+  width: 1rem;
+  height: 1rem;
+}
+
+:root.dark input[type="radio"],
+:root.dark input[type="checkbox"] {
+  accent-color: #e2e8f0;
+}
+
+/* Keyboard focus ring for any interactive element that doesn't set its own. */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
 }
 
 :root.dark .bg-white {

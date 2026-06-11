@@ -315,7 +315,31 @@ export type TranslationKey =
   | "yourScore"
   | "addParticipantsNote"
   | "completedNonByeMatches"
-  | "individualMixer";
+  | "individualMixer"
+  | "basics"
+  | "scoring"
+  | "firstRoundPairing"
+  | "participantsAndEntry"
+  | "eliminationFormat"
+  | "eliminationFormatDescription"
+  | "doubleEliminationDescription"
+  | "singleEliminationDescription"
+  | "teamRoundRobinDescription"
+  | "individualMixerDescription"
+  | "eventTournamentDescription"
+  | "randomFirstRoundPairingDescription"
+  | "manualFirstRoundPairingDescription"
+  | "pointsScoringDescription"
+  | "winnerOnlyDescription"
+  | "bestOfThreeSemisFinalDescription"
+  | "enterTeamNamesDescription"
+  | "enterPlayerNamesDescription"
+  | "allowPlayerSelfJoinHint"
+  | "courtsAvailableHint"
+  | "teamSizeHint"
+  | "participantsHint"
+  | "disciplinesHint"
+  | "eventScoringNote";
 
 const translations: Record<Locale, Record<TranslationKey, string>> = {
   de: {
@@ -651,6 +675,45 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Fügen Sie Teilnehmer hinzu und bestätigen Sie die Teams, bevor Sie das Turnier starten.",
     completedNonByeMatches: "Gespielte Matches",
     individualMixer: "Einzel-Mixer",
+    basics: "Grundlagen",
+    scoring: "Wertung",
+    firstRoundPairing: "Erstrunden-Paarung",
+    participantsAndEntry: "Teilnehmer & Eingabe",
+    eliminationFormat: "Elimination",
+    eliminationFormatDescription:
+      "KO-Baum – Single oder Double Elimination unten wählbar.",
+    doubleEliminationDescription:
+      "Teams spielen bis zur zweiten Niederlage – mit Gewinner- und Verliererbaum.",
+    singleEliminationDescription:
+      "Eine Niederlage bedeutet das Aus – ein einzelner KO-Baum.",
+    teamRoundRobinDescription:
+      "Jedes Team spielt gegen jedes andere; Platzierung nach Bilanz.",
+    individualMixerDescription:
+      "Spieler treten einzeln an und werden zu neuen Teams gemischt.",
+    eventTournamentDescription:
+      "Mehrere Single-Elimination-Disziplinen laufen parallel.",
+    randomFirstRoundPairingDescription:
+      "Das System lost die Erstrundengegner zufällig aus.",
+    manualFirstRoundPairingDescription:
+      "Sie legen die Erstrundenpaarungen selbst fest.",
+    pointsScoringDescription:
+      "Satzergebnisse erfassen; Tabelle nach Punkten und Satzverhältnis.",
+    winnerOnlyDescription:
+      "Nur erfassen, wer gewonnen hat – ohne Ergebnisse.",
+    bestOfThreeSemisFinalDescription:
+      "Halbfinale und Finale gehen über Best-of-three statt einen Satz.",
+    enterTeamNamesDescription: "Teamnamen direkt eingeben.",
+    enterPlayerNamesDescription:
+      "Spieler eingeben; Teams werden daraus erzeugt.",
+    allowPlayerSelfJoinHint:
+      "Spieler mit Konto können sich in der Beitrittsphase selbst eintragen.",
+    courtsAvailableHint:
+      "Spiele werden auf so viele Felder gleichzeitig verteilt.",
+    teamSizeHint: "Anzahl Spieler pro Team.",
+    participantsHint: "Wie viele Spieler nehmen am Event teil.",
+    disciplinesHint: "Anzahl der parallelen Disziplin-Brackets.",
+    eventScoringNote:
+      "Events nutzen reine Sieger-Wertung auf einem Feld.",
   },
   en: {
     account: "Account",
@@ -977,6 +1040,43 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
       "Add participants and confirm the teams before starting the tournament.",
     completedNonByeMatches: "Completed non-bye matches",
     individualMixer: "Individual mixer",
+    basics: "Basics",
+    scoring: "Scoring",
+    firstRoundPairing: "First-round pairing",
+    participantsAndEntry: "Participants & entry",
+    eliminationFormat: "Elimination",
+    eliminationFormatDescription:
+      "Knockout bracket — choose single or double elimination below.",
+    doubleEliminationDescription:
+      "Teams play until two losses, with a winners and losers bracket.",
+    singleEliminationDescription:
+      "One loss and you're out — a single knockout bracket.",
+    teamRoundRobinDescription:
+      "Every team plays every other team; ranked by record.",
+    individualMixerDescription:
+      "Players enter individually and are mixed into new teams.",
+    eventTournamentDescription:
+      "Several single-elimination disciplines run in parallel.",
+    randomFirstRoundPairingDescription:
+      "The system draws first-round opponents at random.",
+    manualFirstRoundPairingDescription:
+      "You arrange the first-round matchups yourself.",
+    pointsScoringDescription:
+      "Record set scores; standings use points and set ratios.",
+    winnerOnlyDescription: "Just record who won each match — no scores.",
+    bestOfThreeSemisFinalDescription:
+      "Semi-finals and the final are best-of-three instead of a single set.",
+    enterTeamNamesDescription: "Type team names directly.",
+    enterPlayerNamesDescription:
+      "Enter players; teams are generated from them.",
+    allowPlayerSelfJoinHint:
+      "Players with accounts can add themselves during the join phase.",
+    courtsAvailableHint:
+      "Matches are scheduled across this many courts at once.",
+    teamSizeHint: "Number of players on each team.",
+    participantsHint: "How many players take part in the event.",
+    disciplinesHint: "Number of parallel discipline brackets.",
+    eventScoringNote: "Events use winner-only scoring on a single court.",
   },
 };
 

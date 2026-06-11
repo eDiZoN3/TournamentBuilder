@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { Types } from "mongoose";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlayerProfile } from "@/lib/models/PlayerProfile";
@@ -178,5 +179,48 @@ describe("/api/admin/players/[id]/reset-password", () => {
     await expect(
       bcrypt.compare("old-password", updatedUser!.passwordHash),
     ).resolves.toBe(false);
+  });
+
+  function resetRequest(id: string) {
+    return resetPlayerPassword(
+      request(
+        `http://localhost:3000/api/admin/players/${id}/reset-password`,
+      ),
+      { params: Promise.resolve({ id }) },
+    );
+  }
+
+  it("requires an authenticated admin", async () => {
+    requireAdmin.mockResolvedValue(false);
+
+    const response = await resetRequest(new Types.ObjectId().toString());
+
+    expect(response.status).toBe(401);
+  });
+
+  it("returns 404 for a malformed player id", async () => {
+    const response = await resetRequest("not-a-valid-id");
+
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 404 when no player profile exists", async () => {
+    const response = await resetRequest(new Types.ObjectId().toString());
+
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 404 when the profile has no matching player user", async () => {
+    const profile = await PlayerProfile.create({
+      userId: new Types.ObjectId(),
+      firstName: "Ghost",
+      surname: "Player",
+      displayName: "Ghost Player",
+      email: "ghost@example.com",
+    });
+
+    const response = await resetRequest(profile._id.toString());
+
+    expect(response.status).toBe(404);
   });
 });

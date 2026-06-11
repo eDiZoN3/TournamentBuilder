@@ -116,8 +116,7 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
         (parsedEventDisciplineCount as number) < 1 ||
         (parsedEventDisciplineCount as number) > 10 ||
         parsedMatchResultMode !== "winner_only" ||
-        parsedKnockoutMatchFormat !== "bo1" ||
-        parsedAllowSelfJoin)) ||
+        parsedKnockoutMatchFormat !== "bo1")) ||
     (parsedAllowSelfJoin && inputMode !== "players") ||
     (parsedFormat !== "team_round_robin" &&
       roundRobinMatchFormat !== undefined &&

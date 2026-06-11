@@ -19,6 +19,19 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      exclude: [
+        "**/node_modules/**",
+        "**/.next/**",
+        "**/coverage/**",
+        "**/__tests__/**",
+        "**/*.config.*",
+        "**/*.d.ts",
+        "vitest.setup.ts",
+        "scripts/**",
+        // NextAuth handler re-export — no logic of our own to cover.
+        // (bracketed segment is glob syntax, so match the dir instead.)
+        "**/api/auth/**",
+      ],
     },
   },
 });

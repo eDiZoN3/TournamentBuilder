@@ -3,6 +3,9 @@
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { Button } from "@/components/ui/Button";
+import { cardSurface } from "@/components/ui/Card";
+import { Field, FormError, Input } from "@/components/ui/Field";
 import { useLocale } from "@/components/ui/LocaleProvider";
 
 export default function ChangePasswordPage() {
@@ -59,39 +62,25 @@ export default function ChangePasswordPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <section className={`w-full max-w-md p-8 ${cardSurface}`}>
         <h1 className="text-2xl font-bold tracking-tight">{t("changePassword")}</h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
           {t("setOwnPassword")}
         </p>
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              htmlFor="current-password"
-            >
-              {t("currentPassword")}
-            </label>
-            <input
+          <Field htmlFor="current-password" label={t("currentPassword")}>
+            <Input
               autoComplete="current-password"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:focus:ring-slate-700"
               id="current-password"
               onChange={(event) => setCurrentPassword(event.target.value)}
               required
               type="password"
               value={currentPassword}
             />
-          </div>
-          <div>
-            <label
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              htmlFor="new-password"
-            >
-              {t("newPassword")}
-            </label>
-            <input
+          </Field>
+          <Field htmlFor="new-password" label={t("newPassword")}>
+            <Input
               autoComplete="new-password"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:focus:ring-slate-700"
               id="new-password"
               minLength={8}
               onChange={(event) => setNewPassword(event.target.value)}
@@ -99,17 +88,10 @@ export default function ChangePasswordPage() {
               type="password"
               value={newPassword}
             />
-          </div>
-          <div>
-            <label
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              htmlFor="confirm-password"
-            >
-              {t("confirmNewPassword")}
-            </label>
-            <input
+          </Field>
+          <Field htmlFor="confirm-password" label={t("confirmNewPassword")}>
+            <Input
               autoComplete="new-password"
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-600 dark:focus:ring-slate-700"
               id="confirm-password"
               minLength={8}
               onChange={(event) => setConfirmPassword(event.target.value)}
@@ -117,19 +99,11 @@ export default function ChangePasswordPage() {
               type="password"
               value={confirmPassword}
             />
-          </div>
-          {error ? (
-            <p className="text-sm font-medium text-red-600" role="alert">
-              {error}
-            </p>
-          ) : null}
-          <button
-            className="w-full rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSubmitting}
-            type="submit"
-          >
+          </Field>
+          {error ? <FormError>{error}</FormError> : null}
+          <Button disabled={isSubmitting} fullWidth size="lg" type="submit">
             {isSubmitting ? t("changing") : t("changePassword")}
-          </button>
+          </Button>
         </form>
       </section>
     </main>

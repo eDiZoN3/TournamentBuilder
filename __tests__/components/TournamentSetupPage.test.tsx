@@ -489,6 +489,7 @@ describe("TournamentSetupForm", () => {
               firstName: "Alice",
               surname: "Example",
               displayName: "Alice Example",
+              email: "alice@example.com",
               joinedAt: "2026-06-03T12:00:00.000Z",
             },
             {
@@ -497,6 +498,7 @@ describe("TournamentSetupForm", () => {
               firstName: "Bob",
               surname: "Example",
               displayName: "Bob Example",
+              email: "bob@example.com",
               joinedAt: "2026-06-03T12:05:00.000Z",
             },
           ],

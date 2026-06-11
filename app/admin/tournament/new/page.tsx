@@ -1,10 +1,13 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Field, FormError, Input } from "@/components/ui/Field";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { OptionCard } from "@/components/ui/OptionCard";
+import { cn } from "@/lib/cn";
 import type {
   FirstRoundPairingMode,
   KnockoutBracketType,
@@ -16,6 +19,42 @@ import type {
 
 interface ApiError {
   error?: string;
+}
+
+function SectionHeading({
+  step,
+  title,
+  description,
+}: {
+  step: number;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white dark:bg-white dark:text-slate-900">
+        {step}
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+          {title}
+        </h2>
+        {description ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {description}
+          </p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Legend({ children }: { children: ReactNode }) {
+  return (
+    <legend className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+      {children}
+    </legend>
+  );
 }
 
 export default function NewTournamentPage() {
@@ -125,204 +164,300 @@ export default function NewTournamentPage() {
     }
   }
 
-  return (
-    <section className="max-w-2xl">
-      <h1 className="text-3xl font-bold tracking-tight">{t("newTournament")}</h1>
-      <p className="mt-2 text-slate-600 dark:text-slate-300">
-        {t("configureTournamentDescription")}
-      </p>
-      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <Field htmlFor="name" label={t("tournamentName")}>
-          <Input
-            id="name"
-            maxLength={100}
-            onChange={(event) => setName(event.target.value)}
-            required
-            value={name}
-          />
-        </Field>
+  const formatOptions = [
+    {
+      value: "double_elimination",
+      label: t("doubleElimination"),
+      description: t("doubleEliminationDescription"),
+      icon: "🏆",
+    },
+    {
+      value: "team_round_robin",
+      label: t("teamRoundRobin"),
+      description: t("teamRoundRobinDescription"),
+      icon: "🔁",
+    },
+    {
+      value: "individual_mixer",
+      label: t("individualMixer"),
+      description: t("individualMixerDescription"),
+      icon: "🎲",
+    },
+    {
+      value: "event",
+      label: t("eventTournament"),
+      description: t("eventTournamentDescription"),
+      icon: "🎪",
+    },
+  ] as const;
 
-        <fieldset>
-          <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {t("tournamentFormat")}
-          </legend>
-          <div className="mt-2 space-y-2">
-            {([
-              ["double_elimination", t("doubleElimination")],
-              ["team_round_robin", t("teamRoundRobin")],
-              ["individual_mixer", t("individualMixer")],
-              ["event", t("eventTournament")],
-            ] as const).map(([value, label]) => (
-              <label className="flex items-center gap-2" key={value}>
-                <input
-                  checked={format === value}
-                  name="format"
-                  onChange={() => updateFormat(value)}
-                  type="radio"
-                />
-                {label}
-              </label>
+  const hasFormatOptions =
+    format === "double_elimination" ||
+    format === "team_round_robin" ||
+    format === "event";
+  const entryStep = hasFormatOptions ? 4 : 3;
+
+  return (
+    <section className="mx-auto max-w-3xl">
+      <header>
+        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t("tournamentManagement")}
+        </p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight">
+          {t("newTournament")}
+        </h1>
+        <p className="mt-2 text-slate-600 dark:text-slate-300">
+          {t("configureTournamentDescription")}
+        </p>
+      </header>
+
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <Card className="space-y-4">
+          <SectionHeading step={1} title={t("basics")} />
+          <Field htmlFor="name" label={t("tournamentName")}>
+            <Input
+              id="name"
+              maxLength={100}
+              onChange={(event) => setName(event.target.value)}
+              required
+              value={name}
+            />
+          </Field>
+        </Card>
+
+        <Card className="space-y-4">
+          <SectionHeading step={2} title={t("tournamentFormat")} />
+          <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
+            {formatOptions.map((option) => (
+              <OptionCard
+                checked={format === option.value}
+                description={option.description}
+                icon={option.icon}
+                key={option.value}
+                name="format"
+                onChange={() => updateFormat(option.value)}
+                title={option.label}
+              />
             ))}
           </div>
-        </fieldset>
+        </Card>
 
         {format === "double_elimination" ? (
-          <>
+          <Card className="space-y-6">
+            <SectionHeading step={3} title={t("knockoutMatchOptions")} />
+
             <fieldset>
-              <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t("knockoutBracket")}
-              </legend>
-              <div className="mt-2 space-y-2">
-                {([
-                  ["double_elimination", t("doubleElimination")],
-                  ["single_elimination", t("singleElimination")],
-                ] as const).map(([value, label]) => (
-                  <label className="flex items-center gap-2" key={value}>
-                    <input
-                      checked={knockoutBracketType === value}
-                      name="knockoutBracketType"
-                      onChange={() => setKnockoutBracketType(value)}
-                      type="radio"
-                    />
-                    {label}
-                  </label>
-                ))}
+              <Legend>{t("knockoutBracket")}</Legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <OptionCard
+                  checked={knockoutBracketType === "double_elimination"}
+                  description={t("doubleEliminationDescription")}
+                  name="knockoutBracketType"
+                  onChange={() => setKnockoutBracketType("double_elimination")}
+                  title={t("doubleElimination")}
+                />
+                <OptionCard
+                  checked={knockoutBracketType === "single_elimination"}
+                  description={t("singleEliminationDescription")}
+                  name="knockoutBracketType"
+                  onChange={() => setKnockoutBracketType("single_elimination")}
+                  title={t("singleElimination")}
+                />
               </div>
             </fieldset>
 
             <fieldset>
-              <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t("knockoutMatchOptions")}
-              </legend>
-              <div className="mt-2 space-y-2">
-                {([
-                  ["random", t("randomFirstRoundPairing")],
-                  ["manual", t("manualFirstRoundPairing")],
-                ] as const).map(([value, label]) => (
-                  <label className="flex items-center gap-2" key={value}>
-                    <input
-                      checked={firstRoundPairingMode === value}
-                      name="firstRoundPairingMode"
-                      onChange={() => setFirstRoundPairingMode(value)}
-                      type="radio"
-                    />
-                    {label}
-                  </label>
-                ))}
-                {([
-                  ["points", t("pointsScoring")],
-                  ["winner_only", t("winnerOnly")],
-                ] as const).map(([value, label]) => (
-                  <label className="flex items-center gap-2" key={value}>
-                    <input
-                      checked={matchResultMode === value}
-                      name="matchResultMode"
-                      onChange={() => updateMatchResultMode(value)}
-                      type="radio"
-                    />
-                    {label}
-                  </label>
-                ))}
-                {matchResultMode === "points" ? (
-                  <label className="flex items-center gap-2">
-                    <input
-                      checked={knockoutMatchFormat === "bo3_semis_finals"}
-                      onChange={(event) =>
-                        setKnockoutMatchFormat(
-                          event.target.checked ? "bo3_semis_finals" : "bo1",
-                        )
-                      }
-                      type="checkbox"
-                    />
-                    {t("bestOfThreeSemisFinal")}
-                  </label>
-                ) : null}
+              <Legend>{t("firstRoundPairing")}</Legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <OptionCard
+                  checked={firstRoundPairingMode === "random"}
+                  description={t("randomFirstRoundPairingDescription")}
+                  name="firstRoundPairingMode"
+                  onChange={() => setFirstRoundPairingMode("random")}
+                  title={t("randomFirstRoundPairing")}
+                />
+                <OptionCard
+                  checked={firstRoundPairingMode === "manual"}
+                  description={t("manualFirstRoundPairingDescription")}
+                  name="firstRoundPairingMode"
+                  onChange={() => setFirstRoundPairingMode("manual")}
+                  title={t("manualFirstRoundPairing")}
+                />
               </div>
             </fieldset>
-          </>
+
+            <fieldset>
+              <Legend>{t("scoring")}</Legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <OptionCard
+                  checked={matchResultMode === "points"}
+                  description={t("pointsScoringDescription")}
+                  name="matchResultMode"
+                  onChange={() => updateMatchResultMode("points")}
+                  title={t("pointsScoring")}
+                />
+                <OptionCard
+                  checked={matchResultMode === "winner_only"}
+                  description={t("winnerOnlyDescription")}
+                  name="matchResultMode"
+                  onChange={() => updateMatchResultMode("winner_only")}
+                  title={t("winnerOnly")}
+                />
+              </div>
+              {matchResultMode === "points" ? (
+                <div className="mt-3">
+                  <OptionCard
+                    checked={knockoutMatchFormat === "bo3_semis_finals"}
+                    description={t("bestOfThreeSemisFinalDescription")}
+                    onChange={() =>
+                      setKnockoutMatchFormat(
+                        knockoutMatchFormat === "bo3_semis_finals"
+                          ? "bo1"
+                          : "bo3_semis_finals",
+                      )
+                    }
+                    title={t("bestOfThreeSemisFinal")}
+                    type="checkbox"
+                  />
+                </div>
+              ) : null}
+            </fieldset>
+          </Card>
+        ) : null}
+
+        {format === "team_round_robin" ? (
+          <Card className="space-y-4">
+            <SectionHeading step={3} title={t("roundRobinMatchFormat")} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <OptionCard
+                checked={roundRobinMatchFormat === "bo1"}
+                name="roundRobinMatchFormat"
+                onChange={() => setRoundRobinMatchFormat("bo1")}
+                title={t("oneSetPerMatch")}
+              />
+              <OptionCard
+                checked={roundRobinMatchFormat === "bo3"}
+                name="roundRobinMatchFormat"
+                onChange={() => setRoundRobinMatchFormat("bo3")}
+                title={t("bestOfThree")}
+              />
+            </div>
+          </Card>
         ) : null}
 
         {format === "event" ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field htmlFor="eventParticipantCount" label={t("participants")}>
+          <Card className="space-y-4">
+            <SectionHeading
+              description={t("eventScoringNote")}
+              step={3}
+              title={t("eventTournament")}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                hint={t("participantsHint")}
+                htmlFor="eventParticipantCount"
+                label={t("participants")}
+              >
+                <Input
+                  className="max-w-[10rem]"
+                  id="eventParticipantCount"
+                  max={32}
+                  min={2}
+                  onChange={(event) =>
+                    setEventParticipantCount(
+                      Number.parseInt(event.target.value, 10),
+                    )
+                  }
+                  required
+                  type="number"
+                  value={eventParticipantCount}
+                />
+              </Field>
+              <Field
+                hint={t("disciplinesHint")}
+                htmlFor="eventDisciplineCount"
+                label={t("disciplines")}
+              >
+                <Input
+                  className="max-w-[10rem]"
+                  id="eventDisciplineCount"
+                  max={10}
+                  min={1}
+                  onChange={(event) =>
+                    setEventDisciplineCount(
+                      Number.parseInt(event.target.value, 10),
+                    )
+                  }
+                  required
+                  type="number"
+                  value={eventDisciplineCount}
+                />
+              </Field>
+            </div>
+          </Card>
+        ) : null}
+
+        <Card className="space-y-6">
+          <SectionHeading step={entryStep} title={t("participantsAndEntry")} />
+
+          {format === "event" ? null : (
+            <fieldset>
+              <Legend>{t("teamSize")}</Legend>
+              <div className="inline-flex flex-wrap gap-2">
+                {([2, 3, 4] as const).map((size) => (
+                  <label
+                    className={cn(
+                      "cursor-pointer rounded-md border px-4 py-2 text-sm font-medium transition",
+                      teamSize === size
+                        ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900"
+                        : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800",
+                    )}
+                    key={size}
+                  >
+                    <input
+                      checked={teamSize === size}
+                      className="sr-only"
+                      name="teamSize"
+                      onChange={() => setTeamSize(size)}
+                      type="radio"
+                    />
+                    {size} {t("players")}
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                {t("teamSizeHint")}
+              </p>
+            </fieldset>
+          )}
+
+          {format === "event" ? null : (
+            <Field
+              hint={t("courtsAvailableHint")}
+              htmlFor="courtsAvailable"
+              label={t("courtsAvailable")}
+            >
               <Input
                 className="max-w-[10rem]"
-                id="eventParticipantCount"
-                max={32}
-                min={2}
-                onChange={(event) =>
-                  setEventParticipantCount(
-                    Number.parseInt(event.target.value, 10),
-                  )
-                }
-                required
-                type="number"
-                value={eventParticipantCount}
-              />
-            </Field>
-            <Field htmlFor="eventDisciplineCount" label={t("disciplines")}>
-              <Input
-                className="max-w-[10rem]"
-                id="eventDisciplineCount"
+                id="courtsAvailable"
                 max={10}
                 min={1}
                 onChange={(event) =>
-                  setEventDisciplineCount(
-                    Number.parseInt(event.target.value, 10),
-                  )
+                  setCourtsAvailable(Number.parseInt(event.target.value, 10))
                 }
                 required
                 type="number"
-                value={eventDisciplineCount}
+                value={courtsAvailable}
               />
             </Field>
-          </div>
-        ) : (
+          )}
+
           <fieldset>
-            <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {t("teamSize")}
-            </legend>
-            <div className="mt-2 flex gap-4">
-              {([2, 3, 4] as const).map((size) => (
-                <label className="flex items-center gap-2" key={size}>
-                  <input
-                    checked={teamSize === size}
-                    name="teamSize"
-                    onChange={() => setTeamSize(size)}
-                    type="radio"
-                  />
-                  {size} {t("players")}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-        )}
-
-        {format === "event" ? null : (
-          <Field htmlFor="courtsAvailable" label={t("courtsAvailable")}>
-            <Input
-              className="max-w-[10rem]"
-              id="courtsAvailable"
-              max={10}
-              min={1}
-              onChange={(event) =>
-                setCourtsAvailable(Number.parseInt(event.target.value, 10))
-              }
-              required
-              type="number"
-              value={courtsAvailable}
-            />
-          </Field>
-        )}
-
-        <fieldset>
-          <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            {t("teamEntry")}
-          </legend>
-          <div className="mt-2 space-y-2">
-            <label className="flex items-center gap-2">
-              <input
+            <Legend>{t("teamEntry")}</Legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <OptionCard
                 checked={inputMode === "teams"}
+                description={t("enterTeamNamesDescription")}
                 disabled={format === "individual_mixer"}
                 name="inputMode"
                 onChange={() => {
@@ -332,65 +467,36 @@ export default function NewTournamentPage() {
                   }
                   setAllowSelfJoin(false);
                 }}
-                type="radio"
+                title={t("enterTeamNames")}
               />
-              {t("enterTeamNames")}
-            </label>
-            <label className="flex items-center gap-2">
-              <input
+              <OptionCard
                 checked={inputMode === "players"}
+                description={t("enterPlayerNamesDescription")}
                 name="inputMode"
-                onChange={() => {
-                  setInputMode("players");
-                }}
-                type="radio"
+                onChange={() => setInputMode("players")}
+                title={t("enterPlayerNames")}
               />
-              {t("enterPlayerNames")}
-            </label>
-          </div>
-        </fieldset>
-
-        <label className="flex items-center gap-2">
-          <input
-                checked={allowSelfJoin}
-            disabled={inputMode !== "players" || format === "event"}
-            onChange={(event) => setAllowSelfJoin(event.target.checked)}
-            type="checkbox"
-          />
-          {t("allowPlayerSelfJoin")}
-        </label>
-
-        {format === "team_round_robin" ? (
-          <fieldset>
-            <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {t("roundRobinMatchFormat")}
-            </legend>
-            <div className="mt-2 space-y-2">
-              {([
-                ["bo1", t("oneSetPerMatch")],
-                ["bo3", t("bestOfThree")],
-              ] as const).map(([value, label]) => (
-                <label className="flex items-center gap-2" key={value}>
-                  <input
-                    checked={roundRobinMatchFormat === value}
-                    name="roundRobinMatchFormat"
-                    onChange={() => setRoundRobinMatchFormat(value)}
-                    type="radio"
-                  />
-                  {label}
-                </label>
-              ))}
             </div>
           </fieldset>
-        ) : null}
+
+          <OptionCard
+            checked={allowSelfJoin}
+            description={t("allowPlayerSelfJoinHint")}
+            disabled={inputMode !== "players" || format === "event"}
+            onChange={() => setAllowSelfJoin(!allowSelfJoin)}
+            title={t("allowPlayerSelfJoin")}
+            type="checkbox"
+          />
+        </Card>
 
         {error ? <FormError>{error}</FormError> : null}
 
-        <Button disabled={isSubmitting} size="lg" type="submit">
-          {isSubmitting ? t("creating") : t("createTournament")}
-        </Button>
+        <div className="flex justify-end">
+          <Button disabled={isSubmitting} size="lg" type="submit">
+            {isSubmitting ? t("creating") : t("createTournament")}
+          </Button>
+        </div>
       </form>
     </section>
   );
 }
-

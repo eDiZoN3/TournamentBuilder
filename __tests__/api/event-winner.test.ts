@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeTeams } from "@/__tests__/helpers/factories";
@@ -110,5 +111,135 @@ describe("PUT /api/tournaments/[id]/event/matches/[matchId]/winner", () => {
     });
     expect(clearedMatch.status).toBe("ready");
     expect(clearedMatch.winnerId).toBeNull();
+  });
+
+  async function createEventTournament() {
+    const teams = makeTeams(4) as ITeam[];
+    const matches = generateEventTournamentMatches(teams, ["Darts"], 11);
+
+    return Tournament.create({
+      name: "Event Cup",
+      format: "event",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      eventParticipantCount: 4,
+      eventDisciplineCount: 1,
+      eventDisciplines: ["Darts"],
+      status: "active",
+      teams,
+      matches,
+    });
+  }
+
+  it("returns 401 when the requester is not an admin", async () => {
+    requireAdmin.mockResolvedValue(false);
+    const id = new Types.ObjectId().toString();
+    const matchId = new Types.ObjectId().toString();
+
+    const response = await selectEventWinner(
+      request(id, matchId, { winnerId: new Types.ObjectId().toString() }),
+      context(id, matchId),
+    );
+
+    expect(response.status).toBe(401);
+  });
+
+  it("rejects a body without a valid winner id", async () => {
+    const id = new Types.ObjectId().toString();
+    const matchId = new Types.ObjectId().toString();
+
+    const response = await selectEventWinner(
+      request(id, matchId, { winnerId: "not-an-id" }),
+      context(id, matchId),
+    );
+
+    expect(response.status).toBe(422);
+  });
+
+  it("returns 404 for an invalid tournament id", async () => {
+    const response = await selectEventWinner(
+      request("not-valid", "also-not-valid", {
+        winnerId: new Types.ObjectId().toString(),
+      }),
+      context("not-valid", "also-not-valid"),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("returns 404 when the tournament or match does not exist", async () => {
+    const id = new Types.ObjectId().toString();
+    const matchId = new Types.ObjectId().toString();
+
+    const response = await selectEventWinner(
+      request(id, matchId, { winnerId: new Types.ObjectId().toString() }),
+      context(id, matchId),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("rejects winner selection on a non-event tournament", async () => {
+    const teams = makeTeams(4) as ITeam[];
+    const matches = generateEventTournamentMatches(teams, ["Darts"], 11);
+    const tournament = await Tournament.create({
+      name: "Regular Cup",
+      format: "double_elimination",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      status: "active",
+      teams,
+      matches,
+    });
+    const match = tournament.matches.find((candidate) => candidate.round === 1)!;
+
+    const response = await selectEventWinner(
+      request(tournament._id.toString(), match._id.toString(), {
+        winnerId: match.teamA!.teamId.toString(),
+      }),
+      context(tournament._id.toString(), match._id.toString()),
+    );
+
+    expect(response.status).toBe(409);
+  });
+
+  it("rejects a winner that is not one of the match participants", async () => {
+    const tournament = await createEventTournament();
+    const match = tournament.matches.find(
+      (candidate) => candidate.round === 1 && candidate.status === "ready",
+    )!;
+
+    const response = await selectEventWinner(
+      request(tournament._id.toString(), match._id.toString(), {
+        winnerId: new Types.ObjectId().toString(),
+      }),
+      context(tournament._id.toString(), match._id.toString()),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(body.error).toBe("Winner must be one of the match participants");
+  });
+
+  it("rejects selecting a winner before both participants are known", async () => {
+    const tournament = await createEventTournament();
+    const finalMatch = tournament.matches.find(
+      (candidate) => candidate.round === 2,
+    )!;
+
+    const response = await selectEventWinner(
+      request(tournament._id.toString(), finalMatch._id.toString(), {
+        winnerId: new Types.ObjectId().toString(),
+      }),
+      context(tournament._id.toString(), finalMatch._id.toString()),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(body.error).toBe("Both participants are required");
   });
 });

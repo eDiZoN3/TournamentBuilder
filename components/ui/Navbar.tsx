@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { Button } from "@/components/ui/Button";
 import { LocaleToggle } from "@/components/ui/LocaleToggle";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -52,14 +53,14 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
   const publicLinks = (
     <>
       <Link
-        className="inline-flex text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white md:inline-flex"
+        className="inline-flex rounded text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-300 dark:hover:text-white dark:focus-visible:ring-offset-slate-950 md:inline-flex"
         href="/"
         onClick={() => setIsMenuOpen(false)}
       >
         {t("tournaments")}
       </Link>
       <Link
-        className="inline-flex text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white md:inline-flex"
+        className="inline-flex rounded text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-300 dark:hover:text-white dark:focus-visible:ring-offset-slate-950 md:inline-flex"
         href="/stats"
         onClick={() => setIsMenuOpen(false)}
       >
@@ -72,7 +73,7 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
     <>
       {!isAuthenticated ? (
         <Link
-          className="inline-flex text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+          className="inline-flex rounded text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-300 dark:hover:text-white dark:focus-visible:ring-offset-slate-950"
           href="/signup"
           onClick={() => setIsMenuOpen(false)}
         >
@@ -80,7 +81,7 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
         </Link>
       ) : null}
       <Link
-        className="inline-flex rounded-md bg-slate-900 px-3 py-2 text-white hover:bg-slate-700 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+        className="inline-flex rounded-md bg-slate-900 px-3 py-2 text-white transition-colors hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200 dark:focus-visible:ring-slate-300 dark:focus-visible:ring-offset-slate-950"
         href={isAuthenticated ? accountHref : "/login"}
         onClick={() => setIsMenuOpen(false)}
       >
@@ -88,7 +89,7 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
       </Link>
       {isAuthenticated && role === "player" ? (
         <Link
-          className="inline-flex text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+          className="inline-flex rounded text-slate-600 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:text-slate-300 dark:hover:text-white dark:focus-visible:ring-offset-slate-950"
           href="/account#practice-matches"
           onClick={() => setIsMenuOpen(false)}
         >
@@ -96,13 +97,12 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
         </Link>
       ) : null}
       {isAuthenticated ? (
-        <button
-          className="inline-flex rounded-md border border-slate-300 px-3 py-2 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+        <Button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          type="button"
+          variant="outline"
         >
           {t("logOut")}
-        </button>
+        </Button>
       ) : null}
     </>
   );

@@ -2,6 +2,8 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { Field, FormError, Input } from "@/components/ui/Field";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import type {
   FirstRoundPairingMode,
@@ -130,22 +132,15 @@ export default function NewTournamentPage() {
         {t("configureTournamentDescription")}
       </p>
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-        <div>
-          <label
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-            htmlFor="name"
-          >
-            {t("tournamentName")}
-          </label>
-          <input
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+        <Field htmlFor="name" label={t("tournamentName")}>
+          <Input
             id="name"
             maxLength={100}
             onChange={(event) => setName(event.target.value)}
             required
             value={name}
           />
-        </div>
+        </Field>
 
         <fieldset>
           <legend className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -249,15 +244,9 @@ export default function NewTournamentPage() {
 
         {format === "event" ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-                htmlFor="eventParticipantCount"
-              >
-                {t("participants")}
-              </label>
-              <input
-                className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+            <Field htmlFor="eventParticipantCount" label={t("participants")}>
+              <Input
+                className="max-w-[10rem]"
                 id="eventParticipantCount"
                 max={32}
                 min={2}
@@ -270,16 +259,10 @@ export default function NewTournamentPage() {
                 type="number"
                 value={eventParticipantCount}
               />
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-                htmlFor="eventDisciplineCount"
-              >
-                {t("disciplines")}
-              </label>
-              <input
-                className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+            </Field>
+            <Field htmlFor="eventDisciplineCount" label={t("disciplines")}>
+              <Input
+                className="max-w-[10rem]"
                 id="eventDisciplineCount"
                 max={10}
                 min={1}
@@ -292,7 +275,7 @@ export default function NewTournamentPage() {
                 type="number"
                 value={eventDisciplineCount}
               />
-            </div>
+            </Field>
           </div>
         ) : (
           <fieldset>
@@ -316,15 +299,9 @@ export default function NewTournamentPage() {
         )}
 
         {format === "event" ? null : (
-          <div>
-            <label
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              htmlFor="courtsAvailable"
-            >
-              {t("courtsAvailable")}
-            </label>
-            <input
-              className="mt-1 w-28 rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+          <Field htmlFor="courtsAvailable" label={t("courtsAvailable")}>
+            <Input
+              className="max-w-[10rem]"
               id="courtsAvailable"
               max={10}
               min={1}
@@ -335,7 +312,7 @@ export default function NewTournamentPage() {
               type="number"
               value={courtsAvailable}
             />
-          </div>
+          </Field>
         )}
 
         <fieldset>
@@ -407,19 +384,11 @@ export default function NewTournamentPage() {
           </fieldset>
         ) : null}
 
-        {error ? (
-          <p className="text-sm font-medium text-red-600" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {error ? <FormError>{error}</FormError> : null}
 
-        <button
-          className="rounded-md bg-slate-900 px-4 py-2 font-medium text-white hover:bg-slate-700 disabled:opacity-60"
-          disabled={isSubmitting}
-          type="submit"
-        >
+        <Button disabled={isSubmitting} size="lg" type="submit">
           {isSubmitting ? t("creating") : t("createTournament")}
-        </button>
+        </Button>
       </form>
     </section>
   );

@@ -69,14 +69,14 @@ export function AdminSidebar() {
         } flex-1 flex-col gap-4 md:flex`}
       >
         <Link
-          className="rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 hover:text-white"
+          className="rounded-md px-3 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           href="/admin/dashboard"
           onClick={() => setIsOpen(false)}
         >
           {t("dashboard")}
         </Link>
         <Link
-          className="rounded-md px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 hover:text-white"
+          className="rounded-md px-3 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           href="/"
           onClick={() => setIsOpen(false)}
         >
@@ -87,7 +87,7 @@ export function AdminSidebar() {
         className={`${isOpen ? "flex" : "hidden"} items-center gap-3 md:flex`}
       >
         <button
-          className="self-start rounded-md border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 hover:text-white"
+          className="self-start rounded-md border border-slate-600 px-3 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           onClick={() => signOut({ callbackUrl: "/login" })}
           type="button"
         >

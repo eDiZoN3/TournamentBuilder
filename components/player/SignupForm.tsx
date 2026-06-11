@@ -3,6 +3,9 @@
 import { type FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
+import { cardSurface } from "@/components/ui/Card";
+import { Field, FormError, Input } from "@/components/ui/Field";
 import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface ApiError {
@@ -66,7 +69,7 @@ export function SignupForm() {
 
   return (
     <section
-      className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      className={`mx-auto max-w-md p-8 ${cardSurface}`}
       data-testid="signup-auth-card"
     >
       <h1 className="text-2xl font-bold tracking-tight">{t("playerSignUp")}</h1>
@@ -74,52 +77,36 @@ export function SignupForm() {
         {t("createAccountDescription")}
       </p>
       <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="firstName">
-            {t("firstName")}
-          </label>
-          <input
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+        <Field htmlFor="firstName" label={t("firstName")}>
+          <Input
             id="firstName"
             maxLength={50}
             onChange={(event) => setFirstName(event.target.value)}
             required
             value={firstName}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="surname">
-            {t("surname")}
-          </label>
-          <input
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
+        </Field>
+        <Field htmlFor="surname" label={t("surname")}>
+          <Input
             id="surname"
             maxLength={50}
             onChange={(event) => setSurname(event.target.value)}
             value={surname}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
-            {t("email")}
-          </label>
-          <input
+        </Field>
+        <Field htmlFor="email" label={t("email")}>
+          <Input
             autoComplete="email"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="email"
             onChange={(event) => setEmail(event.target.value)}
             required
             type="email"
             value={email}
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
-            {t("password")}
-          </label>
-          <input
+        </Field>
+        <Field htmlFor="password" label={t("password")}>
+          <Input
             autoComplete="new-password"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
             id="password"
             minLength={8}
             onChange={(event) => setPassword(event.target.value)}
@@ -127,19 +114,11 @@ export function SignupForm() {
             type="password"
             value={password}
           />
-        </div>
-        {error ? (
-          <p className="text-sm font-medium text-red-600" role="alert">
-            {error}
-          </p>
-        ) : null}
-        <button
-          className="w-full rounded-md bg-slate-900 px-4 py-2 font-medium text-white disabled:opacity-60"
-          disabled={isSubmitting}
-          type="submit"
-        >
+        </Field>
+        {error ? <FormError>{error}</FormError> : null}
+        <Button disabled={isSubmitting} fullWidth size="lg" type="submit">
           {isSubmitting ? t("creating") : t("createAccount")}
-        </button>
+        </Button>
       </form>
     </section>
   );

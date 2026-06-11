@@ -167,8 +167,8 @@ export default function NewTournamentPage() {
   const formatOptions = [
     {
       value: "double_elimination",
-      label: t("doubleElimination"),
-      description: t("doubleEliminationDescription"),
+      label: t("eliminationFormat"),
+      description: t("eliminationFormatDescription"),
       icon: "🏆",
     },
     {

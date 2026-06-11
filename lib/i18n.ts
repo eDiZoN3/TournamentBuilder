@@ -320,6 +320,8 @@ export type TranslationKey =
   | "scoring"
   | "firstRoundPairing"
   | "participantsAndEntry"
+  | "eliminationFormat"
+  | "eliminationFormatDescription"
   | "doubleEliminationDescription"
   | "singleEliminationDescription"
   | "teamRoundRobinDescription"
@@ -677,6 +679,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     scoring: "Wertung",
     firstRoundPairing: "Erstrunden-Paarung",
     participantsAndEntry: "Teilnehmer & Eingabe",
+    eliminationFormat: "Elimination",
+    eliminationFormatDescription:
+      "KO-Baum – Single oder Double Elimination unten wählbar.",
     doubleEliminationDescription:
       "Teams spielen bis zur zweiten Niederlage – mit Gewinner- und Verliererbaum.",
     singleEliminationDescription:
@@ -1039,6 +1044,9 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     scoring: "Scoring",
     firstRoundPairing: "First-round pairing",
     participantsAndEntry: "Participants & entry",
+    eliminationFormat: "Elimination",
+    eliminationFormatDescription:
+      "Knockout bracket — choose single or double elimination below.",
     doubleEliminationDescription:
       "Teams play until two losses, with a winners and losers bracket.",
     singleEliminationDescription:

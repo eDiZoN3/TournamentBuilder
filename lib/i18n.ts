@@ -347,6 +347,10 @@ export type TranslationKey =
   | "themeDefaultDescription"
   | "themeKnight"
   | "themeKnightDescription"
+  | "themeVolleyball"
+  | "themeVolleyballDescription"
+  | "themeGaming"
+  | "themeGamingDescription"
   | "themeUpdated"
   | "unableToUpdateTheme"
   | "coatOfArms"
@@ -741,6 +745,10 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     themeDefaultDescription: "Klares, neutrales Design.",
     themeKnight: "Ritterturnier",
     themeKnightDescription: "Mittelalterliches Tjost-Design mit Pergament und Gold.",
+    themeVolleyball: "Volleyball",
+    themeVolleyballDescription: "Sportliches Strand-Design mit Sand, Himmelblau und Sonne.",
+    themeGaming: "Gaming",
+    themeGamingDescription: "E-Sport-Design mit dunklem Hintergrund und Neonakzenten.",
     themeUpdated: "Design aktualisiert",
     unableToUpdateTheme: "Design konnte nicht geändert werden.",
     coatOfArms: "Wappen",
@@ -1124,6 +1132,10 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     themeDefaultDescription: "Clean, neutral look.",
     themeKnight: "Knight's Joust",
     themeKnightDescription: "Medieval jousting look with parchment and gold.",
+    themeVolleyball: "Volleyball",
+    themeVolleyballDescription: "Sporty beach look with sand, sky blue and sunshine.",
+    themeGaming: "Gaming",
+    themeGamingDescription: "Esports look with a dark backdrop and neon accents.",
     themeUpdated: "Theme updated",
     unableToUpdateTheme: "Unable to change the theme.",
     coatOfArms: "Coat of arms",

@@ -1,0 +1,197 @@
+/*
+ * Gaming / Esports theme.
+ *
+ * Scoped entirely under `[data-tournament-theme="gaming"]`, set on the
+ * tournament view wrapper — nothing here leaks to the rest of the app. The
+ * descendant overrides are prefixed with `:root` so they match the specificity
+ * of the global dark-mode rules in `globals.css` and win on source order, so
+ * the neon look is identical in light or dark mode.
+ *
+ * This is a *dark* skin, so the readability contract is the mirror image of the
+ * light themes: the app's default dark ink (`text-slate-900/950`) now sits on
+ * dark neon panels and MUST become a light tincture, while light surfaces
+ * (`bg-white`, `bg-slate-50/100/200`) collapse to dark panels. `text-white`
+ * was already light and stays light. Get either wrong and you get the exact
+ * dark-on-dark class of bug we never want.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap");
+
+[data-tournament-theme="gaming"] {
+  /* Palette */
+  --game-bg: #0d0b1a;
+  --game-panel: #161229;
+  --game-panel-2: #1d1838;
+  --game-panel-3: #251f45;
+  --game-surface-dark: #0a0814;
+  --game-text: #e9e7ff;
+  --game-text-soft: #bcb6e2;
+  --game-text-faint: #8a84b4;
+  --game-cyan: #22d3ee;
+  --game-magenta: #f23bc4;
+  --game-purple: #a855f7;
+  --game-green: #34f5a0;
+  --game-line: #352c66;
+  --game-line-bright: #5b4ba8;
+
+  color: var(--game-text);
+  font-family: "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+  position: relative;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background-color: var(--game-bg);
+  background-image:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(168, 85, 247, 0.28),
+      transparent 60%
+    ),
+    linear-gradient(rgba(91, 75, 168, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91, 75, 168, 0.08) 1px, transparent 1px);
+  background-size: auto, 28px 28px, 28px 28px;
+  box-shadow:
+    0 0 0 1px var(--game-cyan) inset,
+    0 0 0 6px var(--game-bg) inset,
+    0 0 0 7px var(--game-magenta) inset,
+    0 0 38px -6px rgba(34, 211, 238, 0.35),
+    0 18px 40px -22px rgba(0, 0, 0, 0.85);
+}
+
+/* Game controller above the heading. */
+[data-tournament-theme="gaming"] > header::before {
+  content: "\1F3AE";
+  display: block;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+/* Display type for headings — neon glow. */
+:root [data-tournament-theme="gaming"] h1,
+:root [data-tournament-theme="gaming"] h2,
+:root [data-tournament-theme="gaming"] h3 {
+  font-family: "Orbitron", "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+  color: var(--game-cyan);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.45);
+}
+
+:root [data-tournament-theme="gaming"] .uppercase {
+  color: var(--game-magenta);
+  letter-spacing: 0.08em;
+}
+
+/* Light surfaces collapse to dark neon panels. */
+:root [data-tournament-theme="gaming"] .bg-white {
+  background-color: var(--game-panel);
+}
+
+:root [data-tournament-theme="gaming"] .bg-slate-50 {
+  background-color: var(--game-panel-2);
+}
+
+:root [data-tournament-theme="gaming"] .bg-slate-100 {
+  background-color: var(--game-panel-3);
+}
+
+:root [data-tournament-theme="gaming"] .bg-slate-200 {
+  background-color: var(--game-panel-3);
+}
+
+/* Already-dark surfaces go a touch deeper than the panels. */
+:root [data-tournament-theme="gaming"] .bg-slate-800,
+:root [data-tournament-theme="gaming"] .bg-slate-900,
+:root [data-tournament-theme="gaming"] .bg-slate-950 {
+  background-color: var(--game-surface-dark);
+  color: var(--game-text);
+}
+
+/*
+ * The app's default *dark* ink now sits on dark panels — flip it to light.
+ * (Mirror of the light themes, where these stay dark.)
+ */
+:root [data-tournament-theme="gaming"] .text-slate-900,
+:root [data-tournament-theme="gaming"] .text-slate-950 {
+  color: var(--game-text);
+}
+
+/* `text-white` and the inverted-button label were already light — keep them. */
+:root [data-tournament-theme="gaming"] .text-white,
+:root [data-tournament-theme="gaming"] .dark\:text-slate-950 {
+  color: var(--game-text);
+}
+
+:root [data-tournament-theme="gaming"] .text-slate-700,
+:root [data-tournament-theme="gaming"] .text-slate-600 {
+  color: var(--game-text-soft);
+}
+
+:root [data-tournament-theme="gaming"] .text-slate-500,
+:root [data-tournament-theme="gaming"] .text-slate-400,
+:root [data-tournament-theme="gaming"] .text-slate-300 {
+  color: var(--game-text-faint);
+}
+
+/* Borders / dividers → neon lines. */
+:root [data-tournament-theme="gaming"] .border-slate-100,
+:root [data-tournament-theme="gaming"] .border-slate-200,
+:root [data-tournament-theme="gaming"] .border-slate-300 {
+  border-color: var(--game-line);
+}
+
+:root [data-tournament-theme="gaming"] .border-slate-500,
+:root [data-tournament-theme="gaming"] .border-slate-600,
+:root [data-tournament-theme="gaming"] .border-slate-700,
+:root [data-tournament-theme="gaming"] .border-slate-800 {
+  border-color: var(--game-line-bright);
+}
+
+:root
+  [data-tournament-theme="gaming"]
+  .divide-slate-100
+  > :not([hidden])
+  ~ :not([hidden]),
+:root
+  [data-tournament-theme="gaming"]
+  .divide-slate-200
+  > :not([hidden])
+  ~ :not([hidden]) {
+  border-color: var(--game-line);
+}
+
+/* Accent colours — winners' banner reads as a "victory" splash. */
+:root [data-tournament-theme="gaming"] .bg-emerald-50,
+:root [data-tournament-theme="gaming"] .bg-emerald-950 {
+  background-color: rgba(52, 245, 160, 0.12);
+}
+
+:root [data-tournament-theme="gaming"] .border-emerald-200,
+:root [data-tournament-theme="gaming"] .border-emerald-800 {
+  border-color: var(--game-green);
+}
+
+:root [data-tournament-theme="gaming"] .text-emerald-900,
+:root [data-tournament-theme="gaming"] .text-emerald-100,
+:root [data-tournament-theme="gaming"] .text-emerald-800,
+:root [data-tournament-theme="gaming"] .text-emerald-700 {
+  color: var(--game-green);
+}
+
+/* Buttons / inputs inside the themed area inherit the dark neon frame. */
+:root [data-tournament-theme="gaming"] select,
+:root [data-tournament-theme="gaming"] input,
+:root [data-tournament-theme="gaming"] textarea {
+  background-color: var(--game-surface-dark);
+  border-color: var(--game-line-bright);
+  color: var(--game-text);
+}
+
+:root [data-tournament-theme="gaming"] input::placeholder,
+:root [data-tournament-theme="gaming"] textarea::placeholder {
+  color: var(--game-text-faint);
+}
+
+:root [data-tournament-theme="gaming"] input[type="radio"],
+:root [data-tournament-theme="gaming"] input[type="checkbox"] {
+  accent-color: var(--game-magenta);
+}

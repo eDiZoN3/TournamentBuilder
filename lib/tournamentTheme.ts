@@ -35,6 +35,16 @@ export const TOURNAMENT_THEMES: readonly TournamentThemeDefinition[] = [
     labelKey: "themeKnight",
     descriptionKey: "themeKnightDescription",
   },
+  {
+    id: "volleyball",
+    labelKey: "themeVolleyball",
+    descriptionKey: "themeVolleyballDescription",
+  },
+  {
+    id: "gaming",
+    labelKey: "themeGaming",
+    descriptionKey: "themeGamingDescription",
+  },
 ] as const;
 
 export type TournamentTheme = (typeof TOURNAMENT_THEMES)[number]["id"];

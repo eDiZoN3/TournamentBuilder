@@ -1,0 +1,185 @@
+/*
+ * Volleyball / Beach theme.
+ *
+ * Scoped entirely under `[data-tournament-theme="volleyball"]`, set on the
+ * tournament view wrapper — nothing here leaks to the rest of the app. The
+ * descendant overrides are prefixed with `:root` so they match the specificity
+ * of the global dark-mode rules in `globals.css` and win on source order, so
+ * the beach look is identical in light or dark mode.
+ *
+ * The readability contract is the same one the knight theme documents: classes
+ * that only ever label a *dark* surface (`text-white`, the inverted-button
+ * `dark:text-slate-950`) must map to a *light* tincture, never to ink, or we'd
+ * paint dark text on a dark panel.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+
+[data-tournament-theme="volleyball"] {
+  /* Palette */
+  --vb-sky: #e3f3fb;
+  --vb-sky-2: #d2ecf8;
+  --vb-sky-3: #bfe2f3;
+  --vb-white: #ffffff;
+  --vb-ink: #123347;
+  --vb-ink-soft: #355f76;
+  --vb-ink-faint: #6f93a6;
+  --vb-blue: #2e86c1;
+  --vb-blue-bright: #4aa6dc;
+  --vb-navy: #16435c;
+  --vb-sand: #f6e4be;
+  --vb-sun: #f4a623;
+  --vb-sun-soft: #f7be5c;
+  --vb-line: #b6dcef;
+
+  color: var(--vb-ink);
+  font-family: "Nunito", ui-sans-serif, system-ui, sans-serif;
+  position: relative;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background-color: var(--vb-sky);
+  background-image:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(74, 166, 220, 0.25),
+      transparent 60%
+    ),
+    linear-gradient(180deg, rgba(74, 166, 220, 0.1), rgba(246, 228, 190, 0.35));
+  box-shadow:
+    0 0 0 2px var(--vb-blue-bright) inset,
+    0 0 0 8px var(--vb-white) inset,
+    0 0 0 10px var(--vb-sun) inset,
+    0 18px 40px -24px rgba(18, 51, 71, 0.45);
+}
+
+/* Volleyball above the heading. */
+[data-tournament-theme="volleyball"] > header::before {
+  content: "\1F3D0";
+  display: block;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+/* Display type for headings. */
+:root [data-tournament-theme="volleyball"] h1,
+:root [data-tournament-theme="volleyball"] h2,
+:root [data-tournament-theme="volleyball"] h3 {
+  font-family: "Baloo 2", "Nunito", ui-sans-serif, system-ui, sans-serif;
+  color: var(--vb-navy);
+  letter-spacing: 0.01em;
+}
+
+:root [data-tournament-theme="volleyball"] .uppercase {
+  color: var(--vb-ink-soft);
+}
+
+/* Surfaces — clean white panels with sky/sand tints. */
+:root [data-tournament-theme="volleyball"] .bg-white {
+  background-color: var(--vb-white);
+}
+
+:root [data-tournament-theme="volleyball"] .bg-slate-50 {
+  background-color: var(--vb-sky-2);
+}
+
+:root [data-tournament-theme="volleyball"] .bg-slate-100 {
+  background-color: var(--vb-sky-3);
+}
+
+:root [data-tournament-theme="volleyball"] .bg-slate-200 {
+  background-color: var(--vb-sky-3);
+}
+
+/* Dark surfaces (some bracket cards, primary buttons) become deep court navy. */
+:root [data-tournament-theme="volleyball"] .bg-slate-800,
+:root [data-tournament-theme="volleyball"] .bg-slate-900,
+:root [data-tournament-theme="volleyball"] .bg-slate-950 {
+  background-color: var(--vb-navy);
+  color: var(--vb-white);
+}
+
+/* Text shades → ink. */
+:root [data-tournament-theme="volleyball"] .text-slate-900,
+:root [data-tournament-theme="volleyball"] .text-slate-950 {
+  color: var(--vb-ink);
+}
+
+/*
+ * `text-white` (and the inverted-button `dark:text-slate-950`) only ever label
+ * a dark surface, which this theme turns into navy — they must stay light.
+ */
+:root [data-tournament-theme="volleyball"] .text-white,
+:root [data-tournament-theme="volleyball"] .dark\:text-slate-950 {
+  color: var(--vb-white);
+}
+
+:root [data-tournament-theme="volleyball"] .text-slate-700,
+:root [data-tournament-theme="volleyball"] .text-slate-600 {
+  color: var(--vb-ink-soft);
+}
+
+:root [data-tournament-theme="volleyball"] .text-slate-500,
+:root [data-tournament-theme="volleyball"] .text-slate-400,
+:root [data-tournament-theme="volleyball"] .text-slate-300 {
+  color: var(--vb-ink-faint);
+}
+
+/* Borders / dividers → sky line + sun accents. */
+:root [data-tournament-theme="volleyball"] .border-slate-100,
+:root [data-tournament-theme="volleyball"] .border-slate-200,
+:root [data-tournament-theme="volleyball"] .border-slate-300 {
+  border-color: var(--vb-line);
+}
+
+:root [data-tournament-theme="volleyball"] .border-slate-500,
+:root [data-tournament-theme="volleyball"] .border-slate-600,
+:root [data-tournament-theme="volleyball"] .border-slate-700,
+:root [data-tournament-theme="volleyball"] .border-slate-800 {
+  border-color: var(--vb-navy);
+}
+
+:root
+  [data-tournament-theme="volleyball"]
+  .divide-slate-100
+  > :not([hidden])
+  ~ :not([hidden]),
+:root
+  [data-tournament-theme="volleyball"]
+  .divide-slate-200
+  > :not([hidden])
+  ~ :not([hidden]) {
+  border-color: var(--vb-line);
+}
+
+/* Accent colours — winners' banner reads as a sunny podium. */
+:root [data-tournament-theme="volleyball"] .bg-emerald-50,
+:root [data-tournament-theme="volleyball"] .bg-emerald-950 {
+  background-color: var(--vb-sand);
+}
+
+:root [data-tournament-theme="volleyball"] .border-emerald-200,
+:root [data-tournament-theme="volleyball"] .border-emerald-800 {
+  border-color: var(--vb-sun);
+}
+
+:root [data-tournament-theme="volleyball"] .text-emerald-900,
+:root [data-tournament-theme="volleyball"] .text-emerald-100,
+:root [data-tournament-theme="volleyball"] .text-emerald-800,
+:root [data-tournament-theme="volleyball"] .text-emerald-700 {
+  color: var(--vb-blue);
+}
+
+/* Buttons / inputs inside the themed area inherit the beach frame. */
+:root [data-tournament-theme="volleyball"] select,
+:root [data-tournament-theme="volleyball"] input,
+:root [data-tournament-theme="volleyball"] textarea {
+  background-color: var(--vb-white);
+  border-color: var(--vb-line);
+  color: var(--vb-ink);
+}
+
+:root [data-tournament-theme="volleyball"] input[type="radio"],
+:root [data-tournament-theme="volleyball"] input[type="checkbox"] {
+  accent-color: var(--vb-blue);
+}

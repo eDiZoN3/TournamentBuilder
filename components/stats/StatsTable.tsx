@@ -1,5 +1,6 @@
 "use client";
 
+import { TeamCrest } from "@/components/bracket/TeamCrest";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useLocale } from "@/components/ui/LocaleProvider";
@@ -11,6 +12,8 @@ interface StatsTableProps {
   emptyTitleKey?: TranslationKey;
   isLoading?: boolean;
   rows: StatsRow[];
+  /** Show each row's team coat of arms (knight theme only). Team tables only. */
+  showCrests?: boolean;
   showScoreStats?: boolean;
   title: string;
   titleKey?: TranslationKey;
@@ -25,6 +28,7 @@ export function StatsTable({
   emptyTitleKey,
   isLoading = false,
   rows,
+  showCrests = false,
   showScoreStats = true,
   title,
   titleKey,
@@ -102,7 +106,14 @@ export function StatsTable({
                   className="max-w-64 break-words px-3 py-3 text-left font-semibold text-slate-900 dark:text-white"
                   scope="row"
                 >
-                  {row.name}
+                  {showCrests ? (
+                    <span className="flex items-center">
+                      <TeamCrest teamName={row.name} />
+                      <span className="min-w-0 break-words">{row.name}</span>
+                    </span>
+                  ) : (
+                    row.name
+                  )}
                 </th>
                 <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-300">
                   {row.matchesPlayed}

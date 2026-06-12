@@ -6,6 +6,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { LOCALE_STORAGE_KEY } from "@/lib/i18n";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
+import "./themes/index.css";
 
 const inter = Inter({
   subsets: ["latin"],

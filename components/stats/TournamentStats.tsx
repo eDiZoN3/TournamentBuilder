@@ -46,6 +46,7 @@ export function TournamentStats({
           emptyTitle=""
           emptyTitleKey="noTeamStats"
           rows={resolvedStats.teams}
+          showCrests
           showScoreStats={showScoreStats}
           title=""
           titleKey="teamStats"

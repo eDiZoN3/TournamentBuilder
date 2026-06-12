@@ -339,7 +339,27 @@ export type TranslationKey =
   | "teamSizeHint"
   | "participantsHint"
   | "disciplinesHint"
-  | "eventScoringNote";
+  | "eventScoringNote"
+  | "appearance"
+  | "theme"
+  | "themeHint"
+  | "themeDefault"
+  | "themeDefaultDescription"
+  | "themeKnight"
+  | "themeKnightDescription"
+  | "themeUpdated"
+  | "unableToUpdateTheme"
+  | "coatOfArms"
+  | "editCoatOfArms"
+  | "coatOfArmsFor"
+  | "crestField"
+  | "crestPattern"
+  | "crestPatternColor"
+  | "crestSymbol"
+  | "crestSymbolColor"
+  | "crestRandomize"
+  | "crestSave"
+  | "unableToUpdateCrest";
 
 const translations: Record<Locale, Record<TranslationKey, string>> = {
   de: {
@@ -714,6 +734,26 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     disciplinesHint: "Anzahl der parallelen Disziplin-Brackets.",
     eventScoringNote:
       "Events nutzen reine Sieger-Wertung auf einem Feld.",
+    appearance: "Erscheinungsbild",
+    theme: "Design",
+    themeHint: "Bestimmt nur das Aussehen – das Turnier funktioniert gleich.",
+    themeDefault: "Standard",
+    themeDefaultDescription: "Klares, neutrales Design.",
+    themeKnight: "Ritterturnier",
+    themeKnightDescription: "Mittelalterliches Tjost-Design mit Pergament und Gold.",
+    themeUpdated: "Design aktualisiert",
+    unableToUpdateTheme: "Design konnte nicht geändert werden.",
+    coatOfArms: "Wappen",
+    editCoatOfArms: "Wappen bearbeiten",
+    coatOfArmsFor: "Wappen für {name}",
+    crestField: "Hintergrund",
+    crestPattern: "Muster",
+    crestPatternColor: "Musterfarbe",
+    crestSymbol: "Symbol",
+    crestSymbolColor: "Symbolfarbe",
+    crestRandomize: "Zufällig",
+    crestSave: "Wappen speichern",
+    unableToUpdateCrest: "Wappen konnte nicht gespeichert werden.",
   },
   en: {
     account: "Account",
@@ -1077,6 +1117,26 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     participantsHint: "How many players take part in the event.",
     disciplinesHint: "Number of parallel discipline brackets.",
     eventScoringNote: "Events use winner-only scoring on a single court.",
+    appearance: "Appearance",
+    theme: "Theme",
+    themeHint: "Only changes the look — the tournament works exactly the same.",
+    themeDefault: "Default",
+    themeDefaultDescription: "Clean, neutral look.",
+    themeKnight: "Knight's Joust",
+    themeKnightDescription: "Medieval jousting look with parchment and gold.",
+    themeUpdated: "Theme updated",
+    unableToUpdateTheme: "Unable to change the theme.",
+    coatOfArms: "Coat of arms",
+    editCoatOfArms: "Edit coat of arms",
+    coatOfArmsFor: "Coat of arms for {name}",
+    crestField: "Background",
+    crestPattern: "Pattern",
+    crestPatternColor: "Pattern colour",
+    crestSymbol: "Symbol",
+    crestSymbolColor: "Symbol colour",
+    crestRandomize: "Randomize",
+    crestSave: "Save coat of arms",
+    unableToUpdateCrest: "Unable to save the coat of arms.",
   },
 };
 

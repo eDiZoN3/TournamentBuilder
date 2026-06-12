@@ -22,6 +22,7 @@ function tournamentWithTeams(
     name: "Test Tournament",
     status: "active",
     format: "double_elimination",
+    theme: "default",
     knockoutBracketType: "double_elimination",
     firstRoundPairingMode: "random",
     matchResultMode,

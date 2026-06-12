@@ -11,6 +11,10 @@ import {
   type ITournament,
 } from "@/lib/models/Tournament";
 import { playerProfileMapById } from "@/lib/playerProfiles";
+import {
+  DEFAULT_TOURNAMENT_THEME,
+  isTournamentTheme,
+} from "@/lib/tournamentTheme";
 
 interface RouteContext {
   params: Promise<{
@@ -29,6 +33,7 @@ interface UpdateBody {
   eventDisciplines?: string[];
   name?: string;
   teams?: TeamInput[];
+  theme?: string;
 }
 
 interface DeleteBody {
@@ -125,12 +130,18 @@ function parseUpdateBody(body: unknown): UpdateBody | null {
 
   if (
     entries.length === 0 ||
-    entries.some(([key]) => !["eventDisciplines", "name", "teams"].includes(key))
+    entries.some(
+      ([key]) =>
+        !["eventDisciplines", "name", "teams", "theme"].includes(key),
+    )
   ) {
     return null;
   }
 
-  const { eventDisciplines, name, teams } = body as Record<string, unknown>;
+  const { eventDisciplines, name, teams, theme } = body as Record<
+    string,
+    unknown
+  >;
   const update: UpdateBody = {};
 
   if (name !== undefined) {
@@ -163,6 +174,14 @@ function parseUpdateBody(body: unknown): UpdateBody | null {
     }
 
     update.eventDisciplines = parsedDisciplines;
+  }
+
+  if (theme !== undefined) {
+    if (!isTournamentTheme(theme)) {
+      return null;
+    }
+
+    update.theme = theme;
   }
 
   return update;
@@ -246,6 +265,7 @@ function tournamentResponseBody(tournament: { toObject(): ITournament }) {
   return {
     ...responseBody,
     format: responseBody.format ?? "double_elimination",
+    theme: responseBody.theme ?? DEFAULT_TOURNAMENT_THEME,
     knockoutBracketType: responseBody.knockoutBracketType ?? "double_elimination",
     firstRoundPairingMode: responseBody.firstRoundPairingMode ?? "random",
     matchResultMode: responseBody.matchResultMode ?? "points",
@@ -341,6 +361,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     if (update.name) {
       tournament.name = update.name;
+    }
+
+    if (update.theme) {
+      tournament.theme = update.theme;
     }
 
     if (update.teams) {

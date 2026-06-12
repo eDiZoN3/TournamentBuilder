@@ -5,11 +5,23 @@ import {
   models,
   type Model,
 } from "mongoose";
+import {
+  DEFAULT_TOURNAMENT_THEME,
+  TOURNAMENT_THEME_IDS,
+} from "@/lib/tournamentTheme";
 
 export interface ISetScore {
   scoreA: number;
   scoreB: number;
   pointsToWin: 11 | 21;
+}
+
+export interface ITeamCrest {
+  field: string;
+  division: string;
+  divisionColor: string;
+  charge: string;
+  chargeColor: string;
 }
 
 export interface ITeam {
@@ -18,6 +30,8 @@ export interface ITeam {
   players: string[];
   playerProfileIds?: Array<Types.ObjectId | null>;
   seed: number;
+  /** Optional heraldic crest, shown only by the knight theme. */
+  crest?: ITeamCrest | null;
 }
 
 export interface IJoinedPlayer {
@@ -79,6 +93,7 @@ export interface ITournament {
   name: string;
   status: "draft" | "active" | "completed";
   format: TournamentFormat;
+  theme: string;
   knockoutBracketType: KnockoutBracketType;
   firstRoundPairingMode: FirstRoundPairingMode;
   matchResultMode: MatchResultMode;
@@ -137,6 +152,19 @@ const teamSlotSchema = new Schema<ITeamSlot>(
   },
 );
 
+const teamCrestSchema = new Schema<ITeamCrest>(
+  {
+    field: { type: String, required: true },
+    division: { type: String, required: true },
+    divisionColor: { type: String, required: true },
+    charge: { type: String, required: true },
+    chargeColor: { type: String, required: true },
+  },
+  {
+    _id: false,
+  },
+);
+
 const teamSchema = new Schema<ITeam>({
   name: {
     type: String,
@@ -155,6 +183,10 @@ const teamSchema = new Schema<ITeam>({
   seed: {
     type: Number,
     default: 0,
+  },
+  crest: {
+    type: teamCrestSchema,
+    default: null,
   },
 });
 
@@ -314,6 +346,12 @@ const tournamentSchema = new Schema<ITournament>(
       type: String,
       enum: ["double_elimination", "team_round_robin", "individual_mixer", "event"],
       default: "double_elimination",
+      required: true,
+    },
+    theme: {
+      type: String,
+      enum: [...TOURNAMENT_THEME_IDS],
+      default: DEFAULT_TOURNAMENT_THEME,
       required: true,
     },
     knockoutBracketType: {

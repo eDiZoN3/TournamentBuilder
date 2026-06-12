@@ -877,6 +877,51 @@ describe("/api/tournaments/[id]", () => {
     });
   });
 
+  it("updates the tournament theme, even after it has started", async () => {
+    const tournament = await Tournament.create({
+      name: "Knight Cup",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        theme: "knight",
+      }),
+      context(tournament._id.toString()),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ theme: "knight" });
+    await expect(
+      Tournament.findById(tournament._id).lean(),
+    ).resolves.toMatchObject({ theme: "knight" });
+  });
+
+  it("rejects an unknown theme", async () => {
+    const tournament = await Tournament.create({
+      name: "Summer Cup",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    const response = await updateTournament(
+      request(`http://localhost:3000/api/tournaments/${tournament._id}`, "PUT", {
+        theme: "wizard",
+      }),
+      context(tournament._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+    });
+  });
+
   it("requires an authenticated admin to update tournaments", async () => {
     requireAdmin.mockResolvedValue(false);
 

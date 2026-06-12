@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { MatchControls } from "@/components/admin/MatchControls";
 import { TournamentDeleteControl } from "@/components/admin/TournamentDeleteControl";
+import { TournamentThemePicker } from "@/components/admin/TournamentThemePicker";
 import { BracketView } from "@/components/bracket/BracketView";
+import { CrestProvider } from "@/components/bracket/CrestContext";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { FinalStandings } from "@/components/bracket/PublicTournamentView";
 import { EventTournamentView } from "@/components/event/EventTournamentView";
@@ -16,6 +18,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatTranslation } from "@/lib/i18n";
 import type { ITournament } from "@/lib/models/Tournament";
 import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
+import { resolveTournamentTheme } from "@/lib/tournamentTheme";
 
 interface TournamentManageViewProps {
   initialTournament: ITournament;
@@ -61,9 +64,22 @@ export function TournamentManageView({
   );
   const tournament = data ?? initialTournament;
   const showSkeleton = isLoading && !data;
+  const activeTheme = resolveTournamentTheme(tournament.theme);
 
   return (
-    <section className="space-y-6">
+    <CrestProvider
+      active={activeTheme === "knight"}
+      editable
+      onCrestUpdated={async () => {
+        await mutate();
+      }}
+      teams={tournament.teams}
+      tournamentId={tournament._id.toString()}
+    >
+    <section
+      className="tournament-theme-root space-y-6"
+      data-tournament-theme={activeTheme}
+    >
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -79,12 +95,21 @@ export function TournamentManageView({
             })}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={tournament.status} />
-          <TournamentDeleteControl
-            onDeleted={() => router.push("/admin/dashboard")}
-            tournament={tournament}
+        <div className="flex flex-wrap items-center gap-3">
+          <TournamentThemePicker
+            currentTheme={tournament.theme}
+            onUpdated={async () => {
+              await mutate();
+            }}
+            tournamentId={tournament._id.toString()}
           />
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={tournament.status} />
+            <TournamentDeleteControl
+              onDeleted={() => router.push("/admin/dashboard")}
+              tournament={tournament}
+            />
+          </div>
         </div>
       </header>
       {unableToRefresh ? (
@@ -152,5 +177,6 @@ export function TournamentManageView({
         />
       )}
     </section>
+    </CrestProvider>
   );
 }

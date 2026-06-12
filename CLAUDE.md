@@ -68,6 +68,20 @@ The bracket logic is isolated here and is the most complex part of the codebase:
 - Dark/light theme is managed in `lib/theme.ts` and `components/ui/ThemeProvider.tsx`, persisted in `localStorage`.
 - Inline scripts in `app/layout.tsx` apply theme/locale before React hydrates to avoid flash.
 
+#### Per-tournament visual themes (skins)
+
+Separate from dark/light, each tournament has a visual **theme** (`default`, `knight`, …) that only changes its *look*, never its behaviour.
+
+- The registry is `lib/tournamentTheme.ts` — adding a theme is additive (one entry + i18n labels + one CSS file).
+- The theme is stored on the `Tournament` document (`theme` field) and chosen via the dropdown in the admin manage view (`components/admin/TournamentThemePicker.tsx`, persisted through `PUT /api/tournaments/[id]`).
+- `TournamentManageView` and `PublicTournamentView` set `data-tournament-theme="<id>"` on their wrapper `<section>`. The matching CSS lives in `app/themes/` (one file per theme, aggregated by `app/themes/index.css`, imported in `app/layout.tsx`). Theme rules are scoped to that attribute and prefixed with `:root` so they override the global dark-mode rules regardless of light/dark.
+- A theme remaps Tailwind utility classes; because base classes (e.g. `bg-slate-900`) win over `dark:` variants at the theme's `:root [attr] .class` specificity, an inverted dark surface and its `text-white` label are both remapped. Keep these in step — `text-white` must map to a *light* tincture (it only ever sits on a dark surface), never to ink, or you get unreadable dark-on-dark labels.
+
+##### Team crests (knight theme)
+
+- The knight theme draws a heraldic shield next to each team in the **team stats table** (`components/stats/StatsTable.tsx`, via the `showCrests` prop set by `TournamentStats`) — not in the bracket/graph. Crest data (`field`, `division`, `divisionColor`, `charge`, `chargeColor` — all tincture/shape ids) lives on each `ITeam` (`crest` field) regardless of theme; pure logic, palettes, a deterministic per-team default, and a WCAG contrast guard are in `lib/crest.ts`.
+- `components/bracket/CrestShield.tsx` renders the SVG; `TeamCrest.tsx` is a context-aware wrapper that shows nothing unless the theme is `knight` (gated by `CrestProvider`, mounted in both tournament views) and becomes an editor trigger when the provider is `editable` (admin manage view). It resolves a team by id or by name (stats rows only carry the team name, so `CrestProvider` exposes a `teamsByName` map). The editor is `CrestEditor.tsx`; crests persist via `PUT /api/tournaments/[id]/teams/[teamId]/crest` (admin-only, allowed in any status).
+
 ### Testing Conventions
 
 - Tests are in `__tests__/`, mirroring the source structure.

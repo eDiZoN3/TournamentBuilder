@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import useSWR from "swr";
 import { BracketView } from "@/components/bracket/BracketView";
+import { CrestProvider } from "@/components/bracket/CrestContext";
 import { BracketSkeleton } from "@/components/bracket/MatchCardSkeleton";
 import { StandingsTable } from "@/components/bracket/StandingsTable";
 import { EventTournamentView } from "@/components/event/EventTournamentView";
@@ -15,6 +16,7 @@ import { formatTranslation } from "@/lib/i18n";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import type { ITournament } from "@/lib/models/Tournament";
 import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
+import { resolveTournamentTheme } from "@/lib/tournamentTheme";
 
 interface PublicTournamentViewProps {
   currentPlayerName?: string | null;
@@ -91,8 +93,18 @@ export function PublicTournamentView({
       ),
   );
 
+  const activeTheme = resolveTournamentTheme(tournament.theme);
+
   return (
-    <section className="space-y-6">
+    <CrestProvider
+      active={activeTheme === "knight"}
+      teams={tournament.teams}
+      tournamentId={tournament._id.toString()}
+    >
+    <section
+      className="tournament-theme-root space-y-6"
+      data-tournament-theme={activeTheme}
+    >
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -177,5 +189,6 @@ export function PublicTournamentView({
         <TournamentStats tournament={tournament} />
       ) : null}
     </section>
+    </CrestProvider>
   );
 }

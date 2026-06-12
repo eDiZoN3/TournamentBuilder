@@ -274,6 +274,43 @@ describe("TournamentManageView", () => {
     expect(screen.getByText("Unable to refresh")).toBeInTheDocument();
   });
 
+  it("renders the theme picker and applies the tournament theme to the wrapper", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    vi.stubGlobal("fetch", fetchMock);
+    const initialTournament = {
+      ...makeTournament({
+        name: "Themed Cup",
+        status: "active",
+        theme: "default",
+      }),
+      updatedAt: new Date(),
+    } as ITournament;
+
+    const { container } = render(
+      <TournamentManageView initialTournament={initialTournament} />,
+    );
+
+    expect(
+      container.querySelector('[data-tournament-theme="default"]'),
+    ).not.toBeNull();
+
+    const select = screen.getByLabelText("Theme");
+
+    expect(select).toHaveValue("default");
+
+    fireEvent.change(select, { target: { value: "knight" } });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringMatching(/\/api\/tournaments\/.+$/),
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({ theme: "knight" }),
+        }),
+      );
+    });
+  });
+
   it("shows bracket skeletons during an initial SWR load with no data", () => {
     const initialTournament = {
       ...makeTournament({

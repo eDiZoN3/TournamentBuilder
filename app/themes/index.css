@@ -1,0 +1,10 @@
+/*
+ * Per-tournament visual themes.
+ *
+ * Each theme lives in its own file and is scoped to
+ * `[data-tournament-theme="<id>"]`. The "default" theme needs no file — it is
+ * simply the app's base styling. Register a new theme here once its CSS exists
+ * and its id is added to `lib/tournamentTheme.ts`.
+ */
+
+@import "./knight.css";

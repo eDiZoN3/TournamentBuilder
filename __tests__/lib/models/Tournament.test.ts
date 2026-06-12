@@ -13,6 +13,7 @@ describe("Tournament model", () => {
       name: "Summer Cup",
       status: "draft",
       format: "double_elimination",
+      theme: "default",
       knockoutBracketType: "double_elimination",
       firstRoundPairingMode: "random",
       matchResultMode: "points",
@@ -61,6 +62,30 @@ describe("Tournament model", () => {
         name: "Bad Match Format Cup",
         format: "team_round_robin",
         roundRobinMatchFormat: "bo5",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("accepts a known visual theme", async () => {
+    const tournament = await Tournament.create({
+      name: "Knight Cup",
+      theme: "knight",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+    });
+
+    expect(tournament).toMatchObject({ theme: "knight" });
+  });
+
+  it("rejects unknown visual themes", async () => {
+    await expect(
+      Tournament.create({
+        name: "Bad Theme Cup",
+        theme: "wizard",
         teamSize: 2,
         courtsAvailable: 1,
         inputMode: "teams",

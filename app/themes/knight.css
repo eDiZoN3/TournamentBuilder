@@ -1,0 +1,195 @@
+/*
+ * Knight / Jousting-Tournament theme.
+ *
+ * Scoped entirely under `[data-tournament-theme="knight"]`, which is set on the
+ * tournament view wrapper. Nothing here leaks to the rest of the app. The
+ * descendant overrides are prefixed with `:root` so they match the specificity
+ * of the global dark-mode rules in `globals.css` (`:root.dark .bg-white`, …) and
+ * win on source order — that way the medieval look is identical whether the
+ * visitor has the site in light or dark mode.
+ *
+ * To add another theme, copy this file to `app/themes/<id>.css`, swap the
+ * attribute value + palette, and import it from `app/themes/index.css`.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap");
+
+[data-tournament-theme="knight"] {
+  /* Palette */
+  --knight-parchment: #f4ead2;
+  --knight-parchment-2: #ecdcb8;
+  --knight-parchment-3: #e2cfa3;
+  --knight-ink: #2c2014;
+  --knight-ink-soft: #5d4a32;
+  --knight-ink-faint: #8a7558;
+  --knight-gold: #a9842a;
+  --knight-gold-bright: #c8a23d;
+  --knight-wood: #4a3318;
+  --knight-royal: #7c1d1d;
+  --knight-royal-soft: #9a2f2f;
+
+  color: var(--knight-ink);
+  font-family: "EB Garamond", Georgia, "Times New Roman", serif;
+  position: relative;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background-color: var(--knight-parchment);
+  background-image:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(168, 132, 42, 0.18),
+      transparent 60%
+    ),
+    repeating-linear-gradient(
+      45deg,
+      rgba(124, 29, 29, 0.03) 0,
+      rgba(124, 29, 29, 0.03) 2px,
+      transparent 2px,
+      transparent 9px
+    );
+  box-shadow:
+    0 0 0 2px var(--knight-gold) inset,
+    0 0 0 8px var(--knight-parchment) inset,
+    0 0 0 10px var(--knight-wood) inset,
+    0 18px 40px -24px rgba(44, 32, 20, 0.6);
+}
+
+/* Crossed-lances banner above the heading. */
+[data-tournament-theme="knight"] > header::before {
+  content: "\2694\FE0F";
+  display: block;
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  filter: saturate(0.7);
+}
+
+/* Display type for headings. */
+:root [data-tournament-theme="knight"] h1,
+:root [data-tournament-theme="knight"] h2,
+:root [data-tournament-theme="knight"] h3 {
+  font-family: "Cinzel", "Trajan Pro", Georgia, serif;
+  color: var(--knight-royal);
+  letter-spacing: 0.02em;
+}
+
+:root [data-tournament-theme="knight"] .uppercase {
+  color: var(--knight-ink-soft);
+}
+
+/* Surfaces — parchment panels framed in gold. */
+:root [data-tournament-theme="knight"] .bg-white {
+  background-color: var(--knight-parchment-2);
+}
+
+:root [data-tournament-theme="knight"] .bg-slate-50 {
+  background-color: var(--knight-parchment);
+}
+
+:root [data-tournament-theme="knight"] .bg-slate-100 {
+  background-color: var(--knight-parchment-3);
+}
+
+:root [data-tournament-theme="knight"] .bg-slate-200 {
+  background-color: var(--knight-parchment-3);
+}
+
+/* Dark surfaces (used on some bracket cards) become tooled leather. */
+:root [data-tournament-theme="knight"] .bg-slate-800,
+:root [data-tournament-theme="knight"] .bg-slate-900,
+:root [data-tournament-theme="knight"] .bg-slate-950 {
+  background-color: var(--knight-wood);
+  color: var(--knight-parchment);
+}
+
+/* Text shades → ink. */
+:root [data-tournament-theme="knight"] .text-slate-900,
+:root [data-tournament-theme="knight"] .text-slate-950 {
+  color: var(--knight-ink);
+}
+
+/*
+ * `text-white` is only ever used as the foreground of a *dark* surface
+ * (primary buttons, the active discipline tab, badges — `bg-slate-900` &c.,
+ * which this theme turns into wood). It must therefore stay light, otherwise
+ * we'd paint near-black ink on dark brown. Likewise the inverted-button idiom
+ * `bg-slate-900 text-white dark:bg-white dark:text-slate-950` keeps its base
+ * `bg-slate-900` (→ wood) under this theme, so its `dark:text-slate-950` must
+ * not drag the label back to ink. Both map to parchment so the label always
+ * reads against the wood it sits on.
+ */
+:root [data-tournament-theme="knight"] .text-white,
+:root [data-tournament-theme="knight"] .dark\:text-slate-950 {
+  color: var(--knight-parchment);
+}
+
+:root [data-tournament-theme="knight"] .text-slate-700,
+:root [data-tournament-theme="knight"] .text-slate-600 {
+  color: var(--knight-ink-soft);
+}
+
+:root [data-tournament-theme="knight"] .text-slate-500,
+:root [data-tournament-theme="knight"] .text-slate-400,
+:root [data-tournament-theme="knight"] .text-slate-300 {
+  color: var(--knight-ink-faint);
+}
+
+/* Borders / dividers → gold + wood. */
+:root [data-tournament-theme="knight"] .border-slate-100,
+:root [data-tournament-theme="knight"] .border-slate-200,
+:root [data-tournament-theme="knight"] .border-slate-300 {
+  border-color: var(--knight-gold);
+}
+
+:root [data-tournament-theme="knight"] .border-slate-500,
+:root [data-tournament-theme="knight"] .border-slate-600,
+:root [data-tournament-theme="knight"] .border-slate-700,
+:root [data-tournament-theme="knight"] .border-slate-800 {
+  border-color: var(--knight-wood);
+}
+
+:root
+  [data-tournament-theme="knight"]
+  .divide-slate-100
+  > :not([hidden])
+  ~ :not([hidden]),
+:root
+  [data-tournament-theme="knight"]
+  .divide-slate-200
+  > :not([hidden])
+  ~ :not([hidden]) {
+  border-color: var(--knight-gold);
+}
+
+/* Accent colours — winners' laurels stay green-ish but warmer; the
+   "tournament complete" banner reads as a royal proclamation. */
+:root [data-tournament-theme="knight"] .bg-emerald-50,
+:root [data-tournament-theme="knight"] .bg-emerald-950 {
+  background-color: var(--knight-parchment-2);
+}
+
+:root [data-tournament-theme="knight"] .border-emerald-200,
+:root [data-tournament-theme="knight"] .border-emerald-800 {
+  border-color: var(--knight-gold-bright);
+}
+
+:root [data-tournament-theme="knight"] .text-emerald-900,
+:root [data-tournament-theme="knight"] .text-emerald-100,
+:root [data-tournament-theme="knight"] .text-emerald-800,
+:root [data-tournament-theme="knight"] .text-emerald-700 {
+  color: var(--knight-royal);
+}
+
+/* Buttons / inputs inside the themed area inherit the parchment frame. */
+:root [data-tournament-theme="knight"] select,
+:root [data-tournament-theme="knight"] input,
+:root [data-tournament-theme="knight"] textarea {
+  background-color: var(--knight-parchment);
+  border-color: var(--knight-gold);
+  color: var(--knight-ink);
+}
+
+:root [data-tournament-theme="knight"] input[type="radio"],
+:root [data-tournament-theme="knight"] input[type="checkbox"] {
+  accent-color: var(--knight-royal);
+}

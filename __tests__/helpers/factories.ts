@@ -6,6 +6,13 @@ export interface Team {
   players: string[];
   playerProfileIds?: Array<Types.ObjectId | null>;
   seed: number;
+  crest?: {
+    field: string;
+    division: string;
+    divisionColor: string;
+    charge: string;
+    chargeColor: string;
+  } | null;
 }
 
 export interface SetScore {
@@ -63,6 +70,7 @@ export interface Tournament {
   name: string;
   status: "draft" | "active" | "completed";
   format: TournamentFormat;
+  theme?: string;
   knockoutBracketType: KnockoutBracketType;
   firstRoundPairingMode: FirstRoundPairingMode;
   matchResultMode: MatchResultMode;
@@ -157,6 +165,7 @@ export function makeTournament(
     name: "Test Tournament",
     status: "draft",
     format: "double_elimination",
+    theme: "default",
     knockoutBracketType: "double_elimination",
     firstRoundPairingMode: "random",
     matchResultMode: "points",

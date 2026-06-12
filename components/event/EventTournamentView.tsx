@@ -331,9 +331,6 @@ export function EventTournamentView({
     }`;
     const inner = (
       <>
-        <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded bg-slate-100 px-1 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-          {team?.seed ?? "·"}
-        </span>
         <TeamCrest editable={false} size={16} teamId={teamId} />
         <span className="flex-1 truncate">{teamName}</span>
         {isWinner ? (

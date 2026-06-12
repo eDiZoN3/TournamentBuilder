@@ -75,6 +75,19 @@ describe("TeamCrest", () => {
     ).toBeInTheDocument();
   });
 
+  it("can be forced read-only even when its provider is editable", () => {
+    render(
+      <CrestProvider active editable teams={teams} tournamentId="t1">
+        <TeamCrest editable={false} teamId={teams[0]._id} />
+      </CrestProvider>,
+    );
+
+    expect(screen.getByRole("img", { name: "Coat of arms" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Edit coat of arms" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("opens the crest editor from the editable crest", () => {
     renderCrest({ active: true, editable: true }, teams);
 

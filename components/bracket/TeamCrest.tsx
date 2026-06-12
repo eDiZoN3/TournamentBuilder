@@ -10,6 +10,12 @@ import { resolveCrest } from "@/lib/crest";
 import { normalizeName } from "@/lib/stats";
 
 interface TeamCrestProps {
+  /**
+   * Override whether this crest can open the editor. Defaults to the provider's
+   * editable setting, but read-only locations (the tournament bracket) can force
+   * display-only while the stats table stays editable.
+   */
+  editable?: boolean;
   size?: number;
   /** Identify the team by id, or by name (e.g. stats-table rows). */
   teamId?: { toString(): string } | string | null | undefined;
@@ -22,7 +28,12 @@ interface TeamCrestProps {
  * {@link CrestProvider}). When the provider is editable (admin manage view) it
  * becomes a click target that opens the crest editor.
  */
-export function TeamCrest({ size = 20, teamId, teamName }: TeamCrestProps) {
+export function TeamCrest({
+  editable,
+  size = 20,
+  teamId,
+  teamName,
+}: TeamCrestProps) {
   const context = useCrestContext();
   const { t } = useLocale();
   const [isEditing, setIsEditing] = useState(false);
@@ -46,7 +57,7 @@ export function TeamCrest({ size = 20, teamId, teamName }: TeamCrestProps) {
     <CrestShield crest={crest} size={size} title={t("coatOfArms")} />
   );
 
-  if (!context.editable) {
+  if (!(editable ?? context.editable)) {
     return <span className="mr-1.5 inline-flex shrink-0 align-middle">{shield}</span>;
   }
 

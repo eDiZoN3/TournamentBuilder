@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { TeamCrest } from "@/components/bracket/TeamCrest";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { localizeLabel, localizePlaceRange } from "@/lib/bracket/labels";
 import type { IMatch, ITeamSlot } from "@/lib/models/Tournament";
@@ -10,12 +11,15 @@ interface MatchCardProps {
   isPinned?: boolean;
   match: IMatch;
   teamAIsCurrentPlayerTeam?: boolean;
+  teamAId?: ITeamSlot["teamId"] | null;
   teamAName?: string;
   teamBIsCurrentPlayerTeam?: boolean;
+  teamBId?: ITeamSlot["teamId"] | null;
   teamBName?: string;
 }
 
 interface DisplayTeam {
+  id: ITeamSlot["teamId"] | null;
   name: string;
   slot: ITeamSlot | null;
 }
@@ -59,7 +63,10 @@ function MatchRow({
       data-current-player-team={isCurrentPlayerTeam}
       data-testid={`team-${side}-row`}
     >
-      <span className="truncate">{team.name}</span>
+      <span className="flex min-w-0 items-center">
+        <TeamCrest editable={false} size={18} teamId={team.id} />
+        <span className="truncate">{team.name}</span>
+      </span>
       {scores.length > 0 ? (
         <span
           className="flex shrink-0 gap-2 font-mono text-xs"
@@ -79,8 +86,10 @@ export function MatchCard({
   isPinned = false,
   match,
   teamAIsCurrentPlayerTeam = false,
+  teamAId,
   teamAName,
   teamBIsCurrentPlayerTeam = false,
+  teamBId,
   teamBName,
 }: MatchCardProps) {
   const { locale, t } = useLocale();
@@ -96,13 +105,13 @@ export function MatchCard({
   const teams: [DisplayTeam, DisplayTeam] = match.isBye
     ? [
         match.teamA
-          ? { name: teamAName ?? fallbackTeamName, slot: match.teamA }
-          : { name: teamBName ?? fallbackTeamName, slot: match.teamB },
-        { name: "—", slot: null },
+          ? { id: teamAId ?? match.teamA.teamId, name: teamAName ?? fallbackTeamName, slot: match.teamA }
+          : { id: teamBId ?? match.teamB?.teamId ?? null, name: teamBName ?? fallbackTeamName, slot: match.teamB },
+        { id: null, name: "—", slot: null },
       ]
     : [
-        { name: match.teamA ? (teamAName ?? fallbackTeamName) : fallbackTeamName, slot: match.teamA },
-        { name: match.teamB ? (teamBName ?? fallbackTeamName) : fallbackTeamName, slot: match.teamB },
+        { id: teamAId ?? match.teamA?.teamId ?? null, name: match.teamA ? (teamAName ?? fallbackTeamName) : fallbackTeamName, slot: match.teamA },
+        { id: teamBId ?? match.teamB?.teamId ?? null, name: match.teamB ? (teamBName ?? fallbackTeamName) : fallbackTeamName, slot: match.teamB },
       ];
   const cardClasses = [
     "group relative w-64 overflow-hidden rounded-lg border bg-white shadow-sm dark:bg-slate-900",

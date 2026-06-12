@@ -39,6 +39,33 @@ describe("normalizeCrest", () => {
   it("drops extra properties, keeping only the crest shape", () => {
     expect(normalizeCrest({ ...validCrest, evil: "payload" })).toEqual(validCrest);
   });
+
+  it("accepts all requested animal charges", () => {
+    expect(CREST_CHARGES).toEqual(
+      expect.arrayContaining([
+        "lion",
+        "falcon",
+        "puma",
+        "panther",
+        "lynx",
+        "scorpion",
+        "cobra",
+        "koala",
+        "cheetah",
+        "jaguar",
+        "elephant",
+        "ram",
+        "fox",
+        "hummingbird",
+        "leopard",
+        "toucan",
+      ]),
+    );
+    expect(normalizeCrest({ ...validCrest, charge: "lion" })).toEqual({
+      ...validCrest,
+      charge: "lion",
+    });
+  });
 });
 
 describe("contrast helpers", () => {

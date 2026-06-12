@@ -50,6 +50,22 @@ export const CREST_CHARGES: readonly string[] = [
   "crown",
   "fleur",
   "swords",
+  "lion",
+  "falcon",
+  "puma",
+  "panther",
+  "lynx",
+  "scorpion",
+  "cobra",
+  "koala",
+  "cheetah",
+  "jaguar",
+  "elephant",
+  "ram",
+  "fox",
+  "hummingbird",
+  "leopard",
+  "toucan",
 ] as const;
 
 export interface TeamCrest {

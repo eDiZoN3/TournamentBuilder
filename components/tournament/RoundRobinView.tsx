@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { StandingsTable } from "@/components/bracket/StandingsTable";
+import { TeamCrest } from "@/components/bracket/TeamCrest";
 import { UpNextBanner } from "@/components/bracket/UpNextBanner";
 import { resolveTeamName } from "@/components/bracket/utils";
 import { useLocale } from "@/components/ui/LocaleProvider";
@@ -139,15 +140,17 @@ export function RoundRobinView({
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {matches.map((match) => {
+                      const teamAId = match.teamA?.teamId ?? null;
+                      const teamBId = match.teamB?.teamId ?? null;
                       const teamAName =
                         resolveTeamName(
                           tournament.teams,
-                          match.teamA?.teamId ?? null,
+                          teamAId,
                         ) ?? t("toBeDetermined");
                       const teamBName =
                         resolveTeamName(
                           tournament.teams,
-                          match.teamB?.teamId ?? null,
+                          teamBId,
                         ) ?? t("toBeDetermined");
 
                       return (
@@ -160,7 +163,15 @@ export function RoundRobinView({
                             {match.position}
                           </td>
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
-                            {teamAName} {t("versus")} {teamBName}
+                            <span className="inline-flex min-w-0 items-center align-middle">
+                              <TeamCrest editable={false} size={16} teamId={teamAId} />
+                              <span className="truncate">{teamAName}</span>
+                            </span>{" "}
+                            {t("versus")} {" "}
+                            <span className="inline-flex min-w-0 items-center align-middle">
+                              <TeamCrest editable={false} size={16} teamId={teamBId} />
+                              <span className="truncate">{teamBName}</span>
+                            </span>
                           </td>
                           <td className="px-4 py-3 font-mono text-slate-700 dark:text-slate-200">
                             {scoreFor(match)}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { TeamCrest } from "@/components/bracket/TeamCrest";
 import { resolveTeamName } from "@/components/bracket/utils";
 import { TournamentStats } from "@/components/stats/TournamentStats";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
@@ -231,7 +232,7 @@ export function EventTournamentView({
     return (
       <button
         aria-label={`Select ${teamName} as winner`}
-        className={`max-w-[8rem] truncate rounded px-1.5 py-0.5 font-medium transition disabled:cursor-default ${tone} ${
+        className={`inline-flex max-w-[8rem] items-center rounded px-1.5 py-0.5 font-medium transition disabled:cursor-default ${tone} ${
           disabled
             ? ""
             : "hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40"
@@ -245,7 +246,8 @@ export function EventTournamentView({
         }}
         type="button"
       >
-        {teamName}
+        <TeamCrest editable={false} size={16} teamId={teamId} />
+        <span className="truncate">{teamName}</span>
       </button>
     );
   }
@@ -332,6 +334,7 @@ export function EventTournamentView({
         <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded bg-slate-100 px-1 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
           {team?.seed ?? "·"}
         </span>
+        <TeamCrest editable={false} size={16} teamId={teamId} />
         <span className="flex-1 truncate">{teamName}</span>
         {isWinner ? (
           <span className="text-emerald-600 dark:text-emerald-400">✓</span>

@@ -56,6 +56,22 @@ describe("CrestShield", () => {
     }
   });
 
+  it("renders animal charges as color emoji", () => {
+    const { container } = render(
+      <CrestShield
+        crest={{
+          ...baseCrest,
+          charge: "lion",
+        }}
+        size={32}
+      />,
+    );
+
+    const emoji = container.querySelector("text");
+    expect(emoji).toHaveTextContent("🦁");
+    expect(emoji).toHaveAttribute("stroke", "none");
+  });
+
   it("ignores unknown division and charge ids without failing", () => {
     const { container } = render(
       <CrestShield

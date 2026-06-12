@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { makeTeams } from "@/__tests__/helpers/factories";
 import { CrestProvider } from "@/components/bracket/CrestContext";
@@ -32,10 +32,26 @@ describe("TeamCrest", () => {
     expect(container.querySelector("svg")).toBeNull();
   });
 
+  it("renders nothing outside a crest provider", () => {
+    const { container } = render(<TeamCrest teamId={teams[0]._id} />);
+
+    expect(container.querySelector("svg")).toBeNull();
+  });
+
   it("renders nothing when the team is unknown", () => {
     const { container } = render(
       <CrestProvider active teams={[]} tournamentId="t1">
         <TeamCrest teamId={teams[0]._id} />
+      </CrestProvider>,
+    );
+
+    expect(container.querySelector("svg")).toBeNull();
+  });
+
+  it("renders nothing when no team identifier is provided", () => {
+    const { container } = render(
+      <CrestProvider active teams={teams} tournamentId="t1">
+        <TeamCrest />
       </CrestProvider>,
     );
 
@@ -56,6 +72,32 @@ describe("TeamCrest", () => {
 
     expect(
       screen.getByRole("button", { name: "Edit coat of arms" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the crest editor from the editable crest", () => {
+    renderCrest({ active: true, editable: true }, teams);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit coat of arms" }));
+
+    expect(
+      screen.getByRole("dialog", {
+        name: `Coat of arms for ${teams[0].name}`,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the crest editor from the keyboard", () => {
+    renderCrest({ active: true, editable: true }, teams);
+
+    fireEvent.keyDown(screen.getByRole("button", { name: "Edit coat of arms" }), {
+      key: "Enter",
+    });
+
+    expect(
+      screen.getByRole("dialog", {
+        name: `Coat of arms for ${teams[0].name}`,
+      }),
     ).toBeInTheDocument();
   });
 

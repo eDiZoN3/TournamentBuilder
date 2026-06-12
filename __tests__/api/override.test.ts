@@ -236,6 +236,37 @@ describe("POST /api/tournaments/[id]/matches/[matchId]/override", () => {
     });
   });
 
+  it("rejects malformed JSON and invalid override details", async () => {
+    const tournamentId = new Types.ObjectId().toString();
+    const matchId = new Types.ObjectId().toString();
+
+    const malformedResponse = await overrideMatch(
+      request(tournamentId, matchId),
+      context(tournamentId, matchId),
+    );
+    const invalidDetailsResponse = await overrideMatch(
+      request(tournamentId, matchId, { sets: [] }),
+      context(tournamentId, matchId),
+    );
+
+    expect(malformedResponse.status).toBe(422);
+    expect(invalidDetailsResponse.status).toBe(422);
+  });
+
+  it("returns not found when tournament or match ids are invalid", async () => {
+    const response = await overrideMatch(
+      request("not-a-tournament", "not-a-match", {
+        sets: [makeSet(11, 9)],
+      }),
+      context("not-a-tournament", "not-a-match"),
+    );
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
   it("rejects overrides for matches that are not completed", async () => {
     const teams = makeTeams(2);
     const match = makeMatch({
@@ -263,6 +294,90 @@ describe("POST /api/tournaments/[id]/matches/[matchId]/override", () => {
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toMatchObject({
       code: "CONFLICT",
+    });
+  });
+
+  it("rejects completed matches with missing team data", async () => {
+    const teams = makeTeams(2);
+    const match = makeMatch({
+      status: "completed",
+      teamA: { teamId: teams[0]._id, sets: [makeSet(11, 9)] },
+      teamB: null,
+      winnerId: teams[0]._id,
+      loserId: teams[1]._id,
+    });
+    const tournament = await Tournament.create({
+      name: "Incomplete Cup",
+      status: "completed",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [match],
+    });
+
+    const response = await overrideMatch(
+      request(tournament._id.toString(), match._id.toString(), {
+        sets: [makeSet(11, 9)],
+      }),
+      context(tournament._id.toString(), match._id.toString()),
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "CONFLICT",
+      error: "Completed match is missing team data",
+    });
+  });
+
+  it("requires winner-side payloads for winner-only tournaments", async () => {
+    const teams = makeTeams(2);
+    const match = makeMatch({
+      status: "completed",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+      winnerId: teams[0]._id,
+      loserId: teams[1]._id,
+    });
+    const tournament = await Tournament.create({
+      name: "Winner Only Cup",
+      status: "completed",
+      matchResultMode: "winner_only",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [match],
+    });
+
+    const response = await overrideMatch(
+      request(tournament._id.toString(), match._id.toString(), {
+        sets: [makeSet(11, 9)],
+      }),
+      context(tournament._id.toString(), match._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+      error: "Winner side is required",
+    });
+  });
+
+  it("rejects winner-only payloads for point-scored tournaments", async () => {
+    const { tournament, source } = await createCompletedTournament();
+
+    const response = await overrideMatch(
+      request(tournament._id.toString(), source._id.toString(), {
+        winnerSide: "A",
+      }),
+      context(tournament._id.toString(), source._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+      error: "Winner-only completion is not enabled",
     });
   });
 

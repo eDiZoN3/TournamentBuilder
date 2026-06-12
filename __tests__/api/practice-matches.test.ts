@@ -139,6 +139,72 @@ describe("/api/practice-matches", () => {
     expect(response.status).toBe(422);
   });
 
+  it("requires a player session before updating or deleting a practice match", async () => {
+    requirePlayerSession.mockResolvedValue(null);
+    const matchId = new Types.ObjectId().toString();
+
+    const updateResponse = await updatePracticeMatch(
+      request(
+        `http://localhost:3000/api/practice-matches/${matchId}`,
+        "PUT",
+        {
+          playedAt: "2026-06-06T12:00:00.000Z",
+          sideA: [{ displayName: "Alice" }],
+          sideB: [{ displayName: "Bob" }],
+          sets: [{ scoreA: 11, scoreB: 8 }],
+        },
+      ),
+      context(matchId),
+    );
+    const deleteResponse = await deletePracticeMatch(
+      request(`http://localhost:3000/api/practice-matches/${matchId}`, "DELETE"),
+      context(matchId),
+    );
+
+    expect(updateResponse.status).toBe(401);
+    expect(deleteResponse.status).toBe(401);
+  });
+
+  it("returns not found for invalid practice match ids", async () => {
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: new Types.ObjectId().toString(),
+        playerProfileId: new Types.ObjectId().toString(),
+        role: "player",
+      },
+    });
+
+    const updateResponse = await updatePracticeMatch(
+      request("http://localhost:3000/api/practice-matches/not-an-id", "PUT"),
+      context("not-an-id"),
+    );
+    const deleteResponse = await deletePracticeMatch(
+      request("http://localhost:3000/api/practice-matches/not-an-id", "DELETE"),
+      context("not-an-id"),
+    );
+
+    expect(updateResponse.status).toBe(404);
+    expect(deleteResponse.status).toBe(404);
+  });
+
+  it("rejects malformed update bodies", async () => {
+    const matchId = new Types.ObjectId().toString();
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: new Types.ObjectId().toString(),
+        playerProfileId: new Types.ObjectId().toString(),
+        role: "player",
+      },
+    });
+
+    const response = await updatePracticeMatch(
+      request(`http://localhost:3000/api/practice-matches/${matchId}`, "PUT"),
+      context(matchId),
+    );
+
+    expect(response.status).toBe(422);
+  });
+
   it("rejects practice match participants without registered player profiles", async () => {
     const userId = new Types.ObjectId();
     const profile = await PlayerProfile.create({
@@ -254,6 +320,91 @@ describe("/api/practice-matches", () => {
         "PUT",
         payload(otherProfileId.toString(), opponentProfileId.toString()),
       ),
+      context(match._id.toString()),
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  it("rejects updates that reference unknown registered-player profiles", async () => {
+    const creator = await PlayerProfile.create({
+      userId: new Types.ObjectId(),
+      firstName: "Alice",
+      displayName: "Alice",
+      email: "alice@example.com",
+    });
+    const missingOpponentId = new Types.ObjectId();
+    const match = await PracticeMatch.create({
+      createdBy: creator._id,
+      playedAt: new Date("2026-06-06T12:00:00.000Z"),
+      sideA: [{ playerProfileId: creator._id, displayName: "Alice" }],
+      sideB: [{ playerProfileId: missingOpponentId, displayName: "Bob" }],
+      sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+      winnerSide: "A",
+    });
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: new Types.ObjectId().toString(),
+        playerProfileId: creator._id.toString(),
+        role: "player",
+      },
+    });
+
+    const response = await updatePracticeMatch(
+      request(
+        `http://localhost:3000/api/practice-matches/${match._id}`,
+        "PUT",
+        payload(creator._id.toString(), missingOpponentId.toString()),
+      ),
+      context(match._id.toString()),
+    );
+
+    expect(response.status).toBe(422);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "VALIDATION_ERROR",
+      error: "Unknown player profile",
+    });
+  });
+
+  it("returns not found when deleting an unknown practice match", async () => {
+    const matchId = new Types.ObjectId().toString();
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: new Types.ObjectId().toString(),
+        playerProfileId: new Types.ObjectId().toString(),
+        role: "player",
+      },
+    });
+
+    const response = await deletePracticeMatch(
+      request(`http://localhost:3000/api/practice-matches/${matchId}`, "DELETE"),
+      context(matchId),
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("prevents players from deleting another creator's practice match", async () => {
+    const creatorProfileId = new Types.ObjectId();
+    const otherProfileId = new Types.ObjectId();
+    const match = await PracticeMatch.create({
+      createdBy: creatorProfileId,
+      playedAt: new Date("2026-06-06T12:00:00.000Z"),
+      sideA: [{ playerProfileId: creatorProfileId, displayName: "Alice" }],
+      sideB: [{ displayName: "Guest Bob" }],
+      sets: [{ scoreA: 11, scoreB: 8, pointsToWin: 11 }],
+      winnerSide: "A",
+    });
+    requirePlayerSession.mockResolvedValue({
+      user: {
+        id: new Types.ObjectId().toString(),
+        playerProfileId: otherProfileId.toString(),
+        role: "player",
+      },
+    });
+
+    const response = await deletePracticeMatch(
+      request(`http://localhost:3000/api/practice-matches/${match._id}`, "DELETE"),
       context(match._id.toString()),
     );
 

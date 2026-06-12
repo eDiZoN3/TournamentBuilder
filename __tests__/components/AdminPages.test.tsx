@@ -3,15 +3,19 @@ import { Types } from "mongoose";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
 import AdminDashboardPage from "@/app/admin/dashboard/page";
+import AdminLoginPage from "@/app/admin/login/page";
 import ManageTournamentPage from "@/app/admin/tournament/[id]/manage/page";
 import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { User } from "@/lib/models/User";
 import { Tournament } from "@/lib/models/Tournament";
 
-const { getServerSession, notFound } = vi.hoisted(() => ({
+const { getServerSession, notFound, redirect } = vi.hoisted(() => ({
   getServerSession: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NOT_FOUND");
+  }),
+  redirect: vi.fn((destination: string) => {
+    throw new Error(`REDIRECT:${destination}`);
   }),
 }));
 
@@ -21,11 +25,36 @@ vi.mock("next-auth", () => ({
 
 vi.mock("next/navigation", () => ({
   notFound,
+  redirect,
   useRouter: () => ({
     push: vi.fn(),
     refresh: vi.fn(),
   }),
 }));
+
+describe("admin login page", () => {
+  beforeEach(() => {
+    redirect.mockClear();
+  });
+
+  it("redirects to the shared login page", async () => {
+    await expect(AdminLoginPage({})).rejects.toThrow("REDIRECT:/login");
+
+    expect(redirect).toHaveBeenCalledWith("/login");
+  });
+
+  it("preserves the requested callback URL", async () => {
+    await expect(
+      AdminLoginPage({
+        searchParams: Promise.resolve({ callbackUrl: "/admin/dashboard" }),
+      }),
+    ).rejects.toThrow("REDIRECT:/login?callbackUrl=%2Fadmin%2Fdashboard");
+
+    expect(redirect).toHaveBeenCalledWith(
+      "/login?callbackUrl=%2Fadmin%2Fdashboard",
+    );
+  });
+});
 
 describe("admin dashboard page", () => {
   beforeEach(() => {

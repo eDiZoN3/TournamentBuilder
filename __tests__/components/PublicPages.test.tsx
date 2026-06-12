@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeMatch, makeTeams } from "@/__tests__/helpers/factories";
 import HomePage from "@/app/(public)/page";
+import SignupPage from "@/app/(public)/signup/page";
 import StatsPage from "@/app/(public)/stats/page";
 import TournamentPage from "@/app/(public)/tournament/[id]/page";
 import { PracticeMatch } from "@/lib/models/PracticeMatch";
@@ -16,6 +17,10 @@ const { notFound } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({
   notFound,
+}));
+
+vi.mock("@/components/player/SignupForm", () => ({
+  SignupForm: () => <form>Signup form</form>,
 }));
 
 describe("public tournament list", () => {
@@ -39,6 +44,14 @@ describe("public tournament list", () => {
     expect(markup).toContain("Public Cup");
     expect(markup).toContain("Active");
     expect(markup).toContain(`/tournament/${tournament._id.toString()}`);
+  });
+});
+
+describe("public signup page", () => {
+  it("renders the player signup form", () => {
+    const markup = renderToStaticMarkup(<SignupPage />);
+
+    expect(markup).toContain("Signup form");
   });
 });
 

@@ -23,6 +23,20 @@ vi.mock("@/components/admin/CourtOverrideControls", () => ({
   ),
 }));
 
+vi.mock("@/components/admin/CompletedMatchControls", () => ({
+  CompletedMatchControls: ({
+    teamAName,
+    teamBName,
+  }: {
+    teamAName: string;
+    teamBName: string;
+  }) => (
+    <div data-testid="completed-controls">
+      {teamAName} vs {teamBName}
+    </div>
+  ),
+}));
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -109,6 +123,32 @@ describe("MatchControls", () => {
       screen.getByRole("button", { name: "Mark as in progress" }),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("court-override")).not.toBeInTheDocument();
+  });
+
+  it("delegates completed matches to the completed-match controls", () => {
+    const teams = makeTeams(2);
+
+    render(
+      <MatchControls
+        courtsAvailable={1}
+        currentMatchIds={[]}
+        match={makeMatch({
+          status: "completed",
+          teamA: { teamId: teams[0]._id, sets: [] },
+          teamB: { teamId: teams[1]._id, sets: [] },
+          winnerId: teams[0]._id,
+          loserId: teams[1]._id,
+        })}
+        onUpdated={vi.fn()}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    expect(screen.getByTestId("completed-controls")).toHaveTextContent(
+      "Alpha vs Beta",
+    );
   });
 
   it("marks a ready match in progress", async () => {
@@ -276,6 +316,32 @@ describe("MatchControls", () => {
     expect(onScoreEntryClose).toHaveBeenCalled();
   });
 
+  it("notifies the parent when an open score entry unmounts", () => {
+    const teams = makeTeams(2);
+    const onScoreEntryClose = vi.fn();
+    const { unmount } = render(
+      <MatchControls
+        courtsAvailable={1}
+        currentMatchIds={[]}
+        match={makeMatch({
+          status: "in_progress",
+          teamA: { teamId: teams[0]._id, sets: [] },
+          teamB: { teamId: teams[1]._id, sets: [] },
+        })}
+        onScoreEntryClose={onScoreEntryClose}
+        onUpdated={vi.fn()}
+        teamAName="Alpha"
+        teamBName="Beta"
+        tournamentId="tournament-id"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Enter scores" }));
+    unmount();
+
+    expect(onScoreEntryClose).toHaveBeenCalled();
+  });
+
   it("shows API conflicts as toast notifications", async () => {
     const fetch = vi.fn().mockResolvedValue(
       jsonResponse(
@@ -307,5 +373,59 @@ describe("MatchControls", () => {
     );
 
     expect(await screen.findByText("No courts available")).toBeInTheDocument();
+  });
+
+  it("uses the fallback error when an API error body cannot be parsed", async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response("not-json", { status: 500 }));
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <ToastProvider>
+        <MatchControls
+          courtsAvailable={1}
+          currentMatchIds={[]}
+          match={makeMatch({ status: "ready" })}
+          onUpdated={vi.fn()}
+          teamAName="Alpha"
+          teamBName="Beta"
+          tournamentId="tournament-id"
+        />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark as in progress" }),
+    );
+
+    expect(await screen.findAllByText("Unable to update match")).not.toHaveLength(0);
+  });
+
+  it("shows a winner-only error toast when confirmation fails", async () => {
+    const teams = makeTeams(2);
+    const fetch = vi.fn().mockRejectedValue(new Error("Network down"));
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <ToastProvider>
+        <MatchControls
+          courtsAvailable={1}
+          currentMatchIds={[]}
+          match={makeMatch({
+            status: "in_progress",
+            teamA: { teamId: teams[0]._id, sets: [] },
+            teamB: { teamId: teams[1]._id, sets: [] },
+          })}
+          matchResultMode="winner_only"
+          onUpdated={vi.fn()}
+          teamAName="Alpha"
+          teamBName="Beta"
+          tournamentId="tournament-id"
+        />
+      </ToastProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Alpha won" }));
+
+    expect(await screen.findAllByText("Unable to confirm match.")).not.toHaveLength(0);
   });
 });

@@ -15,6 +15,169 @@ function seedByTeamId(teams: ITeam[]) {
   return new Map(teams.map((team) => [team._id.toString(), team.seed]));
 }
 
+
+function pairKeyFromSeeds(first: number, second: number) {
+  return `${Math.min(first, second)}-${Math.max(first, second)}`;
+}
+
+function firstRoundSeedsByPosition(matches: IMatch[], teams: ITeam[], disciplineIndex: number) {
+  const seeds = seedByTeamId(teams);
+
+  return matches
+    .filter((match) => match.eventDisciplineIndex === disciplineIndex && match.round === 1)
+    .sort((first, second) => first.position - second.position)
+    .map((match) => [
+      seeds.get(match.teamA!.teamId.toString())!,
+      seeds.get(match.teamB!.teamId.toString())!,
+    ] as [number, number]);
+}
+
+function possibleRoundForPositions(firstPosition: number, secondPosition: number) {
+  const firstMatchIndex = Math.floor(firstPosition / 2);
+  const secondMatchIndex = Math.floor(secondPosition / 2);
+
+  if (firstMatchIndex === secondMatchIndex) {
+    return 1;
+  }
+
+  if (Math.floor(firstMatchIndex / 2) === Math.floor(secondMatchIndex / 2)) {
+    return 2;
+  }
+
+  return 3;
+}
+
+function scoreEightTeamLayout(
+  layout: Array<[number, number]>,
+  directPairs: Set<string>,
+  earliestPossibleRoundByPair: Map<string, number>,
+) {
+  const seedPositions = new Map<number, number>();
+  let score = 0;
+
+  layout.forEach(([firstSeed, secondSeed], matchIndex) => {
+    seedPositions.set(firstSeed, matchIndex * 2);
+    seedPositions.set(secondSeed, matchIndex * 2 + 1);
+
+    if (directPairs.has(pairKeyFromSeeds(firstSeed, secondSeed))) {
+      score += 100;
+    }
+  });
+
+  for (let firstSeed = 1; firstSeed <= 8; firstSeed += 1) {
+    for (let secondSeed = firstSeed + 1; secondSeed <= 8; secondSeed += 1) {
+      const historyRound = earliestPossibleRoundByPair.get(
+        pairKeyFromSeeds(firstSeed, secondSeed),
+      );
+
+      if (!historyRound) {
+        continue;
+      }
+
+      const possibleRound = possibleRoundForPositions(
+        seedPositions.get(firstSeed)!,
+        seedPositions.get(secondSeed)!,
+      );
+
+      if (directPairs.has(pairKeyFromSeeds(firstSeed, secondSeed)) && possibleRound < 3) {
+        score += 1000;
+      }
+
+      if (possibleRound < 3) {
+        score += 80;
+      }
+
+      if (possibleRound === 1) {
+        score += 60;
+      }
+
+      if (possibleRound === 2) {
+        score += 45;
+      }
+    }
+  }
+
+  return score;
+}
+
+function enumeratePairings(seeds: number[]): Array<Array<[number, number]>> {
+  if (seeds.length === 0) {
+    return [[]];
+  }
+
+  const [firstSeed, ...remaining] = seeds;
+  const pairings: Array<Array<[number, number]>> = [];
+
+  remaining.forEach((secondSeed, index) => {
+    const rest = remaining.filter((_seed, restIndex) => restIndex !== index);
+
+    for (const pairing of enumeratePairings(rest)) {
+      pairings.push([[firstSeed, secondSeed], ...pairing]);
+    }
+  });
+
+  return pairings;
+}
+
+function permutations<T>(values: T[]): T[][] {
+  if (values.length === 0) {
+    return [[]];
+  }
+
+  return values.flatMap((value, index) =>
+    permutations(values.filter((_candidate, candidateIndex) => candidateIndex !== index)).map(
+      (rest) => [value, ...rest],
+    ),
+  );
+}
+
+function minimumEightTeamLayoutScore(
+  directPairs: Set<string>,
+  earliestPossibleRoundByPair: Map<string, number>,
+) {
+  let minimum = Number.POSITIVE_INFINITY;
+
+  for (const pairing of enumeratePairings([1, 2, 3, 4, 5, 6, 7, 8])) {
+    for (const layout of permutations(pairing)) {
+      minimum = Math.min(
+        minimum,
+        scoreEightTeamLayout(layout, directPairs, earliestPossibleRoundByPair),
+      );
+    }
+  }
+
+  return minimum;
+}
+
+function rememberEightTeamLayout(
+  layout: Array<[number, number]>,
+  directPairs: Set<string>,
+  earliestPossibleRoundByPair: Map<string, number>,
+) {
+  const seedPositions = new Map<number, number>();
+
+  layout.forEach(([firstSeed, secondSeed], matchIndex) => {
+    directPairs.add(pairKeyFromSeeds(firstSeed, secondSeed));
+    seedPositions.set(firstSeed, matchIndex * 2);
+    seedPositions.set(secondSeed, matchIndex * 2 + 1);
+  });
+
+  for (let firstSeed = 1; firstSeed <= 8; firstSeed += 1) {
+    for (let secondSeed = firstSeed + 1; secondSeed <= 8; secondSeed += 1) {
+      const key = pairKeyFromSeeds(firstSeed, secondSeed);
+      const possibleRound = possibleRoundForPositions(
+        seedPositions.get(firstSeed)!,
+        seedPositions.get(secondSeed)!,
+      );
+      const existing = earliestPossibleRoundByPair.get(key);
+
+      if (!existing || possibleRound < existing) {
+        earliestPossibleRoundByPair.set(key, possibleRound);
+      }
+    }
+  }
+}
+
 describe("event tournament helpers", () => {
   it("derives weighted bye quotas from participant seed order", () => {
     expect(deriveEventConfig(5, 4)).toEqual({
@@ -228,6 +391,60 @@ describe("event tournament helpers", () => {
     expect(pairCounts.has("2-5")).toBe(true);
     expect(pairCounts.has("3-5")).toBe(true);
     expect(pairCounts.has("4-5")).toBe(true);
+  });
+
+
+  it("builds the optimal available draw for each 8-team follow-up discipline", () => {
+    const teams = makeTeams(8) as ITeam[];
+    const matches = generateEventTournamentMatches(
+      teams,
+      ["Darts", "Quiz", "Cards", "Skill"],
+      99,
+    );
+    const directPairs = new Set<string>();
+    const earliestPossibleRoundByPair = new Map<string, number>();
+
+    for (let disciplineIndex = 0; disciplineIndex < 4; disciplineIndex += 1) {
+      const layout = firstRoundSeedsByPosition(matches, teams, disciplineIndex);
+      const actualScore = scoreEightTeamLayout(
+        layout,
+        directPairs,
+        earliestPossibleRoundByPair,
+      );
+      const optimalScore = minimumEightTeamLayoutScore(
+        directPairs,
+        earliestPossibleRoundByPair,
+      );
+
+      expect(actualScore).toBe(optimalScore);
+      rememberEightTeamLayout(layout, directPairs, earliestPossibleRoundByPair);
+    }
+  });
+
+  it("pushes previous direct rematches to the final path when a final-only placement is possible", () => {
+    const teams = makeTeams(8) as ITeam[];
+    const matches = generateEventTournamentMatches(
+      teams,
+      ["Darts", "Quiz"],
+      99,
+    );
+    const firstLayout = firstRoundSeedsByPosition(matches, teams, 0);
+    const secondLayout = firstRoundSeedsByPosition(matches, teams, 1);
+    const secondSeedPositions = new Map<number, number>();
+
+    secondLayout.forEach(([firstSeed, secondSeed], matchIndex) => {
+      secondSeedPositions.set(firstSeed, matchIndex * 2);
+      secondSeedPositions.set(secondSeed, matchIndex * 2 + 1);
+    });
+
+    for (const [firstSeed, secondSeed] of firstLayout) {
+      expect(
+        possibleRoundForPositions(
+          secondSeedPositions.get(firstSeed)!,
+          secondSeedPositions.get(secondSeed)!,
+        ),
+      ).toBe(3);
+    }
   });
 
   it("plans playable slots without participant or discipline conflicts", () => {

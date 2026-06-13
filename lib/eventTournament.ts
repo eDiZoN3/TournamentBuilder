@@ -10,6 +10,14 @@ interface FirstRoundEntity {
   secondSeed: number | null;
 }
 
+interface EventDrawHistory {
+  directPairs: Set<string>;
+  earliestPossibleRoundByPair: Map<string, number>;
+  seedPositions: Map<number, Map<number, number>>;
+}
+
+const EVENT_DRAW_CANDIDATE_COUNT = 250;
+
 export interface EventTournamentConfig {
   bracketSize: number;
   byeCount: number;
@@ -220,58 +228,176 @@ function assignEventByes(config: EventTournamentConfig): number[][] {
   return plan;
 }
 
-function pairRoundOne(
-  players: number[],
-  usedPairs: Set<string>,
-  rng: () => number,
-): Array<[number, number]> {
-  const half = players.length / 2;
-  const strong = players.slice(0, half);
-  const weak = players.slice(half);
-
-  function backtrack(
-    index: number,
-    taken: Set<number>,
-    pairs: Array<[number, number]>,
-  ): Array<[number, number]> | null {
-    if (index === half) {
-      return pairs;
-    }
-
-    for (const weakSeed of shuffle(weak, rng)) {
-      if (
-        taken.has(weakSeed) ||
-        usedPairs.has(pairKey(strong[index], weakSeed))
-      ) {
-        continue;
-      }
-
-      taken.add(weakSeed);
-
-      const result = backtrack(index + 1, taken, [
-        ...pairs,
-        [strong[index], weakSeed],
-      ]);
-
-      if (result) {
-        return result;
-      }
-
-      taken.delete(weakSeed);
-    }
-
-    return null;
+function enumeratePairings(seeds: number[]): Array<Array<[number, number]>> {
+  if (seeds.length === 0) {
+    return [[]];
   }
 
-  const pairs =
-    backtrack(0, new Set(), []) ??
-    strong.map((seed, index) => [seed, weak[index]] as [number, number]);
+  const [firstSeed, ...remaining] = seeds;
+  const pairings: Array<Array<[number, number]>> = [];
 
-  pairs.forEach(([firstSeed, secondSeed]) => {
-    usedPairs.add(pairKey(firstSeed, secondSeed));
+  remaining.forEach((secondSeed, index) => {
+    const rest = remaining.filter((_seed, restIndex) => restIndex !== index);
+
+    for (const pairing of enumeratePairings(rest)) {
+      pairings.push([[firstSeed, secondSeed], ...pairing]);
+    }
   });
 
+  return pairings;
+}
+
+function permutations<T>(values: T[]): T[][] {
+  if (values.length === 0) {
+    return [[]];
+  }
+
+  return values.flatMap((value, index) =>
+    permutations(values.filter((_candidate, candidateIndex) => candidateIndex !== index)).map(
+      (rest) => [value, ...rest],
+    ),
+  );
+}
+
+function randomPairing(seeds: number[], rng: () => number): Array<[number, number]> {
+  const shuffled = shuffle(seeds, rng);
+  const pairs: Array<[number, number]> = [];
+
+  for (let index = 0; index < shuffled.length; index += 2) {
+    pairs.push([shuffled[index], shuffled[index + 1]]);
+  }
+
   return pairs;
+}
+
+function possibleRoundForEntityPositions(firstPosition: number, secondPosition: number, roundCount: number): number {
+  if (firstPosition === secondPosition) {
+    return 1;
+  }
+  let first = firstPosition;
+  let second = secondPosition;
+  for (let round = 2; round <= roundCount; round += 1) {
+    if (Math.floor(first / 2) === Math.floor(second / 2)) {
+      return round;
+    }
+    first = Math.floor(first / 2);
+    second = Math.floor(second / 2);
+  }
+  return roundCount;
+}
+
+function scoreEventDrawCandidate(candidate: FirstRoundEntity[], history: EventDrawHistory, roundCount: number): number {
+  const seedPositions = new Map<number, number>();
+  const byePositions: number[] = [];
+  let score = 0;
+  candidate.forEach((entity, position) => {
+    if (entity.isBye) {
+      byePositions.push(position);
+    }
+    seedPositions.set(entity.firstSeed, position);
+    score += (history.seedPositions.get(entity.firstSeed)?.get(position) ?? 0) * 25;
+    if (entity.secondSeed) {
+      seedPositions.set(entity.secondSeed, position);
+      score += (history.seedPositions.get(entity.secondSeed)?.get(position) ?? 0) * 25;
+      if (history.directPairs.has(pairKey(entity.firstSeed, entity.secondSeed))) {
+        score += 100;
+      }
+    }
+  });
+  for (let firstIndex = 0; firstIndex < byePositions.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < byePositions.length; secondIndex += 1) {
+      if (possibleRoundForEntityPositions(byePositions[firstIndex], byePositions[secondIndex], roundCount) < roundCount) {
+        score += 2000;
+      }
+    }
+  }
+
+  const seeds = [...seedPositions.keys()].sort((first, second) => first - second);
+  for (let firstIndex = 0; firstIndex < seeds.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < seeds.length; secondIndex += 1) {
+      const firstSeed = seeds[firstIndex];
+      const secondSeed = seeds[secondIndex];
+      if (!history.earliestPossibleRoundByPair.has(pairKey(firstSeed, secondSeed))) {
+        continue;
+      }
+      const possibleRound = possibleRoundForEntityPositions(seedPositions.get(firstSeed)!, seedPositions.get(secondSeed)!, roundCount);
+      if (history.directPairs.has(pairKey(firstSeed, secondSeed)) && possibleRound < roundCount) {
+        score += 1000;
+      }
+      if (possibleRound < roundCount) {
+        score += 80;
+      }
+      if (possibleRound === 1) {
+        score += 60;
+      } else if (possibleRound === 2) {
+        score += 45;
+      }
+    }
+  }
+  return score;
+}
+
+function rememberEventDrawCandidate(candidate: FirstRoundEntity[], history: EventDrawHistory, roundCount: number) {
+  const seedPositions = new Map<number, number>();
+  candidate.forEach((entity, position) => {
+    seedPositions.set(entity.firstSeed, position);
+    const firstPositions = history.seedPositions.get(entity.firstSeed) ?? new Map<number, number>();
+    firstPositions.set(position, (firstPositions.get(position) ?? 0) + 1);
+    history.seedPositions.set(entity.firstSeed, firstPositions);
+    if (entity.secondSeed) {
+      seedPositions.set(entity.secondSeed, position);
+      const secondPositions = history.seedPositions.get(entity.secondSeed) ?? new Map<number, number>();
+      secondPositions.set(position, (secondPositions.get(position) ?? 0) + 1);
+      history.seedPositions.set(entity.secondSeed, secondPositions);
+      history.directPairs.add(pairKey(entity.firstSeed, entity.secondSeed));
+    }
+  });
+  const seeds = [...seedPositions.keys()].sort((first, second) => first - second);
+  for (let firstIndex = 0; firstIndex < seeds.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < seeds.length; secondIndex += 1) {
+      const firstSeed = seeds[firstIndex];
+      const secondSeed = seeds[secondIndex];
+      const key = pairKey(firstSeed, secondSeed);
+      const possibleRound = possibleRoundForEntityPositions(seedPositions.get(firstSeed)!, seedPositions.get(secondSeed)!, roundCount);
+      const existing = history.earliestPossibleRoundByPair.get(key);
+      if (!existing || possibleRound < existing) {
+        history.earliestPossibleRoundByPair.set(key, possibleRound);
+      }
+    }
+  }
+}
+
+function eventDrawCandidates(byes: number[], activeSeeds: number[], rng: () => number): FirstRoundEntity[][] {
+  const byeEntities = byes.map((seed) => ({ firstSeed: seed, isBye: true, secondSeed: null }));
+  const makeEntities = (pairs: Array<[number, number]>) => [
+    ...byeEntities,
+    ...pairs.map(([firstSeed, secondSeed]) => ({ firstSeed, isBye: false, secondSeed })),
+  ];
+  if (activeSeeds.length <= 8 && byeEntities.length + activeSeeds.length / 2 <= 8) {
+    return enumeratePairings(activeSeeds).flatMap((pairs) => permutations(makeEntities(pairs)));
+  }
+  const candidates: FirstRoundEntity[][] = [];
+  for (let index = 0; index < EVENT_DRAW_CANDIDATE_COUNT; index += 1) {
+    candidates.push(shuffle(makeEntities(randomPairing(activeSeeds, rng)), rng));
+  }
+  return candidates;
+}
+
+function buildOptimizedEventDraw(byes: number[], activeSeeds: number[], history: EventDrawHistory, roundCount: number, rng: () => number): FirstRoundEntity[] {
+  let bestCandidate: FirstRoundEntity[] | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (const candidate of eventDrawCandidates(byes, activeSeeds, rng)) {
+    const score = scoreEventDrawCandidate(candidate, history, roundCount);
+    if (score < bestScore) {
+      bestCandidate = candidate;
+      bestScore = score;
+    }
+  }
+  if (!bestCandidate) {
+    throw new Error("Unable to build an event draw candidate");
+  }
+  rememberEventDrawCandidate(bestCandidate, history, roundCount);
+  return bestCandidate;
 }
 
 function bracketOrder(matchCount: number): number[] {
@@ -398,10 +524,13 @@ export function generateEventTournamentMatches(
   const names = normalizeDisciplineNames(disciplineNames);
   const teamsBySeed = new Map<number, ITeam>();
   const rng = mulberry32(drawSeed);
-  const usedPairs = new Set<string>();
+  const drawHistory: EventDrawHistory = {
+    directPairs: new Set<string>(),
+    earliestPossibleRoundByPair: new Map<string, number>(),
+    seedPositions: new Map<number, Map<number, number>>(),
+  };
   const byePlan = assignEventByes(config);
   const firstRoundMatchCount = config.bracketSize / 2;
-  const order = bracketOrder(firstRoundMatchCount);
   const matches: IMatch[] = [];
 
   teams.forEach((team, index) => {
@@ -420,24 +549,13 @@ export function generateEventTournamentMatches(
       { length: config.participantCount },
       (_, index) => index + 1,
     ).filter((seed) => !byes.includes(seed));
-    const pairs = pairRoundOne(activeSeeds, usedPairs, rng);
-    const entities: FirstRoundEntity[] = [
-      ...byes.map((seed) => ({
-        firstSeed: seed,
-        isBye: true,
-        secondSeed: null,
-      })),
-      ...pairs.map(([firstSeed, secondSeed]) => ({
-        firstSeed,
-        isBye: false,
-        secondSeed,
-      })),
-    ].sort(
-      (first, second) =>
-        Math.min(first.firstSeed, first.secondSeed ?? 99) -
-        Math.min(second.firstSeed, second.secondSeed ?? 99),
+    const firstRoundEntities = buildOptimizedEventDraw(
+      byes,
+      activeSeeds,
+      drawHistory,
+      config.roundCount,
+      rng,
     );
-    const firstRoundEntities = Array<FirstRoundEntity>(firstRoundMatchCount);
     const rounds = Array.from({ length: config.roundCount }, (_, roundIndex) =>
       Array.from(
         { length: config.bracketSize / 2 ** (roundIndex + 1) },
@@ -451,12 +569,6 @@ export function generateEventTournamentMatches(
           ),
       ),
     );
-
-    const disciplineOrder = rotateBracketOrder(order, disciplineIndex);
-
-    disciplineOrder.forEach((rank, position) => {
-      firstRoundEntities[position] = entities[rank - 1];
-    });
 
     for (let roundIndex = 0; roundIndex < config.roundCount - 1; roundIndex += 1) {
       const currentRound = rounds[roundIndex];

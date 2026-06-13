@@ -9,6 +9,8 @@
 
 Die Team-Zuordnung in Event-Tournament-Disziplinbäume soll nicht rein zufällig passieren. Stattdessen soll die App mehrere mögliche Auslosungen/Bracket-Layouts erzeugen, diese algorithmisch bewerten und das fairste Layout auswählen. Ziel ist, gleiche Matchups über den gesamten Event-Tournament-Graphen so weit wie möglich zu minimieren, ohne die Auslosung komplett starr wirken zu lassen.
 
+Zusätzlich soll der Optimierer nicht nur die erste Runde betrachten: Auch in späteren Folge-Runden sollen bereits bekannte oder wahrscheinliche gleiche Matchups möglichst spät wieder möglich werden. Wenn zwei Teams schon früh gegeneinander gespielt haben oder in vorherigen Disziplinen früh aufeinandertreffen konnten, sollen sie in neuen Brackets nach Möglichkeit in unterschiedliche Baumhälften bzw. gegensätzliche Pfade gesetzt werden, sodass das frühestmögliche erneute Aufeinandertreffen erst im Halbfinale oder idealerweise erst im Finale liegt.
+
 ### Entscheidung
 
 Nicht auf reine Zufallsverteilung und Normalverteilung hoffen.
@@ -23,6 +25,7 @@ Stattdessen:
 - Zufall kann unfair wirken, auch wenn er technisch zufällig ist.
 - Bei 5–8 Teams gibt es zu wenige Matches, damit sich Zufall über Normalverteilung sauber ausgleicht.
 - Spieler nehmen wiederholte frühe Duelle stärker als unfair wahr als algorithmisch optimierte Paarungen.
+- Wiederholte Matchups wirken auch dann unfair, wenn sie nicht direkt in Runde 1 wieder passieren, sondern durch ähnliche Pfade schon in Runde 2 oder im Halbfinale sehr wahrscheinlich erneut entstehen.
 
 ### Harte Regeln / Constraints
 
@@ -46,7 +49,9 @@ Empfohlene Strafpunkte:
 
 ```txt
 +100: gleiches direktes Round-1-Match wie in einer vorherigen Disziplin
++80: bereits bekanntes Matchup kann erneut vor dem Finale entstehen, obwohl Trennung bis Finale möglich wäre
 +60: gleiches mögliches Match schon wieder in Runde 2
++45: bereits bekanntes Matchup kann erneut im Halbfinale entstehen, obwohl Finale möglich wäre
 +40: zwei Teams landen erneut in derselben Baumhälfte
 +25: Team landet erneut in exakt derselben Bracket-Position
 +20: Top-Seed bekommt erneut denselben Pfad
@@ -58,8 +63,9 @@ Die genauen Werte können beim Implementieren angepasst werden. Wichtig ist die 
 
 1. Direkte Match-Wiederholungen am stärksten vermeiden.
 2. Potenzielle frühe Wiederholungen vermeiden.
-3. Baumhälften und Positionen rotieren.
-4. Seed-Fairness beibehalten.
+3. Wiederholte Matchups, falls nicht vermeidbar, so weit wie möglich nach hinten schieben: Finale besser als Halbfinale, Halbfinale besser als Runde 2.
+4. Baumhälften, Viertel/Pfade und Positionen rotieren.
+5. Seed-Fairness beibehalten.
 
 ### Technischer Ansatz
 
@@ -106,6 +112,7 @@ interface EventDrawCandidate {
 interface EventDrawHistory {
   directPairs: Map<string, number>;
   sameHalfPairs: Map<string, number>;
+  earliestPossibleRoundByPair: Map<string, number>;
   seedPositions: Map<number, Map<number, number>>;
 }
 ```
@@ -116,6 +123,7 @@ Beim Erzeugen der Disziplinen wird eine Historie aufgebaut:
 
 - Welche direkten Paarungen gab es bereits?
 - Welche Teams waren schon in derselben Hälfte?
+- In welcher frühesten Runde konnten Teams in vorherigen Disziplinen aufeinandertreffen?
 - Welche Bracket-Positionen hatte jeder Seed bereits?
 - Welche Seeds hatten Freilose?
 
@@ -141,6 +149,8 @@ Damit bleibt das Risiko klein.
 - Bei Power-of-two Feldern mit genug möglichen Paarungen gibt es über mehrere Disziplinen keine wiederholten Round-1-Matches, solange vermeidbar.
 - Teams rotieren über verschiedene Bracket-Positionen.
 - Teams rotieren über verschiedene Baumhälften, soweit möglich.
+- Bereits bekannte Matchups werden in neuen Brackets möglichst weit auseinander gesetzt, sodass ein erneutes Aufeinandertreffen — wenn möglich — erst im Finale stattfinden kann.
+- Wenn Final-Trennung mathematisch nicht möglich ist, wird das frühestmögliche erneute Aufeinandertreffen mindestens so spät wie möglich gelegt, z. B. Halbfinale statt Runde 2.
 - Freilos-Regeln bleiben exakt erhalten.
 - Die Auslosung bleibt reproduzierbar über `drawSeed`.
 - Bei gleichem `drawSeed` entsteht derselbe optimierte Graph.
@@ -180,7 +190,7 @@ Erwartung:
 - Direkte Paarungen gegen den letzten Seed werden verteilt.
 - Keine Paarung wird häufiger wiederholt als nötig.
 
-#### Test 3: rotiert Baumhälften
+#### Test 3: rotiert Baumhälften und verschiebt Wiederholungen nach hinten
 
 Szenario:
 
@@ -191,6 +201,8 @@ Erwartung:
 
 - Seed 1 ist nicht in jeder Disziplin mit denselben Seeds in derselben Hälfte.
 - Seed 2/3/4 rotieren ebenfalls über unterschiedliche Pfade.
+- Ein bekanntes Matchup aus einer früheren Disziplin wird in einer späteren Disziplin nicht wieder in denselben frühen Pfad gelegt, wenn eine Platzierung in gegenüberliegenden Baumhälften möglich ist.
+- Für ein wiederholtes Matchup ist das frühestmögliche erneute Aufeinandertreffen nach Möglichkeit erst das Finale; andernfalls wird die späteste mathematisch mögliche Runde gewählt.
 
 #### Test 4: Reproduzierbarkeit über Draw Seed
 

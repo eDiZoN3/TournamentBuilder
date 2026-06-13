@@ -467,3 +467,261 @@ Falls die App diese Logik später irgendwo erklären soll, könnte der Text laut
 
 > Die Event-Auslosung wird zufällig erzeugt und anschließend optimiert, damit gleiche Begegnungen über mehrere Disziplinen möglichst selten vorkommen.
 
+
+
+---
+
+## Event Tournaments: greedy Berechnung der nächsten spielbaren Runden
+
+**Status:** geplant, noch nicht implementiert  
+**Priorität:** mittel/hoch, nach Disconnect-/Stale-Update-Schutz und vor weiterer UI-Politur
+
+### Ziel
+
+Die Anzeige und Berechnung der nächsten spielbaren Event-Matches soll nicht nur starr nach Slot/Runde/Position laufen. Stattdessen soll ein **greedy Scheduler** entscheiden, welche Matches als nächstes sinnvoll spielbar sind, sobald der Graph steht und Ergebnisse nach und nach eingetragen werden.
+
+Ziel ist, die nächsten Runden möglichst früh und fair vorzubereiten, ohne falsche oder doppelte Ergebnisse durch parallele Admins, stale Clients oder unvollständige Abhängigkeiten zu riskieren.
+
+### Entscheidung
+
+Nicht alle Matches einfach rein nach `round` und `position` abarbeiten.
+Stattdessen:
+
+> **Greedy next-match scheduling**: Bei jedem Refresh/Update werden alle aktuell spielbaren Event-Matches bewertet. Der Scheduler wählt die besten nächsten Matches anhand von harten Bedingungen und weichen Prioritäten.
+
+### Harte Regeln / Constraints
+
+Diese Regeln dürfen nie verletzt werden:
+
+- Ein Match ist nur spielbar, wenn beide Teilnehmer feststehen.
+- Ein Match ist nur spielbar, wenn es nicht abgeschlossen ist.
+- Ein Match mit Freilos darf nicht als manuell spielbares Match erscheinen.
+- Ein Team darf nicht gleichzeitig in zwei offenen vorgeschlagenen Matches auftauchen.
+- Gewinner-Routing aus vorherigen Matches muss abgeschlossen sein, bevor ein Folgematch vorgeschlagen wird.
+- Stale/alte Clients dürfen durch den Scheduler keine bereits überholten Matches bestätigen können.
+- Bestehende Ergebnis- und Stats-Regeln bleiben unverändert.
+- Die Berechnung muss deterministisch sein: gleicher Turnierzustand ergibt gleiche Vorschlagsliste.
+
+### Greedy-Prioritäten
+
+Der Algorithmus soll pro Kandidaten-Match einen Score berechnen und die besten Matches auswählen.
+
+Empfohlene Priorität:
+
+1. Matches, deren beide Vorgänger abgeschlossen sind, haben Vorrang.
+2. Frühere Runden haben Vorrang, damit der Graph stabil von unten nach oben wächst.
+3. Disziplinen sollen möglichst gleichmäßig vorankommen.
+4. Teams sollen nicht direkt nacheinander mehrfach vorgeschlagen werden, wenn Alternativen existieren.
+5. Matches, die den nächsten Folgematch-Knoten freischalten, bekommen Bonus.
+6. Finals/Disziplinsieger-Matches sollen erst erscheinen, wenn keine niedrigeren abhängigen Matches derselben Disziplin offen sind.
+7. Bei Gleichstand: stabile Sortierung nach Disziplin, Runde, Position, Match-ID.
+
+Mögliche Score-Idee:
+
+```txt
++1000: beide Teilnehmer bekannt und Match ready
++200: Match schaltet nach Abschluss ein weiteres Match frei
++100: Disziplin ist im Vergleich zu anderen im Rückstand
++50: niedrigere Runde
++20: Team hatte länger kein vorgeschlagenes Match
+-500: Team ist bereits in einem anderen vorgeschlagenen Match enthalten
+-100: Disziplin ist schon deutlich weiter als andere
+```
+
+Die Zahlen sind nur Startwerte. Wichtig ist die Reihenfolge der Ziele, nicht die exakte Gewichtung.
+
+### Technischer Ansatz
+
+#### 1. Bestehende Next-Slot-Logik analysieren
+
+Relevante Dateien:
+
+- `lib/eventTournament.ts`
+- `components/event/EventTournamentView.tsx`
+- `__tests__/lib/eventTournament.test.ts`
+- `__tests__/components/EventTournamentView.test.tsx`
+
+Aktuell relevante Funktion:
+
+- `planEventSlots(tournament.matches)`
+
+Diese Funktion soll entweder ersetzt oder intern auf den neuen greedy Scheduler umgestellt werden.
+
+#### 2. Interne Kandidaten-Funktion einführen
+
+Mögliche interne Funktion:
+
+```ts
+function getPlayableEventMatchCandidates(matches: IMatch[]): IMatch[]
+```
+
+Aufgabe:
+
+- alle nicht abgeschlossenen Event-Matches sammeln
+- nur Matches mit `teamA` und `teamB` behalten
+- `isBye` ausschließen
+- Status `ready`/spielbar beachten
+- pro Match Metadaten für Score berechnen
+
+#### 3. Greedy-Auswahl bauen
+
+Mögliche Funktion:
+
+```ts
+function planGreedyEventSlots(matches: IMatch[]): EventSlotPlan[]
+```
+
+Prinzip:
+
+1. Kandidaten berechnen.
+2. Kandidaten scoren.
+3. Besten Kandidaten nehmen.
+4. Teams dieses Kandidaten für denselben Planungsschritt blockieren.
+5. Weitere Kandidaten hinzufügen, solange keine Team-Kollision entsteht.
+6. Ergebnis stabil sortiert zurückgeben.
+
+#### 4. Bestehendes UI-Verhalten beibehalten
+
+Die UI soll weiterhin „Als Nächstes“ anzeigen.
+Nur die Reihenfolge und Auswahl der vorgeschlagenen Matches darf sich verbessern.
+
+Nicht ändern:
+
+- Ergebnis-Eintragung
+- Winner-Buttons
+- Stats-Anzeige
+- Bracket-Rendering
+- Winner-Routing
+
+### Akzeptanzkriterien
+
+- „Als Nächstes“ zeigt nur Matches mit beiden bekannten Teilnehmern.
+- Kein Team erscheint gleichzeitig in zwei vorgeschlagenen nächsten Matches.
+- Wenn mehrere Disziplinen offen sind, werden sie möglichst gleichmäßig fortgeführt.
+- Wenn ein Match ein Folgematch freischalten kann, wird es bevorzugt gegenüber weniger dringenden Matches.
+- Finals erscheinen nicht zu früh, solange abhängige niedrigere Runden derselben Disziplin offen sind.
+- Die Reihenfolge ist deterministisch und flackert nicht zwischen Refreshes.
+- Bestehende Event-Stats und Ergebnislogik bleiben unverändert.
+- Bestehende Tests bleiben grün.
+
+### TDD-Testplan
+
+#### Test 1: schlägt nur spielbare Matches vor
+
+Datei:
+
+- `__tests__/lib/eventTournament.test.ts`
+
+Szenario:
+
+- Event-Bracket mit mehreren Runden
+- einige Matches haben nur einen Teilnehmer
+- einige Matches sind completed
+- einige Matches sind ready
+
+Erwartung:
+
+- `planEventSlots()` enthält nur Matches mit `teamA` und `teamB`
+- completed Matches erscheinen nicht erneut
+- Freilose erscheinen nicht als manuell spielbare Matches
+
+#### Test 2: verhindert Team-Kollisionen in derselben Vorschlagsgruppe
+
+Szenario:
+
+- Mehrere theoretisch spielbare Matches
+- ein Team taucht durch Graph-Zustand in mehr als einem Kandidaten auf
+
+Erwartung:
+
+- der greedy Plan nimmt nur eines dieser Matches in denselben Slot
+- das kollidierende Match rutscht nach hinten
+
+#### Test 3: balanciert Disziplinen
+
+Szenario:
+
+- Disziplin A ist bereits weiter als Disziplin B
+- in beiden Disziplinen sind Matches spielbar
+
+Erwartung:
+
+- Disziplin B bekommt Vorrang, solange harte Regeln erfüllt sind
+
+#### Test 4: bevorzugt Matches, die Folgematches freischalten
+
+Szenario:
+
+- zwei Matches sind spielbar
+- eines davon komplettiert danach beide Teilnehmer eines Folgematches
+
+Erwartung:
+
+- dieses Match bekommt höheren Score und wird früher vorgeschlagen
+
+#### Test 5: deterministische Reihenfolge
+
+Szenario:
+
+- gleicher Turnierzustand wird mehrfach geplant
+
+Erwartung:
+
+- `planEventSlots()` liefert jedes Mal dieselbe Reihenfolge
+
+### Implementierungsplan
+
+1. Bestehende `planEventSlots()`-Tests lesen und Verhalten dokumentieren.
+2. Failing Test für „nur spielbare Matches“ schreiben.
+3. Minimalen Kandidatenfilter implementieren.
+4. Failing Test für Team-Kollisionen schreiben.
+5. Greedy-Auswahl mit blockierten Team-IDs implementieren.
+6. Failing Test für Disziplin-Balancing schreiben.
+7. Score um Disziplin-Fortschritt erweitern.
+8. Failing Test für Freischalt-Bonus schreiben.
+9. Score um Next-Match-Bonus erweitern.
+10. Failing Test für deterministische Reihenfolge schreiben.
+11. Stabilen Tie-Breaker ergänzen.
+12. UI-Komponententests für „Als Nächstes“ aktualisieren.
+13. Zieltests ausführen.
+14. Full Test Suite ausführen.
+15. Erst danach committen/deployen.
+
+### Verifikation
+
+Vor Commit mindestens:
+
+```bash
+npm test -- --run __tests__/lib/eventTournament.test.ts __tests__/components/EventTournamentView.test.tsx
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Vor Deploy zusätzlich:
+
+```bash
+npm test
+```
+
+### Nicht Teil dieses Issues
+
+- Keine Änderung an Winner-Routing.
+- Keine Änderung an Stats-Berechnung.
+- Keine Änderung an Freilos-Wertung.
+- Keine Änderung an Disconnect-/Stale-Update-Schutz.
+- Keine neue manuelle Sortier-UI.
+- Keine automatische Court-Zuweisung.
+
+### Offene Frage
+
+Der genaue Satz der Anforderung endete bei „ein mehr greedy algorithmus der darauf ...“. Vor Implementierung klären:
+
+- Worauf soll der greedy Algorithmus zusätzlich besonders achten?
+  - weniger Wartezeit pro Team?
+  - gleichmäßige Disziplin-Verteilung?
+  - möglichst früh Folgematches freischalten?
+  - möglichst wenig direkte Wiederholung der gleichen Teams?
+  - Court-/Slot-Auslastung?
+
+Bis zur Klärung gilt die oben beschriebene Annahme: Der Scheduler soll spielbare nächste Matches fair, stabil und kollisionsfrei priorisieren.

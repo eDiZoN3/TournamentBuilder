@@ -1,1 +1,3 @@
-_No open issues._
+# Open Issues
+
+- Event Tournaments: optimierter Bracket-Algorithmus statt reiner Zufall (`issues.md`)

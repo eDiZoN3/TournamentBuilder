@@ -16,15 +16,25 @@ function seedByTeamId(teams: ITeam[]) {
 }
 
 describe("event tournament helpers", () => {
-  it("derives bracket size and bye quotas from participant and discipline counts", () => {
+  it("derives weighted bye quotas from participant seed order", () => {
+    expect(deriveEventConfig(5, 4)).toEqual({
+      participantCount: 5,
+      disciplineCount: 4,
+      bracketSize: 8,
+      byeCount: 3,
+      roundCount: 3,
+      byePoolSize: 5,
+      byeQuotas: [4, 3, 3, 2, 0],
+    });
+
     expect(deriveEventConfig(13, 5)).toEqual({
       participantCount: 13,
       disciplineCount: 5,
       bracketSize: 16,
       byeCount: 3,
       roundCount: 4,
-      byePoolSize: 5,
-      byeQuotas: [3, 3, 3, 3, 3],
+      byePoolSize: 13,
+      byeQuotas: [2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 0, 0, 0],
     });
   });
 
@@ -49,13 +59,19 @@ describe("event tournament helpers", () => {
     expect(matches).toHaveLength(75);
     expect(byeCounts).toEqual(
       new Map([
-        [1, 3],
-        [2, 3],
-        [3, 3],
-        [4, 3],
-        [5, 3],
+        [1, 2],
+        [2, 2],
+        [3, 2],
+        [4, 2],
+        [5, 2],
+        [6, 1],
+        [7, 1],
+        [8, 1],
+        [9, 1],
+        [10, 1],
       ]),
     );
+    expect(byeCounts.get(13) ?? 0).toBe(0);
 
     for (let index = 0; index < 5; index += 1) {
       const disciplineMatches = matches.filter(
@@ -70,6 +86,48 @@ describe("event tournament helpers", () => {
           (match) => match.eventDisciplineName === ["Darts", "Quiz", "Cards", "Skill", "Puzzle"][index],
         ),
       ).toBe(true);
+    }
+  });
+
+
+  it("keeps the last seed to at most one bye across all disciplines", () => {
+    const teams = makeTeams(5) as ITeam[];
+    const matches = generateEventTournamentMatches(
+      teams,
+      ["Darts", "Quiz", "Cards", "Skill"],
+      123,
+    );
+    const seeds = seedByTeamId(teams);
+    const byeCounts = new Map<number, number>();
+
+    for (const match of matches.filter((match) => match.isBye)) {
+      const winnerSeed = seeds.get(match.winnerId?.toString() ?? "");
+
+      if (winnerSeed) {
+        byeCounts.set(winnerSeed, (byeCounts.get(winnerSeed) ?? 0) + 1);
+      }
+    }
+
+    expect(byeCounts).toEqual(
+      new Map([
+        [1, 4],
+        [2, 3],
+        [3, 3],
+        [4, 2],
+      ]),
+    );
+    expect(byeCounts.get(5) ?? 0).toBeLessThanOrEqual(1);
+
+    for (let index = 0; index < 4; index += 1) {
+      const disciplineByes = matches.filter(
+        (match) => match.eventDisciplineIndex === index && match.isBye,
+      );
+      const byeTeamIds = disciplineByes.map((match) =>
+        match.winnerId?.toString(),
+      );
+
+      expect(disciplineByes).toHaveLength(3);
+      expect(new Set(byeTeamIds).size).toBe(byeTeamIds.length);
     }
   });
 

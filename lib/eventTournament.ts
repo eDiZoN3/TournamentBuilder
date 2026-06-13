@@ -48,6 +48,67 @@ function nextPowerOfTwo(value: number): number {
   return result;
 }
 
+function calculateSeededByeQuotas(
+  participantCount: number,
+  disciplineCount: number,
+  byeCount: number,
+): number[] {
+  const totalByes = byeCount * disciplineCount;
+
+  if (totalByes === 0) {
+    return [];
+  }
+
+  const lastSeedIndex = participantCount - 1;
+  const lastSeedCap = totalByes <= (participantCount - 1) * disciplineCount ? 0 : 1;
+  const caps = Array.from({ length: participantCount }, (_, index) =>
+    index === lastSeedIndex ? lastSeedCap : disciplineCount,
+  );
+  const weights = Array.from({ length: participantCount }, (_, index) =>
+    caps[index] > 0 ? participantCount - index : 0,
+  );
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const rawQuotas = weights.map((weight) => (totalByes * weight) / totalWeight);
+  const byeQuotas = rawQuotas.map((quota, index) =>
+    Math.min(caps[index], Math.floor(quota)),
+  );
+  let remaining = totalByes - byeQuotas.reduce((sum, quota) => sum + quota, 0);
+  const priority = rawQuotas
+    .map((quota, index) => ({
+      fraction: quota - Math.floor(quota),
+      index,
+      weight: weights[index],
+    }))
+    .sort(
+      (first, second) =>
+        second.fraction - first.fraction ||
+        second.weight - first.weight ||
+        first.index - second.index,
+    );
+
+  while (remaining > 0) {
+    let assigned = false;
+
+    for (const { index } of priority) {
+      if (remaining === 0) {
+        break;
+      }
+
+      if (byeQuotas[index] < caps[index]) {
+        byeQuotas[index] += 1;
+        remaining -= 1;
+        assigned = true;
+      }
+    }
+
+    if (!assigned) {
+      break;
+    }
+  }
+
+  return byeQuotas;
+}
+
 export function deriveEventConfig(
   participantCount: number,
   disciplineCount: number,
@@ -70,12 +131,10 @@ export function deriveEventConfig(
 
   const bracketSize = nextPowerOfTwo(participantCount);
   const byeCount = bracketSize - participantCount;
-  const byePoolSize = byeCount > 0 ? Math.min(participantCount, byeCount + 2) : 0;
-  const totalByes = byeCount * disciplineCount;
-  const baseQuota = byePoolSize > 0 ? Math.floor(totalByes / byePoolSize) : 0;
-  const remainder = byePoolSize > 0 ? totalByes % byePoolSize : 0;
-  const byeQuotas = Array.from({ length: byePoolSize }, (_, index) =>
-    baseQuota + (index < remainder ? 1 : 0),
+  const byeQuotas = calculateSeededByeQuotas(
+    participantCount,
+    disciplineCount,
+    byeCount,
   );
 
   return {
@@ -84,7 +143,7 @@ export function deriveEventConfig(
     bracketSize,
     byeCount,
     roundCount: Math.log2(bracketSize),
-    byePoolSize,
+    byePoolSize: byeQuotas.length,
     byeQuotas,
   };
 }

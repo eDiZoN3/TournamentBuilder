@@ -159,6 +159,77 @@ describe("event tournament helpers", () => {
     expect(new Set(firstRoundPairKeys).size).toBe(firstRoundPairKeys.length);
   });
 
+
+  it("rotates bracket layouts between event disciplines", () => {
+    const teams = makeTeams(8) as ITeam[];
+    const matches = generateEventTournamentMatches(
+      teams,
+      ["Darts", "Quiz", "Cards", "Skill"],
+      99,
+    );
+    const seeds = seedByTeamId(teams);
+    const layoutSignatures = new Set<string>();
+    const topSeedPositions = new Set<number>();
+
+    for (let index = 0; index < 4; index += 1) {
+      const firstRound = matches
+        .filter(
+          (match) => match.eventDisciplineIndex === index && match.round === 1,
+        )
+        .sort((first, second) => first.position - second.position);
+
+      layoutSignatures.add(
+        firstRound
+          .map((match) => {
+            const firstSeed = seeds.get(match.teamA!.teamId.toString());
+            const secondSeed = seeds.get(match.teamB!.teamId.toString());
+
+            return `${firstSeed}-${secondSeed}`;
+          })
+          .join("|"),
+      );
+
+      const topSeedMatch = firstRound.find(
+        (match) => seeds.get(match.teamA!.teamId.toString()) === 1 ||
+          seeds.get(match.teamB!.teamId.toString()) === 1,
+      );
+      topSeedPositions.add(topSeedMatch!.position);
+    }
+
+    expect(layoutSignatures.size).toBe(4);
+    expect(topSeedPositions.size).toBeGreaterThan(1);
+  });
+
+  it("minimizes unavoidable first-round repeats when byes differ by seed", () => {
+    const teams = makeTeams(5) as ITeam[];
+    const matches = generateEventTournamentMatches(
+      teams,
+      ["Darts", "Quiz", "Cards", "Skill"],
+      123,
+    );
+    const seeds = seedByTeamId(teams);
+    const pairCounts = new Map<string, number>();
+
+    for (const match of matches.filter(
+      (match) => match.round === 1 && !match.isBye,
+    )) {
+      const pair = [
+        seeds.get(match.teamA!.teamId.toString()),
+        seeds.get(match.teamB!.teamId.toString()),
+      ]
+        .sort((first, second) => (first ?? 0) - (second ?? 0))
+        .join("-");
+
+      pairCounts.set(pair, (pairCounts.get(pair) ?? 0) + 1);
+    }
+
+    expect(pairCounts.size).toBe(3);
+    expect(Math.max(...pairCounts.values())).toBe(2);
+    expect(pairCounts.has("2-5")).toBe(true);
+    expect(pairCounts.has("3-5")).toBe(true);
+    expect(pairCounts.has("4-5")).toBe(true);
+  });
+
   it("plans playable slots without participant or discipline conflicts", () => {
     const teams = makeTeams(8) as ITeam[];
     const matches = generateEventTournamentMatches(

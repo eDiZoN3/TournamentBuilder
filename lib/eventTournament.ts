@@ -282,6 +282,16 @@ function bracketOrder(matchCount: number): number[] {
   return ranks;
 }
 
+function rotateBracketOrder(order: number[], disciplineIndex: number): number[] {
+  if (order.length <= 1) {
+    return order;
+  }
+
+  const offset = disciplineIndex % order.length;
+
+  return [...order.slice(offset), ...order.slice(0, offset)];
+}
+
 function teamSlot(team: ITeam): ITeamSlot {
   return {
     teamId: team._id,
@@ -438,7 +448,9 @@ export function generateEventTournamentMatches(
       ),
     );
 
-    order.forEach((rank, position) => {
+    const disciplineOrder = rotateBracketOrder(order, disciplineIndex);
+
+    disciplineOrder.forEach((rank, position) => {
       firstRoundEntities[position] = entities[rank - 1];
     });
 

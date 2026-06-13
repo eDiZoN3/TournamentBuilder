@@ -262,6 +262,82 @@ describe("event tournament helpers", () => {
     }
   });
 
+
+
+  it("prioritizes event matches that improve total flow over strict round order", () => {
+    const teams = makeTeams(8) as ITeam[];
+    const matches = generateEventTournamentMatches(teams, ["Darts", "Quiz"], 99);
+    const tournament = makeTournament({
+      format: "event",
+      matchResultMode: "winner_only",
+      status: "active",
+      teams,
+      matches: matches as IMatch[],
+    }) as ITournament;
+    const dartsRoundOne = tournament.matches
+      .filter(
+        (match) => match.eventDisciplineIndex === 0 && match.round === 1,
+      )
+      .sort((first, second) => first.position - second.position);
+
+    toggleEventMatchWinner(tournament, dartsRoundOne[0], dartsRoundOne[0].teamA!.teamId);
+    toggleEventMatchWinner(tournament, dartsRoundOne[1], dartsRoundOne[1].teamA!.teamId);
+    toggleEventMatchWinner(tournament, dartsRoundOne[2], dartsRoundOne[2].teamA!.teamId);
+    toggleEventMatchWinner(tournament, dartsRoundOne[3], dartsRoundOne[3].teamA!.teamId);
+
+    const dartsRoundTwo = tournament.matches
+      .filter(
+        (match) =>
+          match.eventDisciplineIndex === 0 &&
+          match.round === 2 &&
+          match.status === "ready",
+      )
+      .sort((first, second) => first.position - second.position);
+
+    toggleEventMatchWinner(tournament, dartsRoundTwo[0], dartsRoundTwo[0].teamA!.teamId);
+
+    const unlockedDartsRoundTwo = dartsRoundTwo[1];
+    const slots = planEventSlots(tournament.matches);
+
+    expect(slots[0].matches[0]._id.toString()).toBe(
+      unlockedDartsRoundTwo._id.toString(),
+    );
+  });
+
+  it("keeps pinned direct next event matches stable while recalculating later slots", () => {
+    const teams = makeTeams(8) as ITeam[];
+    const matches = generateEventTournamentMatches(teams, ["Darts", "Quiz"], 99);
+    const tournament = makeTournament({
+      format: "event",
+      matchResultMode: "winner_only",
+      status: "active",
+      teams,
+      matches: matches as IMatch[],
+    }) as ITournament;
+    const originalDirectMatch = tournament.matches.find(
+      (match) =>
+        match.eventDisciplineIndex === 1 &&
+        match.round === 1 &&
+        match.status === "ready",
+    )!;
+    const dartsRoundOne = tournament.matches
+      .filter(
+        (match) => match.eventDisciplineIndex === 0 && match.round === 1,
+      )
+      .sort((first, second) => first.position - second.position);
+
+    toggleEventMatchWinner(tournament, dartsRoundOne[0], dartsRoundOne[0].teamA!.teamId);
+    toggleEventMatchWinner(tournament, dartsRoundOne[1], dartsRoundOne[1].teamA!.teamId);
+
+    const slots = planEventSlots(tournament.matches, {
+      pinnedFirstSlotMatchIds: [originalDirectMatch._id.toString()],
+    });
+
+    expect(slots[0].matches.map((match) => match._id.toString())).toContain(
+      originalDirectMatch._id.toString(),
+    );
+  });
+
   it("toggles winners, advances them, and resets downstream event matches", () => {
     const teams = makeTeams(4) as ITeam[];
     const matches = generateEventTournamentMatches(teams, ["Darts"], 1);

@@ -25,6 +25,10 @@ export interface EventSlotPlan {
   matches: IMatch[];
 }
 
+export interface EventSlotPlanOptions {
+  pinnedFirstSlotMatchIds?: string[];
+}
+
 export interface EventWinnerResult {
   affectedMatchIds: string[];
   loserId: string | null;
@@ -515,38 +519,132 @@ function eventDisciplineCount(matches: IMatch[]): number {
   return indexes.length > 0 ? Math.max(...indexes) + 1 : 1;
 }
 
-export function planEventSlots(matches: IMatch[]): EventSlotPlan[] {
-  let ready = matches.filter(
-    (match) =>
-      match.eventDisciplineIndex !== null &&
+function isPlayableEventMatch(match: IMatch): boolean {
+  return Boolean(
+    match.eventDisciplineIndex !== null &&
+      match.eventDisciplineIndex !== undefined &&
       !match.isBye &&
       match.status === "ready" &&
       match.teamA &&
       match.teamB &&
       !match.winnerId,
   );
-  const disciplineCount = eventDisciplineCount(matches);
+}
+
+function eventMatchIds(match: IMatch) {
+  return {
+    firstTeamId: match.teamA?.teamId.toString() ?? "",
+    matchId: match._id.toString(),
+    secondTeamId: match.teamB?.teamId.toString() ?? "",
+  };
+}
+
+function wouldUnlockNextEventMatch(match: IMatch, matchesById: Map<string, IMatch>): boolean {
+  if (!match.winnerNextMatchId || !match.winnerNextSlot) {
+    return false;
+  }
+
+  const nextMatch = matchesById.get(match.winnerNextMatchId.toString());
+
+  if (!nextMatch || nextMatch.status === "completed" || nextMatch.isBye) {
+    return false;
+  }
+
+  const targetSlot = match.winnerNextSlot === "A" ? nextMatch.teamA : nextMatch.teamB;
+  const otherSlot = match.winnerNextSlot === "A" ? nextMatch.teamB : nextMatch.teamA;
+
+  return !targetSlot && Boolean(otherSlot);
+}
+
+function compareEventMatches(first: IMatch, second: IMatch): number {
+  return (
+    (first.eventDisciplineIndex ?? 0) - (second.eventDisciplineIndex ?? 0) ||
+    first.round - second.round ||
+    first.position - second.position ||
+    first._id.toString().localeCompare(second._id.toString())
+  );
+}
+
+function scorePlayableEventMatch(
+  match: IMatch,
+  matchesById: Map<string, IMatch>,
+  completedByDiscipline: Map<number, number>,
+  maxCompleted: number,
+): number {
+  const disciplineIndex = match.eventDisciplineIndex ?? 0;
+  const completedLag = maxCompleted - (completedByDiscipline.get(disciplineIndex) ?? 0);
+
+  return (
+    (wouldUnlockNextEventMatch(match, matchesById) ? 10_000 : 0) +
+    completedLag * 100 +
+    // Rounds are intentionally only a soft tie-breaker. The scheduler optimizes
+    // current tournament flow from the existing graph, not "round 1 before round 2".
+    Math.max(0, 32 - match.round)
+  );
+}
+
+export function planEventSlots(
+  matches: IMatch[],
+  options: EventSlotPlanOptions = {},
+): EventSlotPlan[] {
+  let ready = matches.filter(isPlayableEventMatch);
+  const matchesById = new Map(matches.map((match) => [match._id.toString(), match]));
+  const completedByDiscipline = new Map<number, number>();
+
+  for (const match of matches) {
+    if (
+      match.eventDisciplineIndex !== null &&
+      match.eventDisciplineIndex !== undefined &&
+      !match.isBye &&
+      match.status === "completed"
+    ) {
+      const disciplineIndex = match.eventDisciplineIndex;
+      completedByDiscipline.set(
+        disciplineIndex,
+        (completedByDiscipline.get(disciplineIndex) ?? 0) + 1,
+      );
+    }
+  }
+
+  const maxCompleted = Math.max(0, ...completedByDiscipline.values());
   const slots: EventSlotPlan[] = [];
   let slotIndex = 0;
 
-  while (ready.length > 0) {
-    ready = [...ready].sort(
-      (first, second) =>
-        first.round - second.round ||
-        (((first.eventDisciplineIndex ?? 0) + slotIndex) % disciplineCount) -
-          (((second.eventDisciplineIndex ?? 0) + slotIndex) % disciplineCount) ||
-        first.position - second.position,
-    );
+  function sorted(matchesToSort: IMatch[]) {
+    return [...matchesToSort].sort((first, second) => {
+      const scoreDifference =
+        scorePlayableEventMatch(second, matchesById, completedByDiscipline, maxCompleted) -
+        scorePlayableEventMatch(first, matchesById, completedByDiscipline, maxCompleted);
 
+      return scoreDifference || compareEventMatches(first, second);
+    });
+  }
+
+  while (ready.length > 0) {
     const busyParticipants = new Set<string>();
     const busyDisciplines = new Set<number>();
     const slotMatches: IMatch[] = [];
+    const selectedMatchIds = new Set<string>();
+
+    const orderedReady =
+      slotIndex === 0 && (options.pinnedFirstSlotMatchIds?.length ?? 0) > 0
+        ? [
+            ...options.pinnedFirstSlotMatchIds!
+              .map((matchId) => ready.find((match) => match._id.toString() === matchId))
+              .filter((match): match is IMatch => Boolean(match)),
+            ...sorted(
+              ready.filter(
+                (match) => !options.pinnedFirstSlotMatchIds!.includes(match._id.toString()),
+              ),
+            ),
+          ]
+        : sorted(ready);
+
     const rest: IMatch[] = [];
 
-    for (const match of ready) {
+    for (const match of orderedReady) {
       const disciplineIndex = match.eventDisciplineIndex ?? 0;
-      const firstTeamId = match.teamA?.teamId.toString();
-      const secondTeamId = match.teamB?.teamId.toString();
+      const { firstTeamId, matchId, secondTeamId } = eventMatchIds(match);
 
       if (
         !firstTeamId ||
@@ -560,9 +658,16 @@ export function planEventSlots(matches: IMatch[]): EventSlotPlan[] {
       }
 
       slotMatches.push(match);
+      selectedMatchIds.add(matchId);
       busyDisciplines.add(disciplineIndex);
       busyParticipants.add(firstTeamId);
       busyParticipants.add(secondTeamId);
+    }
+
+    for (const match of ready) {
+      if (!selectedMatchIds.has(match._id.toString()) && !rest.includes(match)) {
+        rest.push(match);
+      }
     }
 
     slots.push({

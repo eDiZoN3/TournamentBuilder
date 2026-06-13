@@ -103,7 +103,14 @@ export function EventTournamentView({
   );
   const [error, setError] = useState<string | null>(null);
   const highlightedRef = useRef<HTMLElement | null>(null);
-  const slots = useMemo(() => planEventSlots(tournament.matches), [tournament.matches]);
+  const pinnedFirstSlotMatchIdsRef = useRef<string[]>([]);
+  const slots = useMemo(
+    () =>
+      planEventSlots(tournament.matches, {
+        pinnedFirstSlotMatchIds: pinnedFirstSlotMatchIdsRef.current,
+      }),
+    [tournament.matches],
+  );
   const disciplineGroups = useMemo(
     () => groupByDiscipline(tournament.matches),
     [tournament.matches],
@@ -123,6 +130,11 @@ export function EventTournamentView({
       ? Math.min(activeDiscipline, disciplineGroups.length - 1)
       : 0;
   const selectedGroup = disciplineGroups[selectedDisciplineIndex];
+
+  useEffect(() => {
+    pinnedFirstSlotMatchIdsRef.current =
+      slots[0]?.matches.map((match) => match._id.toString()) ?? [];
+  }, [slots]);
 
   useEffect(() => {
     if (!highlightedMatchId || !highlightedRef.current) {

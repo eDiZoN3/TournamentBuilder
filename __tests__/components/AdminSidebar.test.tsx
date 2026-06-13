@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminSidebar } from "@/components/ui/AdminSidebar";
@@ -9,11 +10,17 @@ vi.mock("next-auth/react", () => ({
   signOut: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: vi.fn(),
+}));
+
 const mockedSignOut = vi.mocked(signOut);
+const mockedUsePathname = vi.mocked(usePathname);
 
 describe("AdminSidebar", () => {
   beforeEach(() => {
     mockedSignOut.mockReset();
+    mockedUsePathname.mockReturnValue("/admin/dashboard");
   });
 
   it("renders dashboard navigation, public links, and logout", () => {
@@ -37,6 +44,28 @@ describe("AdminSidebar", () => {
     ).toBe(false);
     expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
     expect(screen.getByLabelText("Switch to dark mode")).toBeInTheDocument();
+  });
+
+
+  it("can hide and restore the desktop sidebar on tournament management pages", () => {
+    mockedUsePathname.mockReturnValue("/admin/tournament/abc123/manage");
+
+    render(<AdminSidebar />);
+
+    const sidebar = screen.getByTestId("admin-sidebar");
+    const hideButton = screen.getByRole("button", { name: "Hide admin sidebar" });
+
+    expect(sidebar).not.toHaveClass("md:hidden");
+
+    fireEvent.click(hideButton);
+
+    expect(sidebar).toHaveClass("md:hidden");
+    const showButton = screen.getByRole("button", { name: "Show admin sidebar" });
+    expect(showButton).toHaveClass("md:flex");
+
+    fireEvent.click(showButton);
+
+    expect(sidebar).not.toHaveClass("md:hidden");
   });
 
   it("logs out to the shared login page", () => {

@@ -28,6 +28,7 @@ export type TranslationKey =
   | "changing"
   | "close"
   | "closeAdminNavigation"
+  | "hideAdminSidebar"
   | "closeNavigationMenu"
   | "completed"
   | "confirmMatch"
@@ -148,6 +149,7 @@ export type TranslationKey =
   | "onlyAdminsCanReset"
   | "openApiJson"
   | "openAdminNavigation"
+  | "showAdminSidebar"
   | "openNavigationMenu"
   | "oneSetPerMatch"
   | "opponentName"
@@ -589,6 +591,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     changing: "Ändern...",
     close: "Schließen",
     closeAdminNavigation: "Admin-Navigation schließen",
+    hideAdminSidebar: "Admin-Seitenleiste ausblenden",
     closeNavigationMenu: "Navigationsmenü schließen",
     confirmMatch: "Spiel bestätigen",
     confirmOverride: "Überschreiben bestätigen",
@@ -640,6 +643,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     noPlayersListed: "Keine Spieler eingetragen",
     openApiJson: "OpenAPI JSON",
     openAdminNavigation: "Admin-Navigation öffnen",
+    showAdminSidebar: "Admin-Seitenleiste anzeigen",
     openNavigationMenu: "Navigationsmenü öffnen",
     opponentNameRequired: "Gegnername ist erforderlich.",
     overrideResult: "Ergebnis überschreiben",
@@ -986,6 +990,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     changing: "Changing...",
     close: "Close",
     closeAdminNavigation: "Close admin navigation",
+    hideAdminSidebar: "Hide admin sidebar",
     closeNavigationMenu: "Close navigation menu",
     confirmMatch: "Confirm match",
     confirmOverride: "Confirm override",
@@ -1036,6 +1041,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     noPlayersListed: "No players listed",
     openApiJson: "OpenAPI JSON",
     openAdminNavigation: "Open admin navigation",
+    showAdminSidebar: "Show admin sidebar",
     openNavigationMenu: "Open navigation menu",
     opponentNameRequired: "Opponent name is required.",
     overrideResult: "Override result",

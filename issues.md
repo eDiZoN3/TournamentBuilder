@@ -506,15 +506,18 @@ Diese Regeln dürfen nie verletzt werden:
 
 Der Algorithmus soll pro Kandidaten-Match einen Score berechnen und die besten Matches auswählen.
 
+Wichtig: Der Scheduler soll **auf die Gesamt-Laufzeit des Event-Turniers optimieren**, nicht strikt nach „Runde 1 komplett vor Runde 2 komplett vor Runde 3“ arbeiten. Runde/Reihenfolge ist nur ein Faktor im Score. Wenn ein Runde-2-Match den Gesamtfluss deutlich verbessert und alle Abhängigkeiten erfüllt sind, darf es vor noch offenen Runde-1-Matches anderer Disziplinen vorgeschlagen werden.
+
 Empfohlene Priorität:
 
 1. Matches, deren beide Vorgänger abgeschlossen sind, haben Vorrang.
-2. Frühere Runden haben Vorrang, damit der Graph stabil von unten nach oben wächst.
-3. Disziplinen sollen möglichst gleichmäßig vorankommen.
-4. Teams sollen nicht direkt nacheinander mehrfach vorgeschlagen werden, wenn Alternativen existieren.
-5. Matches, die den nächsten Folgematch-Knoten freischalten, bekommen Bonus.
-6. Finals/Disziplinsieger-Matches sollen erst erscheinen, wenn keine niedrigeren abhängigen Matches derselben Disziplin offen sind.
-7. Bei Gleichstand: stabile Sortierung nach Disziplin, Runde, Position, Match-ID.
+2. Kürzere Gesamt-Laufzeit / besserer Turnierfluss hat Vorrang vor starrer Rundennummer-Reihenfolge.
+3. Matches, die den nächsten Folgematch-Knoten freischalten, bekommen Bonus.
+4. Disziplinen sollen möglichst gleichmäßig vorankommen.
+5. Teams sollen nicht direkt nacheinander mehrfach vorgeschlagen werden, wenn Alternativen existieren.
+6. Frühere Runden sind ein Tie-Breaker, aber kein hartes „Runde 1 vor Runde 2“-Gesetz.
+7. Finals/Disziplinsieger-Matches sollen erst erscheinen, wenn keine niedrigeren abhängigen Matches derselben Disziplin offen sind.
+8. Bei Gleichstand: stabile Sortierung nach Disziplin, Runde, Position, Match-ID.
 
 Mögliche Score-Idee:
 
@@ -585,6 +588,17 @@ Prinzip:
 Die UI soll weiterhin „Als Nächstes“ anzeigen.
 Nur die Reihenfolge und Auswahl der vorgeschlagenen Matches darf sich verbessern.
 
+#### 5. Direkt nächste Matches einfrieren
+
+Die **direkt nächsten / aktuell vorgeschlagenen Matches dürfen nicht bei jedem Refresh neu kalkuliert und ausgetauscht werden**, sobald sie dem Admin angezeigt wurden. Dadurch wird verhindert, dass sich ein Match ändert, während Spieler bereits auf dem Weg zum Spiel sind oder der Admin es gerade ansagt.
+
+Stattdessen:
+
+- Slot 1 / direkt nächste Matches bleiben stabil, solange sie weiterhin spielbar und nicht abgeschlossen sind.
+- Nach einem Ergebnis wird erst der nachgelagerte Vorschau-Bereich neu berechnet.
+- Der greedy Scheduler soll primär die **zweiten nächsten / danach kommenden Matches** neu planen.
+- Ein direkt nächstes Match darf nur verschwinden, wenn es abgeschlossen wurde, durch einen Rollback/Änderung ungültig wurde oder nicht mehr beide Teilnehmer bekannt sind.
+
 Nicht ändern:
 
 - Ergebnis-Eintragung
@@ -601,6 +615,8 @@ Nicht ändern:
 - Wenn ein Match ein Folgematch freischalten kann, wird es bevorzugt gegenüber weniger dringenden Matches.
 - Finals erscheinen nicht zu früh, solange abhängige niedrigere Runden derselben Disziplin offen sind.
 - Die Reihenfolge ist deterministisch und flackert nicht zwischen Refreshes.
+- Direkt nächste Matches bleiben stabil und werden nicht bei jedem Polling durch andere Kandidaten ersetzt.
+- Der greedy Algorithmus optimiert auf Gesamt-Laufzeit/Turnierfluss, nicht auf starre komplette Rundenblöcke.
 - Bestehende Event-Stats und Ergebnislogik bleiben unverändert.
 - Bestehende Tests bleiben grün.
 
@@ -669,6 +685,31 @@ Erwartung:
 
 - `planEventSlots()` liefert jedes Mal dieselbe Reihenfolge
 
+#### Test 6: optimiert Gesamt-Laufzeit statt starrer Rundenblöcke
+
+Szenario:
+
+- ein Runde-2-Match ist vollständig spielbar und schaltet den weiteren Graphen frei
+- parallel existiert noch ein anderes Runde-1-Match in einer anderen Disziplin
+
+Erwartung:
+
+- der Scheduler darf das Runde-2-Match früher vorschlagen, wenn es den Gesamtfluss verbessert
+- es gibt keine harte Regel „alle Runde-1-Matches vor irgendeinem Runde-2-Match“
+
+#### Test 7: friert direkt nächste Matches ein
+
+Szenario:
+
+- Slot 1 enthält aktuell vorgeschlagene spielbare Matches
+- durch ein anderes Ergebnis entstehen neue Kandidaten mit höherem greedy Score
+
+Erwartung:
+
+- Slot 1 bleibt unverändert, solange die bisherigen Matches weiterhin spielbar sind
+- nur die danach folgenden Vorschau-Matches werden neu berechnet
+- erst nach Abschluss/Invalidierung rücken neue Matches nach
+
 ### Implementierungsplan
 
 1. Bestehende `planEventSlots()`-Tests lesen und Verhalten dokumentieren.
@@ -680,12 +721,16 @@ Erwartung:
 7. Score um Disziplin-Fortschritt erweitern.
 8. Failing Test für Freischalt-Bonus schreiben.
 9. Score um Next-Match-Bonus erweitern.
-10. Failing Test für deterministische Reihenfolge schreiben.
-11. Stabilen Tie-Breaker ergänzen.
-12. UI-Komponententests für „Als Nächstes“ aktualisieren.
-13. Zieltests ausführen.
-14. Full Test Suite ausführen.
-15. Erst danach committen/deployen.
+10. Failing Test für Gesamt-Laufzeit statt starrer Rundenblöcke schreiben.
+11. Score/Tie-Breaker so anpassen, dass Runden nur weiche Priorität sind.
+12. Failing Test für eingefrorene direkt nächste Matches schreiben.
+13. Planungsfunktion um bereits angezeigte direkte Matches / Slot-1-Stabilität erweitern.
+14. Failing Test für deterministische Reihenfolge schreiben.
+15. Stabilen Tie-Breaker ergänzen.
+16. UI-Komponententests für „Als Nächstes“ aktualisieren.
+17. Zieltests ausführen.
+18. Full Test Suite ausführen.
+19. Erst danach committen/deployen.
 
 ### Verifikation
 
@@ -713,15 +758,21 @@ npm test
 - Keine neue manuelle Sortier-UI.
 - Keine automatische Court-Zuweisung.
 
-### Offene Frage
+### Geklärte Zusatzanforderungen
 
-Der genaue Satz der Anforderung endete bei „ein mehr greedy algorithmus der darauf ...“. Vor Implementierung klären:
+- Der greedy Algorithmus soll auf die **Gesamt-Laufzeit / den Gesamtfluss des Event-Turniers** schauen.
+- Es soll keine harte Reihenfolge „Runde 1 komplett vor Runde 2 komplett vor Runde 3“ geben.
+- Die **direkt nächsten Matches** sollen nach Anzeige stabil bleiben und nicht bei jedem Polling neu gemischt werden.
+- Neu kalkuliert werden primär die **zweiten nächsten / danach kommenden Matches**, damit sich nicht ändert, wohin Teams/Spieler bereits unterwegs sind.
 
-- Worauf soll der greedy Algorithmus zusätzlich besonders achten?
-  - weniger Wartezeit pro Team?
-  - gleichmäßige Disziplin-Verteilung?
-  - möglichst früh Folgematches freischalten?
-  - möglichst wenig direkte Wiederholung der gleichen Teams?
-  - Court-/Slot-Auslastung?
+### Noch offene Feinabstimmung
 
-Bis zur Klärung gilt die oben beschriebene Annahme: Der Scheduler soll spielbare nächste Matches fair, stabil und kollisionsfrei priorisieren.
+Vor Implementierung optional klären, welche Laufzeit-Metrik am wichtigsten ist:
+
+- weniger Wartezeit pro Team?
+- gleichmäßige Disziplin-Verteilung?
+- möglichst früh Folgematches freischalten?
+- möglichst wenig direkte Wiederholung der gleichen Teams?
+- Court-/Slot-Auslastung?
+
+Bis zur weiteren Klärung gilt die Annahme: Gesamtfluss + stabile direkte Matches sind wichtiger als starre Rundennummer-Reihenfolge.

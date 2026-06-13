@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   makeTeams,
@@ -132,6 +132,53 @@ describe("EventTournamentView", () => {
     expect(
       screen.getByText(/This view is no longer current/),
     ).toBeInTheDocument();
+  });
+
+
+  it("shows recalculated upcoming event matches as read-only", () => {
+    const teams = makeTeams(4) as ITeam[];
+    const matches = generateEventTournamentMatches(teams, ["Darts"], 7);
+    const tournament = makeTournament({
+      _id: teams[0]._id,
+      format: "event",
+      name: "Event Cup",
+      status: "active",
+      teams,
+      matches,
+    }) as ITournament;
+    const [currentSlot, recalculatedSlot] = planEventSlots(matches);
+    const currentMatch = currentSlot.matches[0];
+    const recalculatedMatch = recalculatedSlot.matches[0];
+    const currentWinnerName = teams.find(
+      (team) => team._id.toString() === currentMatch.teamA!.teamId.toString(),
+    )!.name;
+    const recalculatedWinnerName = teams.find(
+      (team) => team._id.toString() === recalculatedMatch.teamA!.teamId.toString(),
+    )!.name;
+
+    render(<EventTournamentView editable tournament={tournament} />);
+
+    expect(
+      screen.getByRole("heading", { name: "Current matches" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Recalculated next matches" }),
+    ).toBeInTheDocument();
+    const currentPreview = screen.getByTestId("event-current-matches");
+
+    expect(
+      within(currentPreview).getByRole("button", {
+        name: `Select ${currentWinnerName} as winner`,
+      }),
+    ).toBeEnabled();
+    const recalculatedPreview = screen.getByTestId("event-recalculated-next-matches");
+
+    expect(
+      within(recalculatedPreview).queryByRole("button", {
+        name: `Select ${recalculatedWinnerName} as winner`,
+      }),
+    ).not.toBeInTheDocument();
+    expect(within(recalculatedPreview).getByText(recalculatedWinnerName)).toBeInTheDocument();
   });
 
   it("shows knight crests in bracket rows without the seed badge", () => {

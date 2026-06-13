@@ -125,6 +125,7 @@ export function EventTournamentView({
     return map;
   }, [tournament.teams]);
   const nextSlot = slots[0];
+  const recalculatedNextSlots = slots.slice(1);
   const selectedDisciplineIndex =
     disciplineGroups.length > 0
       ? Math.min(activeDiscipline, disciplineGroups.length - 1)
@@ -232,7 +233,11 @@ export function EventTournamentView({
     }
   }
 
-  function renderSlotParticipant(match: IMatch, side: "A" | "B") {
+  function renderSlotParticipant(
+    match: IMatch,
+    side: "A" | "B",
+    readOnly = false,
+  ) {
     const slot = side === "A" ? match.teamA : match.teamB;
     const teamId = slot?.teamId ?? null;
     const teamName = teamId
@@ -250,6 +255,7 @@ export function EventTournamentView({
       currentPlayerName,
     );
     const disabled =
+      readOnly ||
       !editable ||
       !syncHealthy ||
       !teamId ||
@@ -261,15 +267,26 @@ export function EventTournamentView({
       : isCurrentPlayer
         ? "bg-sky-50 text-slate-900 dark:bg-sky-950 dark:text-white"
         : "text-slate-700 dark:text-slate-200";
+    const content = (
+      <>
+        <TeamCrest editable={false} size={16} teamId={teamId} />
+        <span className="truncate">{teamName}</span>
+      </>
+    );
+    const className = `inline-flex max-w-[8rem] items-center rounded px-1.5 py-0.5 font-medium transition ${tone} ${
+      disabled
+        ? "cursor-default"
+        : "hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40"
+    }`;
+
+    if (readOnly) {
+      return <span className={className}>{content}</span>;
+    }
 
     return (
       <button
         aria-label={`Select ${teamName} as winner`}
-        className={`inline-flex max-w-[8rem] items-center rounded px-1.5 py-0.5 font-medium transition disabled:cursor-default ${tone} ${
-          disabled
-            ? ""
-            : "hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40"
-        }`}
+        className={className}
         disabled={disabled}
         onClick={(event) => {
           event.stopPropagation();
@@ -279,16 +296,42 @@ export function EventTournamentView({
         }}
         type="button"
       >
-        <TeamCrest editable={false} size={16} teamId={teamId} />
-        <span className="truncate">{teamName}</span>
+        {content}
       </button>
     );
   }
 
-  function renderSlotMatch(match: IMatch) {
+  function renderSlotMatch(match: IMatch, readOnly = false) {
+    const className = `flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs shadow-sm transition dark:border-slate-700 dark:bg-slate-900 ${
+      readOnly
+        ? "opacity-80"
+        : "cursor-pointer hover:border-slate-400 dark:hover:border-slate-500"
+    }`;
+    const content = (
+      <>
+        <span
+          className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900"
+          style={{ backgroundColor: disciplineColor(match.eventDisciplineIndex ?? 0) }}
+        >
+          {match.eventDisciplineName ?? ""}
+        </span>
+        {renderSlotParticipant(match, "A", readOnly)}
+        <span className="shrink-0 text-slate-400">{t("versus")}</span>
+        {renderSlotParticipant(match, "B", readOnly)}
+      </>
+    );
+
+    if (readOnly) {
+      return (
+        <article className={className} key={match._id.toString()}>
+          {content}
+        </article>
+      );
+    }
+
     return (
       <article
-        className="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs shadow-sm transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-500"
+        className={className}
         key={match._id.toString()}
         onClick={() => jumpToMatch(match)}
         onKeyDown={(event) => {
@@ -301,15 +344,7 @@ export function EventTournamentView({
         tabIndex={0}
         title={t("viewInBracket")}
       >
-        <span
-          className="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-900"
-          style={{ backgroundColor: disciplineColor(match.eventDisciplineIndex ?? 0) }}
-        >
-          {match.eventDisciplineName ?? ""}
-        </span>
-        {renderSlotParticipant(match, "A")}
-        <span className="shrink-0 text-slate-400">{t("versus")}</span>
-        {renderSlotParticipant(match, "B")}
+        {content}
       </article>
     );
   }
@@ -582,25 +617,51 @@ export function EventTournamentView({
 
       <div className="mx-auto w-fit max-w-full space-y-6">
         <section>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              {t("upNext")}
-            </h2>
-            {nextSlot ? (
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                {t("slot")} {nextSlot.index}
-              </span>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            {t("upNext")}
+          </h2>
+          <div className="mt-4 space-y-4">
+            <section data-testid="event-current-matches">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                  {t("currentMatches")}
+                </h3>
+                {nextSlot ? (
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                    {t("slot")} {nextSlot.index}
+                  </span>
+                ) : null}
+              </div>
+              {nextSlot ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {nextSlot.matches.map((match) => renderSlotMatch(match))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                  {t("noPlayableEventMatches")}
+                </p>
+              )}
+            </section>
+            {recalculatedNextSlots.length > 0 ? (
+              <section data-testid="event-recalculated-next-matches">
+                <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+                  {t("recalculatedNextMatches")}
+                </h3>
+                <div className="mt-3 space-y-3">
+                  {recalculatedNextSlots.map((slot) => (
+                    <div key={slot.index}>
+                      <span className="mb-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        {t("slot")} {slot.index}
+                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        {slot.matches.map((match) => renderSlotMatch(match, true))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             ) : null}
           </div>
-          {nextSlot ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {nextSlot.matches.map(renderSlotMatch)}
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-              {t("noPlayableEventMatches")}
-            </p>
-          )}
         </section>
 
         <section>

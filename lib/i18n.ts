@@ -53,6 +53,7 @@ export type TranslationKey =
   | "createTournament"
   | "createTournamentDescription"
   | "createTournamentLead"
+  | "currentMatches"
   | "createdAccountSignInFailed"
   | "creating"
   | "currentPassword"
@@ -198,6 +199,7 @@ export type TranslationKey =
   | "registeredAdmins"
   | "registeredPlayers"
   | "registeredTournaments"
+  | "recalculatedNextMatches"
   | "remove"
   | "resetScope"
   | "resetScopeAll"
@@ -396,6 +398,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     createPlayer: "Spieler erstellen",
     createTournament: "Turnier erstellen",
     createTournamentLead: "Turnierleiter anlegen",
+    currentMatches: "Aktuelle Matches",
     currentPassword: "Aktuelles Passwort",
     dashboard: "Dashboard",
     delete: "Löschen",
@@ -499,6 +502,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     registeredAdmins: "Registrierte Administratoren",
     registeredPlayers: "Registrierte Spieler",
     registeredTournaments: "Registrierte Turniere",
+    recalculatedNextMatches: "Neu berechnete nächste Matches",
     remove: "Entfernen",
     resetScope: "Bereich zurücksetzen",
     resetScopeAll: "Alle Statistiken",
@@ -794,6 +798,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     createPlayer: "Create player",
     createTournament: "Create tournament",
     createTournamentLead: "Create tournament lead",
+    currentMatches: "Current matches",
     currentPassword: "Current password",
     dashboard: "Dashboard",
     delete: "Delete",
@@ -894,6 +899,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     registeredAdmins: "Registered admins",
     registeredPlayers: "Registered players",
     registeredTournaments: "Registered tournaments",
+    recalculatedNextMatches: "Recalculated next matches",
     remove: "Remove",
     resetScope: "Reset scope",
     resetScopeAll: "All stats",

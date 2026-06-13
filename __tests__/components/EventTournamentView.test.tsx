@@ -161,9 +161,6 @@ describe("EventTournamentView", () => {
     expect(
       screen.getByRole("heading", { name: "Current matches" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Recalculated next matches" }),
-    ).toBeInTheDocument();
     const currentPreview = screen.getByTestId("event-current-matches");
 
     expect(
@@ -172,7 +169,16 @@ describe("EventTournamentView", () => {
       }),
     ).toBeEnabled();
     const recalculatedPreview = screen.getByTestId("event-recalculated-next-matches");
+    const recalculatedToggle = within(recalculatedPreview).getByRole("button", {
+      name: /Recalculated next matches/,
+    });
 
+    expect(recalculatedToggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(recalculatedPreview).queryByText(recalculatedWinnerName)).not.toBeInTheDocument();
+
+    fireEvent.click(recalculatedToggle);
+
+    expect(recalculatedToggle).toHaveAttribute("aria-expanded", "true");
     expect(
       within(recalculatedPreview).queryByRole("button", {
         name: `Select ${recalculatedWinnerName} as winner`,

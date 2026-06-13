@@ -101,6 +101,7 @@ export function EventTournamentView({
   const [highlightedMatchId, setHighlightedMatchId] = useState<string | null>(
     null,
   );
+  const [showRecalculatedNext, setShowRecalculatedNext] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const highlightedRef = useRef<HTMLElement | null>(null);
   const pinnedFirstSlotMatchIdsRef = useRef<string[]>([]);
@@ -644,21 +645,32 @@ export function EventTournamentView({
             </section>
             {recalculatedNextSlots.length > 0 ? (
               <section data-testid="event-recalculated-next-matches">
-                <h3 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
-                  {t("recalculatedNextMatches")}
-                </h3>
-                <div className="mt-3 space-y-3">
-                  {recalculatedNextSlots.map((slot) => (
-                    <div key={slot.index}>
-                      <span className="mb-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                        {t("slot")} {slot.index}
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {slot.matches.map((match) => renderSlotMatch(match, true))}
+                <button
+                  aria-expanded={showRecalculatedNext}
+                  className="flex w-full items-center justify-between gap-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-left text-base font-bold tracking-tight text-slate-900 shadow-sm transition hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:hover:border-slate-500"
+                  onClick={() => setShowRecalculatedNext((visible) => !visible)}
+                  type="button"
+                >
+                  <span>{t("recalculatedNextMatches")}</span>
+                  <span className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <span>{recalculatedNextSlots.length} {t("slot")}</span>
+                    <span aria-hidden="true">{showRecalculatedNext ? "▲" : "▼"}</span>
+                  </span>
+                </button>
+                {showRecalculatedNext ? (
+                  <div className="mt-3 space-y-3">
+                    {recalculatedNextSlots.map((slot) => (
+                      <div key={slot.index}>
+                        <span className="mb-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                          {t("slot")} {slot.index}
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {slot.matches.map((match) => renderSlotMatch(match, true))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : null}
               </section>
             ) : null}
           </div>

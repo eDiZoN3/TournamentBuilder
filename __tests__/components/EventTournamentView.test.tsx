@@ -65,12 +65,73 @@ describe("EventTournamentView", () => {
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
+            tournamentUpdatedAt: new Date(tournament.updatedAt).toISOString(),
             winnerId: nextMatch.teamA!.teamId.toString(),
           }),
         }),
       );
       expect(onUpdated).toHaveBeenCalled();
     });
+  });
+
+
+  it("sends the tournament timestamp and refreshes when the server rejects a stale view", async () => {
+    const teams = makeTeams(4) as ITeam[];
+    const matches = generateEventTournamentMatches(teams, ["Darts"], 7);
+    const tournament = makeTournament({
+      _id: teams[0]._id,
+      format: "event",
+      name: "Event Cup",
+      status: "active",
+      teams,
+      matches,
+      updatedAt: new Date("2026-01-01T12:00:00.000Z"),
+    }) as ITournament;
+    const nextMatch = planEventSlots(matches)[0].matches[0];
+    const winnerName = teams.find(
+      (team) => team._id.toString() === nextMatch.teamA!.teamId.toString(),
+    )!.name;
+    const onUpdated = vi.fn();
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ code: "STALE_TOURNAMENT" }), {
+        status: 409,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+
+    render(
+      <EventTournamentView
+        editable
+        onUpdated={onUpdated}
+        tournament={tournament}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getAllByRole("button", {
+        name: `Select ${winnerName} as winner`,
+      })[0],
+    );
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/tournaments/${tournament._id.toString()}/event/matches/${nextMatch._id.toString()}/winner`,
+        expect.objectContaining({
+          body: JSON.stringify({
+            tournamentUpdatedAt: "2026-01-01T12:00:00.000Z",
+            winnerId: nextMatch.teamA!.teamId.toString(),
+          }),
+        }),
+      );
+      expect(onUpdated).toHaveBeenCalled();
+    });
+
+    expect(
+      screen.getByText(/This view is no longer current/),
+    ).toBeInTheDocument();
   });
 
   it("shows knight crests in bracket rows without the seed badge", () => {

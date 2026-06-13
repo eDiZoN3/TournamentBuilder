@@ -6,6 +6,7 @@ export type ApiErrorCode =
   | "NOT_FOUND"
   | "VALIDATION_ERROR"
   | "CONFLICT"
+  | "STALE_TOURNAMENT"
   | "INTERNAL_ERROR";
 
 export function jsonError(

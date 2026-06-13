@@ -125,7 +125,8 @@ export function TournamentManageView({
         <BracketSkeleton />
       ) : tournament.format === "event" ? (
         <EventTournamentView
-          editable
+          editable={!unableToRefresh}
+          syncHealthy={!unableToRefresh}
           onUpdated={async () => {
             await mutate();
           }}

@@ -147,6 +147,36 @@ describe("PUT /api/tournaments/[id]/event/matches/[matchId]/winner", () => {
     expect(response.status).toBe(401);
   });
 
+
+
+  it("rejects stale event winner updates from disconnected clients", async () => {
+    const tournament = await createEventTournament();
+    const match = tournament.matches.find(
+      (candidate) => candidate.round === 1 && candidate.status === "ready",
+    )!;
+    const staleUpdatedAt = new Date(
+      tournament.updatedAt.getTime() - 1000,
+    ).toISOString();
+
+    const response = await selectEventWinner(
+      request(tournament._id.toString(), match._id.toString(), {
+        tournamentUpdatedAt: staleUpdatedAt,
+        winnerId: match.teamA!.teamId.toString(),
+      }),
+      context(tournament._id.toString(), match._id.toString()),
+    );
+    const body = await response.json();
+    const unchangedTournament = await Tournament.findById(tournament._id);
+    const unchangedMatch = unchangedTournament!.matches.find(
+      (candidate) => candidate._id.toString() === match._id.toString(),
+    )!;
+
+    expect(response.status).toBe(409);
+    expect(body.code).toBe("STALE_TOURNAMENT");
+    expect(unchangedMatch.status).toBe("ready");
+    expect(unchangedMatch.winnerId).toBeNull();
+  });
+
   it("rejects a body without a valid winner id", async () => {
     const id = new Types.ObjectId().toString();
     const matchId = new Types.ObjectId().toString();

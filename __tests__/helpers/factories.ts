@@ -85,6 +85,7 @@ export interface Tournament {
   eventDisciplines?: string[];
   eventDrawSeed?: number;
   createdAt: Date;
+  updatedAt: Date;
   teams: Team[];
   joinedPlayers: Array<{
     userId: Types.ObjectId | string;
@@ -180,6 +181,7 @@ export function makeTournament(
     eventDisciplines: ["Discipline 1"],
     eventDrawSeed: 1,
     createdAt: new Date(),
+    updatedAt: new Date(),
     teams: [],
     joinedPlayers: [],
     matches: [],

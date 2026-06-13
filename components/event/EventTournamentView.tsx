@@ -12,6 +12,7 @@ import type { IMatch, ITeam, ITournament } from "@/lib/models/Tournament";
 interface EventTournamentViewProps {
   currentPlayerName?: string | null;
   editable?: boolean;
+  syncHealthy?: boolean;
   onUpdated?: () => Promise<void> | void;
   tournament: ITournament;
 }
@@ -90,6 +91,7 @@ function groupByDiscipline(matches: IMatch[]): DisciplineGroup[] {
 export function EventTournamentView({
   currentPlayerName = null,
   editable = false,
+  syncHealthy = true,
   onUpdated,
   tournament,
 }: EventTournamentViewProps) {
@@ -169,7 +171,7 @@ export function EventTournamentView({
   }
 
   async function selectWinner(match: IMatch, winnerId: string) {
-    if (!editable || !match.teamA || !match.teamB) {
+    if (!editable || !syncHealthy || !match.teamA || !match.teamB) {
       return;
     }
 
@@ -184,11 +186,29 @@ export function EventTournamentView({
           headers: {
             "content-type": "application/json",
           },
-          body: JSON.stringify({ winnerId }),
+          body: JSON.stringify({
+            tournamentUpdatedAt: new Date(tournament.updatedAt).toISOString(),
+            winnerId,
+          }),
         },
       );
 
       if (!response.ok) {
+        let errorCode: string | null = null;
+
+        try {
+          const body = (await response.json()) as { code?: unknown };
+          errorCode = typeof body.code === "string" ? body.code : null;
+        } catch {
+          errorCode = null;
+        }
+
+        if (errorCode === "STALE_TOURNAMENT") {
+          setError(t("staleTournamentState"));
+          await onUpdated?.();
+          return;
+        }
+
         throw new Error(t("unableToUpdateMatch"));
       }
 
@@ -219,6 +239,7 @@ export function EventTournamentView({
     );
     const disabled =
       !editable ||
+      !syncHealthy ||
       !teamId ||
       !match.teamA ||
       !match.teamB ||

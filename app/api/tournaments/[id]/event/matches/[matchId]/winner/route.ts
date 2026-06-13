@@ -13,18 +13,29 @@ interface RouteContext {
   }>;
 }
 
-function parseBody(body: unknown): { winnerId: string } | null {
+function parseBody(body: unknown): {
+  tournamentUpdatedAt: string | null;
+  winnerId: string;
+} | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     return null;
   }
 
-  const { winnerId } = body as Record<string, unknown>;
+  const { tournamentUpdatedAt, winnerId } = body as Record<string, unknown>;
 
   if (typeof winnerId !== "string" || !Types.ObjectId.isValid(winnerId)) {
     return null;
   }
 
-  return { winnerId };
+  if (
+    tournamentUpdatedAt !== undefined &&
+    (typeof tournamentUpdatedAt !== "string" ||
+      Number.isNaN(Date.parse(tournamentUpdatedAt)))
+  ) {
+    return null;
+  }
+
+  return { tournamentUpdatedAt: tournamentUpdatedAt ?? null, winnerId };
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
@@ -66,6 +77,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     if ((tournament.format ?? "double_elimination") !== "event") {
       return jsonError("Tournament is not an event tournament", "CONFLICT", 409);
+    }
+
+    if (
+      parsedBody.tournamentUpdatedAt &&
+      tournament.updatedAt.toISOString() !==
+        new Date(parsedBody.tournamentUpdatedAt).toISOString()
+    ) {
+      return jsonError(
+        "Tournament was updated by another client. Please refresh before entering results.",
+        "STALE_TOURNAMENT",
+        409,
+      );
     }
 
     try {

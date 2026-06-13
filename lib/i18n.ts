@@ -247,6 +247,7 @@ export type TranslationKey =
   | "surname"
   | "switchToDarkMode"
   | "switchToLightMode"
+  | "staleTournamentState"
   | "team"
   | "teamEntry"
   | "teamNameField"
@@ -561,6 +562,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToRefresh: "Konnte nicht aktualisieren",
     unableToSaveTournamentTeams: "Konnte Turnierteams nicht speichern.",
     unableToStartTournament: "Turnier konnte nicht gestartet werden.",
+    staleTournamentState: "Diese Ansicht ist nicht mehr aktuell. Bitte warte kurz, bis das Turnier neu geladen wurde, und trage das Ergebnis dann erneut ein.",
     unableToUpdateMatch: "Konnte das Spiel nicht aktualisieren",
     upNext: "Als Nächstes",
     view: "Ansehen",
@@ -954,6 +956,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     unableToRefresh: "Unable to refresh",
     unableToSaveTournamentTeams: "Unable to save tournament teams.",
     unableToStartTournament: "Unable to start tournament.",
+    staleTournamentState: "This view is no longer current. Please wait for the tournament to reload, then enter the result again.",
     unableToUpdateMatch: "Unable to update match",
     upNext: "Up next",
     view: "View",

@@ -11,6 +11,7 @@ export interface StatsRow {
   pointsFor: number;
   pointsAgainst: number;
   pointDiff: number;
+  tournamentPoints?: number;
   winRate: number;
 }
 
@@ -39,6 +40,7 @@ interface MatchSideDelta {
   pointsFor: number;
   setsLost: number;
   setsWon: number;
+  tournamentPoints: number;
   won: boolean;
 }
 
@@ -73,6 +75,7 @@ function createStats(
     pointsFor: 0,
     pointsAgainst: 0,
     pointDiff: 0,
+    tournamentPoints: 0,
     winRate: 0,
   };
 }
@@ -108,14 +111,21 @@ function finalizeStats(stats: MutableStats): StatsRow {
     pointsFor: stats.pointsFor,
     pointsAgainst: stats.pointsAgainst,
     pointDiff: stats.pointsFor - stats.pointsAgainst,
+    tournamentPoints: stats.tournamentPoints,
     winRate:
       stats.matchesPlayed === 0 ? 0 : stats.matchesWon / stats.matchesPlayed,
   };
 }
 
-function sortStats(rows: StatsRow[]): StatsRow[] {
+function sortStats(
+  rows: StatsRow[],
+  preferTournamentPoints = false,
+): StatsRow[] {
   return [...rows].sort(
     (first, second) =>
+      (preferTournamentPoints
+        ? (second.tournamentPoints ?? 0) - (first.tournamentPoints ?? 0)
+        : 0) ||
       second.matchesWon - first.matchesWon ||
       second.winRate - first.winRate ||
       second.pointDiff - first.pointDiff ||
@@ -210,13 +220,30 @@ function playableCompleted(match: IMatch): boolean {
   );
 }
 
+function eventByeCompleted(match: IMatch): boolean {
+  return (
+    match.status === "completed" &&
+    match.isBye &&
+    Boolean(match.teamA) &&
+    Boolean(match.winnerId)
+  );
+}
+
+function eventWinnerPoints(match: IMatch): number {
+  return match.round + (match.isWBFinal ? 1 : 0);
+}
+
 function recordedSets(match: IMatch) {
   return match.teamA?.sets.length
     ? match.teamA.sets
     : (match.teamB?.sets ?? []);
 }
 
-function deltaForMatch(match: IMatch, side: "A" | "B"): MatchSideDelta {
+function deltaForMatch(
+  match: IMatch,
+  side: "A" | "B",
+  winnerTournamentPoints = 0,
+): MatchSideDelta {
   const sets = recordedSets(match);
   const teamId = side === "A" ? match.teamA!.teamId : match.teamB!.teamId;
   const won = idString(match.winnerId) === idString(teamId);
@@ -226,6 +253,7 @@ function deltaForMatch(match: IMatch, side: "A" | "B"): MatchSideDelta {
     pointsFor: 0,
     setsLost: 0,
     setsWon: 0,
+    tournamentPoints: won ? winnerTournamentPoints : 0,
     won,
   };
 
@@ -254,6 +282,7 @@ function applyDelta(stats: MutableStats, delta: MatchSideDelta) {
   stats.setsLost += delta.setsLost;
   stats.pointsFor += delta.pointsFor;
   stats.pointsAgainst += delta.pointsAgainst;
+  stats.tournamentPoints = (stats.tournamentPoints ?? 0) + delta.tournamentPoints;
 }
 
 function applyPlayers(
@@ -315,7 +344,34 @@ export function calculateTournamentStats(
     }
   }
 
+  const isEventTournament = tournament.format === "event";
+
   for (const match of tournament.matches) {
+    if (isEventTournament && eventByeCompleted(match)) {
+      const winningTeam = teamsById.get(idString(match.winnerId));
+
+      if (!winningTeam) {
+        continue;
+      }
+
+      const byeDelta: MatchSideDelta = {
+        lost: false,
+        pointsAgainst: 0,
+        pointsFor: 0,
+        setsLost: 0,
+        setsWon: 0,
+        tournamentPoints: eventWinnerPoints(match),
+        won: true,
+      };
+
+      applyDelta(
+        ensureStats(teamStatsByKey, idString(winningTeam._id), winningTeam.name),
+        byeDelta,
+      );
+      applyPlayers(winningTeam, playerStatsByKey, byeDelta);
+      continue;
+    }
+
     if (!playableCompleted(match)) {
       continue;
     }
@@ -327,8 +383,9 @@ export function calculateTournamentStats(
       continue;
     }
 
-    const deltaA = deltaForMatch(match, "A");
-    const deltaB = deltaForMatch(match, "B");
+    const winnerTournamentPoints = isEventTournament ? eventWinnerPoints(match) : 0;
+    const deltaA = deltaForMatch(match, "A", winnerTournamentPoints);
+    const deltaB = deltaForMatch(match, "B", winnerTournamentPoints);
 
     applyDelta(ensureStats(teamStatsByKey, idString(teamA._id), teamA.name), deltaA);
     applyDelta(ensureStats(teamStatsByKey, idString(teamB._id), teamB.name), deltaB);
@@ -337,9 +394,15 @@ export function calculateTournamentStats(
   }
 
   return {
-    teams: sortStats([...teamStatsByKey.values()].map(finalizeStats)),
+    teams: sortStats(
+      [...teamStatsByKey.values()].map(finalizeStats),
+      isEventTournament,
+    ),
     players: filterPlayerStats(
-      sortStats([...playerStatsByKey.values()].map(finalizeStats)),
+      sortStats(
+        [...playerStatsByKey.values()].map(finalizeStats),
+        isEventTournament,
+      ),
       resetRules,
     ),
   };
@@ -367,6 +430,8 @@ function mergeStats(
     stats.setsLost += row.setsLost;
     stats.pointsFor += row.pointsFor;
     stats.pointsAgainst += row.pointsAgainst;
+    stats.tournamentPoints =
+      (stats.tournamentPoints ?? 0) + (row.tournamentPoints ?? 0);
   }
 }
 

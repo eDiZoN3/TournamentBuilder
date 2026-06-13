@@ -638,6 +638,7 @@ export const openApiDocument: OpenApiDocument = {
           "matchesLost",
           "pointsFor",
           "pointsAgainst",
+          "tournamentPoints",
           "winRate",
         ],
         properties: {
@@ -657,6 +658,9 @@ export const openApiDocument: OpenApiDocument = {
             type: "integer",
           },
           pointsAgainst: {
+            type: "integer",
+          },
+          tournamentPoints: {
             type: "integer",
           },
           winRate: {

@@ -24,8 +24,9 @@ export function TournamentStats({
 
   // Event tournaments entered as teams only have team standings; entered as
   // players they keep both player and team statistics.
+  const isEventTournament = tournament?.format === "event";
   const showPlayerStats = !(
-    tournament?.format === "event" &&
+    isEventTournament &&
     (tournament?.inputMode ?? "teams") === "teams"
   );
   // Winner-only tournaments record no sets or points, so drop the scoring
@@ -48,6 +49,7 @@ export function TournamentStats({
           rows={resolvedStats.teams}
           showCrests
           showScoreStats={showScoreStats}
+          showTournamentPoints={isEventTournament}
           title=""
           titleKey="teamStats"
         />
@@ -57,6 +59,7 @@ export function TournamentStats({
             emptyTitleKey="noPlayerStats"
             rows={resolvedStats.players}
             showScoreStats={showScoreStats}
+            showTournamentPoints={isEventTournament}
             title=""
             titleKey="playerStats"
           />

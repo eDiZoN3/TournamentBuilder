@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Types } from "mongoose";
+import { generateEventTournamentMatches } from "@/lib/eventTournament";
 import {
   makeMatch,
   makeSet,
@@ -205,6 +206,61 @@ describe("calculateTournamentStats", () => {
         }),
       ]),
     );
+  });
+
+
+  it("scores event tournament wins by round and counts first-round byes immediately", () => {
+    const teams = makeTeams(3);
+    const matches = generateEventTournamentMatches(teams as ITournament["teams"], ["Darts"], 1);
+    const byeMatch = matches.find((match) => match.isBye)!;
+    const firstRoundMatch = matches.find(
+      (match) => match.round === 1 && !match.isBye,
+    )!;
+    const finalMatch = matches.find((match) => match.isWBFinal)!;
+    const firstRoundWinnerId = firstRoundMatch.teamA!.teamId;
+    const firstRoundLoserId = firstRoundMatch.teamB!.teamId;
+
+    firstRoundMatch.status = "completed";
+    firstRoundMatch.winnerId = firstRoundWinnerId;
+    firstRoundMatch.loserId = firstRoundLoserId;
+    finalMatch.teamA = { teamId: byeMatch.winnerId!, sets: [] };
+    finalMatch.teamB = { teamId: firstRoundWinnerId, sets: [] };
+    finalMatch.status = "completed";
+    finalMatch.winnerId = byeMatch.winnerId;
+    finalMatch.loserId = firstRoundWinnerId;
+
+    const stats = calculateTournamentStats(
+      tournament({
+        format: "event",
+        matchResultMode: "winner_only",
+        teams,
+        matches,
+      }),
+    );
+
+    expect(stats.teams).toEqual([
+      expect.objectContaining({
+        name: "Team A",
+        matchesPlayed: 2,
+        matchesWon: 2,
+        matchesLost: 0,
+        tournamentPoints: 4,
+      }),
+      expect.objectContaining({
+        name: "Team B",
+        matchesPlayed: 2,
+        matchesWon: 1,
+        matchesLost: 1,
+        tournamentPoints: 1,
+      }),
+      expect.objectContaining({
+        name: "Team C",
+        matchesPlayed: 1,
+        matchesWon: 0,
+        matchesLost: 1,
+        tournamentPoints: 0,
+      }),
+    ]);
   });
 });
 

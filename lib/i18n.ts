@@ -257,6 +257,7 @@ export type TranslationKey =
   | "teams"
   | "teamSize"
   | "teamStats"
+  | "totalPoints"
   | "tempPassword"
   | "temporaryPasswordHelp"
   | "toBeDetermined"
@@ -539,6 +540,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     teams: "Teams",
     teamSize: "Teamgröße",
     teamStats: "Teamstatistiken",
+    totalPoints: "Gesamtpunkte",
     tempPassword: "Temporäres Passwort",
     tournamentAdmin: "Turnierverwaltung",
     tournamentBracket: "Turnieransicht",
@@ -931,6 +933,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     teams: "Teams",
     teamSize: "Team size",
     teamStats: "Team stats",
+    totalPoints: "Total points",
     tempPassword: "Temporary password",
     tournamentAdmin: "Tournament Admin",
     tournamentBracket: "Tournament bracket",

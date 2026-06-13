@@ -15,6 +15,7 @@ interface StatsTableProps {
   /** Show each row's team coat of arms (knight theme only). Team tables only. */
   showCrests?: boolean;
   showScoreStats?: boolean;
+  showTournamentPoints?: boolean;
   title: string;
   titleKey?: TranslationKey;
 }
@@ -30,6 +31,7 @@ export function StatsTable({
   rows,
   showCrests = false,
   showScoreStats = true,
+  showTournamentPoints = false,
   title,
   titleKey,
 }: StatsTableProps) {
@@ -78,6 +80,11 @@ export function StatsTable({
               <th className="px-3 py-3 text-right" scope="col">
                 {t("lost")}
               </th>
+              {showTournamentPoints ? (
+                <th className="px-3 py-3 text-right" scope="col">
+                  {t("totalPoints")}
+                </th>
+              ) : null}
               {showScoreStats ? (
                 <>
                   <th className="px-3 py-3 text-right" scope="col">
@@ -124,6 +131,11 @@ export function StatsTable({
                 <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-300">
                   {row.matchesLost}
                 </td>
+                {showTournamentPoints ? (
+                  <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-300">
+                    {row.tournamentPoints ?? 0}
+                  </td>
+                ) : null}
                 {showScoreStats ? (
                   <>
                     <td className="px-3 py-3 text-right text-slate-700 dark:text-slate-300">

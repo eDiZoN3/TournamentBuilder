@@ -117,13 +117,13 @@ describe("Navbar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
-    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login" });
+    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login", redirect: true });
 
     mockedSignOut.mockClear();
     rerender(<Navbar isAuthenticated role={"tournament_lead" as never} />);
     fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
-    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login" });
+    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login", redirect: true });
   });
 
   it("shows player account and logout actions only for player sessions", () => {
@@ -143,6 +143,6 @@ describe("Navbar", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
-    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login" });
+    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login", redirect: true });
   });
 });

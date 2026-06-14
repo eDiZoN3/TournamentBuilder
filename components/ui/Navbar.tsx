@@ -98,7 +98,7 @@ export function Navbar({ isAuthenticated, role = null }: NavbarProps) {
       ) : null}
       {isAuthenticated ? (
         <Button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ callbackUrl: "/login", redirect: true })}
           variant="outline"
         >
           {t("logOut")}

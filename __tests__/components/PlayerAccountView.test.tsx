@@ -118,6 +118,6 @@ describe("PlayerAccountView", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Log out" }));
 
-    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login" });
+    expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: "/login", redirect: true });
   });
 });

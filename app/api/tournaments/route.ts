@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
 import { defaultEventDisciplines } from "@/lib/eventTournament";
 import {
+  MAX_TEAM_SIZE,
+  MIN_TEAM_SIZE,
   Tournament,
   type FirstRoundPairingMode,
   type KnockoutBracketType,
@@ -22,7 +24,7 @@ interface CreateTournamentBody {
   matchResultMode: MatchResultMode;
   name: string;
   roundRobinMatchFormat: RoundRobinMatchFormat;
-  teamSize: 2 | 3 | 4;
+  teamSize: number;
   courtsAvailable: number;
   inputMode: "teams" | "players";
   eventParticipantCount?: number;
@@ -92,7 +94,9 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     typeof name !== "string" ||
     name.trim().length === 0 ||
     name.trim().length > 100 ||
-    ![2, 3, 4].includes(teamSize as number) ||
+    !Number.isInteger(teamSize) ||
+    (teamSize as number) < MIN_TEAM_SIZE ||
+    (teamSize as number) > MAX_TEAM_SIZE ||
     !Number.isInteger(courtsAvailable) ||
     (courtsAvailable as number) < 1 ||
     (courtsAvailable as number) > 10 ||
@@ -119,13 +123,13 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
         parsedKnockoutMatchFormat !== "bo1")) ||
     (parsedAllowSelfJoin && inputMode !== "players") ||
     (parsedFormat !== "team_round_robin" &&
+      parsedFormat !== "individual_mixer" &&
       roundRobinMatchFormat !== undefined &&
       parsedRoundRobinMatchFormat !== "bo1") ||
     (parsedFormat !== "double_elimination" &&
       !isEventFormat &&
       (knockoutBracketType !== undefined ||
         firstRoundPairingMode !== undefined ||
-        matchResultMode !== undefined ||
         knockoutMatchFormat !== undefined)) ||
     (parsedMatchResultMode === "winner_only" &&
       parsedKnockoutMatchFormat !== "bo1")
@@ -142,16 +146,16 @@ function parseCreateBody(body: unknown): CreateTournamentBody | null {
     matchResultMode: parsedMatchResultMode,
     name: name.trim(),
     roundRobinMatchFormat: parsedRoundRobinMatchFormat,
-    teamSize: teamSize as 2 | 3 | 4,
+    teamSize: teamSize as number,
     courtsAvailable: isEventFormat ? 1 : (courtsAvailable as number),
     inputMode: inputMode as "teams" | "players",
     ...(isEventFormat
       ? {
           eventParticipantCount: parsedEventParticipantCount as number,
           eventDisciplineCount: parsedEventDisciplineCount as number,
-          eventDisciplines: defaultEventDisciplines(
-            parsedEventDisciplineCount as number,
-          ),
+          // Disciplines start unset so the setup form shows them as empty
+          // placeholders rather than pre-filled values.
+          eventDisciplines: [],
           eventDrawSeed: 1 + Math.floor(Math.random() * 1_000_000_000),
         }
       : {}),
@@ -236,10 +240,7 @@ export async function POST(request: NextRequest) {
         roundRobinMatchFormat: tournament.roundRobinMatchFormat,
         eventParticipantCount: tournament.eventParticipantCount,
         eventDisciplineCount: tournament.eventDisciplineCount,
-        eventDisciplines:
-          (tournament.eventDisciplines ?? []).length > 0
-            ? tournament.eventDisciplines
-            : defaultEventDisciplines(tournament.eventDisciplineCount ?? 1),
+        eventDisciplines: tournament.eventDisciplines ?? [],
         eventDrawSeed: tournament.eventDrawSeed,
         teamSize: tournament.teamSize,
         courtsAvailable: tournament.courtsAvailable,

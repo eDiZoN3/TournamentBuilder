@@ -448,6 +448,75 @@ describe("PUT /api/tournaments/[id]/matches/[matchId]/status", () => {
     expect(saved?.matches[0].teamB?.sets).toEqual([]);
   });
 
+  it("completes a ready winner-only match directly from a team click", async () => {
+    const teams = makeTeams(2);
+    const readyMatch = makeMatch({
+      status: "ready",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const tournament = await Tournament.create({
+      name: "Winner Only Cup",
+      status: "active",
+      matchResultMode: "winner_only",
+      knockoutMatchFormat: "bo1",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [readyMatch],
+      currentMatchIds: [],
+    });
+
+    const response = await updateStatus(
+      request(tournament._id.toString(), readyMatch._id.toString(), {
+        status: "completed",
+        winnerSide: "A",
+      }),
+      context(tournament._id.toString(), readyMatch._id.toString()),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(tournament._id);
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({
+      status: "completed",
+      winnerId: teams[0]._id.toString(),
+      loserId: teams[1]._id.toString(),
+      tournamentCompleted: true,
+    });
+    expect(saved?.matches[0].status).toBe("completed");
+  });
+
+  it("still rejects a direct ready completion for point-scored tournaments", async () => {
+    const teams = makeTeams(2);
+    const readyMatch = makeMatch({
+      status: "ready",
+      teamA: { teamId: teams[0]._id, sets: [] },
+      teamB: { teamId: teams[1]._id, sets: [] },
+    });
+    const tournament = await Tournament.create({
+      name: "Point Cup",
+      status: "active",
+      teamSize: 2,
+      courtsAvailable: 1,
+      inputMode: "teams",
+      teams,
+      matches: [readyMatch],
+      currentMatchIds: [],
+    });
+
+    const response = await updateStatus(
+      request(tournament._id.toString(), readyMatch._id.toString(), {
+        status: "completed",
+        winnerSide: "A",
+      }),
+      context(tournament._id.toString(), readyMatch._id.toString()),
+    );
+
+    expect(response.status).toBe(409);
+  });
+
   it("rejects winner-only completion for point-scored tournaments", async () => {
     const teams = makeTeams(2);
     const final = makeMatch({

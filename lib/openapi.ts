@@ -502,7 +502,8 @@ export const openApiDocument: OpenApiDocument = {
           roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           teamSize: {
             type: "integer",
-            enum: [2, 3, 4],
+            minimum: 2,
+            maximum: 20,
           },
           courtsAvailable: {
             type: "integer",
@@ -540,7 +541,8 @@ export const openApiDocument: OpenApiDocument = {
           roundRobinMatchFormat: ref("RoundRobinMatchFormat"),
           teamSize: {
             type: "integer",
-            enum: [2, 3, 4],
+            minimum: 2,
+            maximum: 20,
           },
           courtsAvailable: {
             type: "integer",

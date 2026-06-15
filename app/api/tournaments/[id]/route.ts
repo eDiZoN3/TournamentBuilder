@@ -3,7 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
 import { requireAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
-import { defaultEventDisciplines } from "@/lib/eventTournament";
 import {
   Tournament,
   type IJoinedPlayer,
@@ -277,10 +276,9 @@ function tournamentResponseBody(tournament: { toObject(): ITournament }) {
     roundRobinMatchFormat: responseBody.roundRobinMatchFormat ?? "bo1",
     eventParticipantCount: responseBody.eventParticipantCount ?? 2,
     eventDisciplineCount: responseBody.eventDisciplineCount ?? 1,
-    eventDisciplines:
-      (responseBody.eventDisciplines?.length ?? 0) > 0
-        ? responseBody.eventDisciplines
-        : defaultEventDisciplines(responseBody.eventDisciplineCount ?? 1),
+    // Return disciplines as stored (empty until set in setup) so the setup
+    // form can show them as placeholders instead of pre-filled defaults.
+    eventDisciplines: responseBody.eventDisciplines ?? [],
     eventDrawSeed: responseBody.eventDrawSeed ?? 1,
     joinedPlayers: publicJoinedPlayers(responseBody.joinedPlayers),
   };

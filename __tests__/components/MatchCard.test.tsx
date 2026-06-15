@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { makeMatch, makeSet, makeTeams } from "@/__tests__/helpers/factories";
 import { MatchCard } from "@/components/bracket/MatchCard";
 
@@ -12,6 +12,55 @@ describe("MatchCard", () => {
     expect(screen.getAllByText("TBD")).toHaveLength(2);
     expect(screen.getByText("Pending")).toBeInTheDocument();
     expect(screen.queryByText(/Court/)).not.toBeInTheDocument();
+  });
+
+  it("makes team rows clickable winner buttons when onSelectWinner is given", () => {
+    const [teamA, teamB] = makeTeams(2);
+    const onSelectWinner = vi.fn();
+
+    render(
+      <MatchCard
+        match={makeMatch({
+          status: "in_progress",
+          courtNumber: 1,
+          teamA: { teamId: teamA._id, sets: [] },
+          teamB: { teamId: teamB._id, sets: [] },
+        })}
+        onSelectWinner={onSelectWinner}
+        teamAName="Alpha"
+        teamBName="Beta"
+      />,
+    );
+
+    const teamARow = screen.getByTestId("team-a-row");
+    const teamBRow = screen.getByTestId("team-b-row");
+
+    expect(teamARow.tagName).toBe("BUTTON");
+    expect(teamBRow.tagName).toBe("BUTTON");
+
+    fireEvent.click(teamBRow);
+    expect(onSelectWinner).toHaveBeenCalledWith("B");
+
+    fireEvent.click(teamARow);
+    expect(onSelectWinner).toHaveBeenCalledWith("A");
+  });
+
+  it("keeps team rows static when no onSelectWinner is provided", () => {
+    const [teamA, teamB] = makeTeams(2);
+
+    render(
+      <MatchCard
+        match={makeMatch({
+          status: "in_progress",
+          teamA: { teamId: teamA._id, sets: [] },
+          teamB: { teamId: teamB._id, sets: [] },
+        })}
+        teamAName="Alpha"
+        teamBName="Beta"
+      />,
+    );
+
+    expect(screen.getByTestId("team-a-row").tagName).toBe("DIV");
   });
 
   it("renders a ready match without a court badge", () => {

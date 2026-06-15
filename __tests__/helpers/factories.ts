@@ -76,7 +76,7 @@ export interface Tournament {
   matchResultMode: MatchResultMode;
   knockoutMatchFormat: KnockoutMatchFormat;
   roundRobinMatchFormat: RoundRobinMatchFormat;
-  teamSize: 2 | 3 | 4;
+  teamSize: number;
   courtsAvailable: number;
   inputMode: "teams" | "players";
   allowSelfJoin: boolean;

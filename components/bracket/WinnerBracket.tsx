@@ -3,7 +3,11 @@
 import { useState, type ReactNode } from "react";
 import { MatchCard } from "@/components/bracket/MatchCard";
 import { RoundTabs } from "@/components/bracket/RoundTabs";
-import { resolveTeamName, roundsFor } from "@/components/bracket/utils";
+import {
+  canSelectWinner,
+  resolveTeamName,
+  roundsFor,
+} from "@/components/bracket/utils";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { localizeLabel } from "@/lib/bracket/labels";
 import type { IMatch, ITeam } from "@/lib/models/Tournament";
@@ -11,6 +15,7 @@ import type { IMatch, ITeam } from "@/lib/models/Tournament";
 interface WinnerBracketProps {
   currentPlayerName?: string | null;
   matches: IMatch[];
+  onSelectWinner?: (match: IMatch, side: "A" | "B") => void;
   pinnedMatchId?: string | null;
   renderMatchControls?: (
     match: IMatch,
@@ -44,6 +49,7 @@ function teamIncludesPlayer(
 export function WinnerBracket({
   currentPlayerName = null,
   matches,
+  onSelectWinner,
   pinnedMatchId = null,
   renderMatchControls,
   teams,
@@ -109,6 +115,11 @@ export function WinnerBracket({
                     isPinned={pinnedMatchId === match._id.toString()}
                     key={match._id.toString()}
                     match={match}
+                    onSelectWinner={
+                      onSelectWinner && canSelectWinner(match)
+                        ? (side) => onSelectWinner(match, side)
+                        : undefined
+                    }
                     teamAIsCurrentPlayerTeam={teamIncludesPlayer(
                       teams,
                       match.teamA?.teamId,

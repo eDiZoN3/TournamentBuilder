@@ -58,6 +58,11 @@ export type FirstRoundPairingMode = "random" | "manual";
 export type MatchResultMode = "points" | "winner_only";
 export type KnockoutMatchFormat = "bo3_semis_finals" | "bo1";
 
+/** Smallest allowed team size. */
+export const MIN_TEAM_SIZE = 2;
+/** Largest allowed team size for custom team sizes. */
+export const MAX_TEAM_SIZE = 20;
+
 export interface ITeamSlot {
   teamId: Types.ObjectId;
   sets: ISetScore[];
@@ -99,7 +104,7 @@ export interface ITournament {
   matchResultMode: MatchResultMode;
   knockoutMatchFormat: KnockoutMatchFormat;
   roundRobinMatchFormat: RoundRobinMatchFormat;
-  teamSize: 2 | 3 | 4;
+  teamSize: number;
   courtsAvailable: number;
   inputMode: "teams" | "players";
   allowSelfJoin: boolean;
@@ -386,7 +391,12 @@ const tournamentSchema = new Schema<ITournament>(
     },
     teamSize: {
       type: Number,
-      enum: [2, 3, 4],
+      min: MIN_TEAM_SIZE,
+      max: MAX_TEAM_SIZE,
+      validate: {
+        validator: Number.isInteger,
+        message: "teamSize must be an integer",
+      },
       required: true,
     },
     courtsAvailable: {

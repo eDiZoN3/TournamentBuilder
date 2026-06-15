@@ -119,7 +119,7 @@ function assignedTeam(
 
 export function assignPlayersToTeams(
   players: string[],
-  teamSize: 2 | 3 | 4,
+  teamSize: number,
 ): AssignedTeam[] {
   const normalizedPlayers = players.map((player) => player.trim());
 
@@ -160,7 +160,7 @@ export function assignPlayersToTeams(
 
 export function assignPlayersToEqualTeams(
   players: string[],
-  teamSize: 2 | 3 | 4,
+  teamSize: number,
 ): AssignedTeam[] {
   const normalizedPlayers = normalizeUniquePlayers(players);
 
@@ -192,7 +192,7 @@ export function assignPlayersToEqualTeams(
 
 export function assignRosterPlayersToEqualTeams(
   players: RosterPlayer[],
-  teamSize: 2 | 3 | 4,
+  teamSize: number,
 ): AssignedTeam[] {
   const normalizedPlayers = normalizeUniqueRosterPlayers(players);
 
@@ -218,7 +218,7 @@ export function assignRosterPlayersToEqualTeams(
 
 export function assignRosterPlayersToTeams(
   players: RosterPlayer[],
-  teamSize: 2 | 3 | 4,
+  teamSize: number,
 ): AssignedTeam[] {
   const normalizedPlayers = players.map(normalizeRosterPlayer);
 

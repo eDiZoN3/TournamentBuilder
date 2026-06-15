@@ -106,6 +106,25 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         );
       }
     } else {
+      // Winner-only matches can be completed directly from "ready" by clicking
+      // a team in the bracket — auto-start them so no separate "mark in
+      // progress" step is required for the one-click flow.
+      if (
+        match.status === "ready" &&
+        requestedStatus.winnerSide &&
+        (tournament.matchResultMode ?? "points") === "winner_only"
+      ) {
+        try {
+          assignCourt(tournament, match);
+        } catch (error) {
+          return jsonError(
+            errorMessage(error, "Unable to assign court"),
+            "CONFLICT",
+            409,
+          );
+        }
+      }
+
       if (match.status !== "in_progress") {
         return jsonError(
           "Only in-progress matches can be completed",

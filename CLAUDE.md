@@ -40,9 +40,20 @@ Copy `.env.local.template` to `.env.local` and fill in:
 
 ### Data Model
 
-All data is in MongoDB. The central model is `lib/models/Tournament.ts`, which contains the full tournament document including embedded `matches[]`. Each match tracks teams, set-by-set scores, status (`pending | in_progress | completed`), bracket position (`winner` or `loser`), and round index.
+All data is in MongoDB. The central model is `lib/models/Tournament.ts`, which contains the full tournament document including embedded `matches[]`. Each match tracks teams, set-by-set scores, status (`pending | ready | in_progress | completed`), bracket position (`winner` or `loser`), and round index.
 
 Supporting models: `User` (admin/tournament_lead/player roles), `PlayerProfile`, `PracticeMatch`, `StatsReset`.
+
+### Tournament formats and match modes
+
+Several `Tournament` fields together decide how a tournament generates, renders, and scores — they cut across the model, the create/start APIs, the bracket engine, and the views:
+
+- `format`: `double_elimination | team_round_robin | individual_mixer | event`. This selects the start-route generator (`generateBracket`, `generateTeamRoundRobinSchedule`, `generateIndividualMixerSchedule`, `generateEventTournamentMatches`) **and** the view: `TournamentManageView`/`PublicTournamentView` render `BracketView` (knockout), `RoundRobinView` (non-knockout, via `isNonKnockoutFormat`), or `EventTournamentView` (event).
+- `matchResultMode`: `points | winner_only`. Winner-only records only who won — no score entry — everywhere. In a winner-only bracket, clicking a team row in the tree completes the match directly (`MatchCard` `onSelectWinner` → status route auto-starts a `ready` match); the two-step "mark in progress" flow still exists in the controls overlay. Events are always winner-only.
+- `knockoutMatchFormat` (`bo3_semis_finals | bo1`) and `roundRobinMatchFormat` (`bo1 | bo3`) control per-match set count; winner-only forces `bo1`.
+- `teamSize` is any integer in `[MIN_TEAM_SIZE, MAX_TEAM_SIZE]` (not a fixed 2/3/4 enum).
+
+Creation is validated in `app/api/tournaments/route.ts` (`parseCreateBody`); the roster/setup UI is `components/admin/TournamentSetupForm.tsx`, and `app/api/tournaments/[id]/start/route.ts` turns a draft roster into matches.
 
 ### Bracket Engine (`lib/bracket/`)
 
@@ -86,9 +97,24 @@ Separate from dark/light, each tournament has a visual **theme** (`default`, `kn
 
 - Tests are in `__tests__/`, mirroring the source structure.
 - `__tests__/setup/db.ts` sets up an in-memory MongoDB via `mongodb-memory-server` — all API tests use this, not mocks.
-- Follow TDD: write failing tests first, then implement.
+- Follow TDD: write failing tests first, then implement (required — see Conventions).
 - Component tests use React Testing Library; bracket/scoring logic tests are pure unit tests.
+- Several creation/setup component tests assert the exact `JSON.stringify` request body; when changing the create payload, update those expectations in lockstep (`__tests__/components/NewTournamentPage.test.tsx`).
 
-## Task Tracking
+## Conventions
 
-Active tasks are in `Documentation/task.md`. Completed tasks are archived to `Documentation/completed-tasks.md`. Open bugs and feature requests are tracked in `Documentation/open-issues.md`. The roadmap lives in `Documentation/roadmap.md`.
+From `agents.md`: TDD is mandatory (tests before implementation), prefer small surgical changes over broad refactors, and follow App Router conventions — React Server Components by default, add `'use client'` only where hooks or browser APIs are needed. Before considering work done, run `npm run lint`, `npm run typecheck`, and `npm run test` (CI parity; the README also lists `npm run build`).
+
+## Planning Docs & Task Tracking
+
+These markdown files live at the **repository root** (there is no `Documentation/` directory):
+
+- `task.md` — active tasks; `completed-tasks.md` — archived completed tasks.
+- `open-issues.md` / `issues.md` — open bugs and feature requests; `implemented-issues.md` — resolved.
+- `roadmap.md` / `implemented-roadmap.md` — roadmap and shipped items.
+- `plan.md`, `techplan.md`, `specify.md`, `group-seeding-algorithm.md` — design/spec notes.
+- `agents.md` — concise AI-agent briefing.
+
+## API Reference
+
+REST routes live under `app/api/`. An OpenAPI document is served at `/api/openapi` (defined in `lib/openapi.ts`) with Swagger UI at `/api-docs`.

@@ -326,6 +326,63 @@ describe("TournamentSetupForm", () => {
     expect(screen.getByLabelText("Preview team 2 name")).toHaveValue("Team B");
   });
 
+  it("starts a team round-robin entered with team names", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({}))
+      .mockResolvedValueOnce(jsonResponse({ tournamentId: "tournament-id" }));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Winner League",
+          format: "team_round_robin",
+          teamSize: 2,
+          inputMode: "teams",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Add team" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add team" }));
+    screen.getAllByLabelText(/Team \d+ name/).forEach((input, index) => {
+      fireEvent.change(input, {
+        target: { value: ["Alpha", "Beta", "Gamma", "Delta"][index] },
+      });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start tournament" }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenNthCalledWith(
+        1,
+        "/api/tournaments/tournament-id",
+        expect.objectContaining({
+          method: "PUT",
+          body: JSON.stringify({
+            teams: [
+              { name: "Alpha", players: [], seed: 0 },
+              { name: "Beta", players: [], seed: 0 },
+              { name: "Gamma", players: [], seed: 0 },
+              { name: "Delta", players: [], seed: 0 },
+            ],
+          }),
+        }),
+      );
+      expect(fetch).toHaveBeenNthCalledWith(
+        2,
+        "/api/tournaments/tournament-id/start",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    expect(
+      screen.queryByText("Player count must be divisible by team size."),
+    ).not.toBeInTheDocument();
+  });
+
   it("blocks team round-robin player setup when the player count is not exact", async () => {
     const fetch = vi.fn();
     vi.stubGlobal("fetch", fetch);

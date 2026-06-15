@@ -642,7 +642,7 @@ export function TournamentSetupForm({
       return;
     }
 
-    if (isTeamRoundRobin) {
+    if (isTeamRoundRobin && tournament.inputMode === "players") {
       if (
         exactPlayerNames.length === 0 ||
         exactPlayerNames.length % tournament.teamSize !== 0

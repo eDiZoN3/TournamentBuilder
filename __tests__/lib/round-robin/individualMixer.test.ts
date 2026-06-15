@@ -32,6 +32,36 @@ describe("generateIndividualMixerSchedule", () => {
     expect(schedule.teams.every((team) => team.players)).toEqual(true);
   });
 
+  it("defaults matches to bo1", () => {
+    const schedule = generateIndividualMixerSchedule(
+      ["Alice", "Bob", "Charlie", "Dana"],
+      2,
+    );
+
+    expect(schedule.matches.every((match) => match.format === "bo1")).toBe(true);
+  });
+
+  it("applies the requested best-of-three match format", () => {
+    const schedule = generateIndividualMixerSchedule(
+      ["Alice", "Bob", "Charlie", "Dana"],
+      2,
+      "bo3",
+    );
+
+    expect(schedule.matches).not.toHaveLength(0);
+    expect(schedule.matches.every((match) => match.format === "bo3")).toBe(true);
+  });
+
+  it("supports custom team sizes larger than four", () => {
+    const players = Array.from({ length: 10 }, (_value, index) => `P${index}`);
+    const schedule = generateIndividualMixerSchedule(players, 5);
+
+    expect(schedule.matches).not.toHaveLength(0);
+    for (const match of schedule.matches) {
+      expect(playersForMatch(schedule.teams, match)).toHaveLength(10);
+    }
+  });
+
   it("never assigns the same player twice in one match", () => {
     const schedule = generateIndividualMixerSchedule(
       ["Alice", "Bob", "Charlie", "Dana", "Evan"],

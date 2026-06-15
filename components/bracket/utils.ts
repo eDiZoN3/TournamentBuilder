@@ -15,6 +15,19 @@ export function resolveTeamName(
   return teams.find((team) => idString(team._id) === idString(teamId))?.name;
 }
 
+/**
+ * Whether a bracket match can have its winner picked by clicking a team row.
+ * Only live (ready / in-progress) matches with two known teams qualify.
+ */
+export function canSelectWinner(match: IMatch): boolean {
+  return (
+    !match.isBye &&
+    Boolean(match.teamA) &&
+    Boolean(match.teamB) &&
+    (match.status === "ready" || match.status === "in_progress")
+  );
+}
+
 export function roundsFor(
   matches: IMatch[],
   bracket: IMatch["bracket"],

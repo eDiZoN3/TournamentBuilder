@@ -72,7 +72,8 @@ export default function NewTournamentPage() {
     useState<KnockoutMatchFormat>("bo3_semis_finals");
   const [roundRobinMatchFormat, setRoundRobinMatchFormat] =
     useState<RoundRobinMatchFormat>("bo1");
-  const [teamSize, setTeamSize] = useState<2 | 3 | 4>(2);
+  const [teamSize, setTeamSize] = useState(2);
+  const [customTeamSize, setCustomTeamSize] = useState(false);
   const [courtsAvailable, setCourtsAvailable] = useState(1);
   const [inputMode, setInputMode] = useState<"teams" | "players">("teams");
   const [allowSelfJoin, setAllowSelfJoin] = useState(false);
@@ -95,7 +96,7 @@ export default function NewTournamentPage() {
       setKnockoutMatchFormat("bo1");
     }
 
-    if (nextFormat !== "team_round_robin") {
+    if (nextFormat !== "team_round_robin" && nextFormat !== "individual_mixer") {
       setRoundRobinMatchFormat("bo1");
     }
   }
@@ -144,7 +145,9 @@ export default function NewTournamentPage() {
           courtsAvailable: format === "event" ? 1 : courtsAvailable,
           inputMode,
           allowSelfJoin,
-          ...(format === "team_round_robin" ? { roundRobinMatchFormat } : {}),
+          ...(format === "team_round_robin" || format === "individual_mixer"
+            ? { matchResultMode, roundRobinMatchFormat }
+            : {}),
         }),
       });
       const body = (await response.json()) as ApiError & { _id?: string };
@@ -190,11 +193,9 @@ export default function NewTournamentPage() {
     },
   ] as const;
 
-  const hasFormatOptions =
-    format === "double_elimination" ||
-    format === "team_round_robin" ||
-    format === "event";
-  const entryStep = hasFormatOptions ? 4 : 3;
+  // Every format now has a step-3 options card (knockout / round-robin /
+  // mixer / event), so participant entry is always step 4.
+  const entryStep = 4;
 
   return (
     <section className="mx-auto max-w-3xl">
@@ -324,23 +325,49 @@ export default function NewTournamentPage() {
           </Card>
         ) : null}
 
-        {format === "team_round_robin" ? (
-          <Card className="space-y-4">
+        {format === "team_round_robin" || format === "individual_mixer" ? (
+          <Card className="space-y-6">
             <SectionHeading step={3} title={t("roundRobinMatchFormat")} />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <OptionCard
-                checked={roundRobinMatchFormat === "bo1"}
-                name="roundRobinMatchFormat"
-                onChange={() => setRoundRobinMatchFormat("bo1")}
-                title={t("oneSetPerMatch")}
-              />
-              <OptionCard
-                checked={roundRobinMatchFormat === "bo3"}
-                name="roundRobinMatchFormat"
-                onChange={() => setRoundRobinMatchFormat("bo3")}
-                title={t("bestOfThree")}
-              />
-            </div>
+
+            <fieldset>
+              <Legend>{t("scoring")}</Legend>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <OptionCard
+                  checked={matchResultMode === "points"}
+                  description={t("pointsScoringDescription")}
+                  name="matchResultMode"
+                  onChange={() => updateMatchResultMode("points")}
+                  title={t("pointsScoring")}
+                />
+                <OptionCard
+                  checked={matchResultMode === "winner_only"}
+                  description={t("winnerOnlyDescription")}
+                  name="matchResultMode"
+                  onChange={() => updateMatchResultMode("winner_only")}
+                  title={t("winnerOnly")}
+                />
+              </div>
+            </fieldset>
+
+            {matchResultMode === "points" ? (
+              <fieldset>
+                <Legend>{t("matchFormat")}</Legend>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <OptionCard
+                    checked={roundRobinMatchFormat === "bo1"}
+                    name="roundRobinMatchFormat"
+                    onChange={() => setRoundRobinMatchFormat("bo1")}
+                    title={t("oneSetPerMatch")}
+                  />
+                  <OptionCard
+                    checked={roundRobinMatchFormat === "bo3"}
+                    name="roundRobinMatchFormat"
+                    onChange={() => setRoundRobinMatchFormat("bo3")}
+                    title={t("bestOfThree")}
+                  />
+                </div>
+              </fieldset>
+            ) : null}
           </Card>
         ) : null}
 
@@ -407,23 +434,58 @@ export default function NewTournamentPage() {
                   <label
                     className={cn(
                       "cursor-pointer rounded-md border px-4 py-2 text-sm font-medium transition",
-                      teamSize === size
+                      !customTeamSize && teamSize === size
                         ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900"
                         : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800",
                     )}
                     key={size}
                   >
                     <input
-                      checked={teamSize === size}
+                      checked={!customTeamSize && teamSize === size}
                       className="sr-only"
                       name="teamSize"
-                      onChange={() => setTeamSize(size)}
+                      onChange={() => {
+                        setCustomTeamSize(false);
+                        setTeamSize(size);
+                      }}
                       type="radio"
                     />
                     {size} {t("players")}
                   </label>
                 ))}
+                <label
+                  className={cn(
+                    "cursor-pointer rounded-md border px-4 py-2 text-sm font-medium transition",
+                    customTeamSize
+                      ? "border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800",
+                  )}
+                >
+                  <input
+                    checked={customTeamSize}
+                    className="sr-only"
+                    name="teamSize"
+                    onChange={() => setCustomTeamSize(true)}
+                    type="radio"
+                  />
+                  {t("customTeamSize")}
+                </label>
               </div>
+              {customTeamSize ? (
+                <div className="mt-3">
+                  <Input
+                    aria-label={t("customTeamSizeLabel")}
+                    className="max-w-[10rem]"
+                    max={20}
+                    min={2}
+                    onChange={(event) =>
+                      setTeamSize(Number.parseInt(event.target.value, 10))
+                    }
+                    type="number"
+                    value={Number.isNaN(teamSize) ? "" : teamSize}
+                  />
+                </div>
+              ) : null}
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 {t("teamSizeHint")}
               </p>

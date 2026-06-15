@@ -39,7 +39,7 @@ export interface SetupTournament {
   _id: string;
   name: string;
   format?: "double_elimination" | "team_round_robin" | "individual_mixer" | "event";
-  teamSize: 2 | 3 | 4;
+  teamSize: number;
   inputMode: "teams" | "players";
   allowSelfJoin?: boolean;
   eventParticipantCount?: number;
@@ -155,11 +155,11 @@ export function TournamentSetupForm({
   const [eventDisciplineNames, setEventDisciplineNames] = useState<string[]>(
     (tournament.eventDisciplines ?? []).length > 0
       ? (tournament.eventDisciplines ?? []).slice(0, eventDisciplineCount)
-      : Array.from(
-          { length: eventDisciplineCount },
-          (_value, index) => `Discipline ${index + 1}`,
-        ),
+      : Array.from({ length: eventDisciplineCount }, () => ""),
   );
+  const [pendingPlaceholders, setPendingPlaceholders] = useState<
+    string[] | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSavingRoster, setIsSavingRoster] = useState(false);
@@ -231,6 +231,15 @@ export function TournamentSetupForm({
     });
   }, [isEventTournament, joinedPlayerNames, tournament.inputMode]);
 
+  // Placeholder labels used both as input placeholders and as the default
+  // values applied when a field is left blank.
+  const teamPlaceholder = (index: number) => `${t("team")} ${index + 1}`;
+  const playerPlaceholder = (index: number) => `${t("player")} ${index + 1}`;
+  const participantPlaceholder = (index: number) =>
+    `${t("participants")} ${index + 1}`;
+  const disciplinePlaceholder = (index: number) =>
+    `${t("discipline")} ${index + 1}`;
+
   const playerNames = playerEntries.map((player) => player.displayName);
   const selectedPlayerProfileIds = playerEntries
     .map((player) => player.playerProfileId)
@@ -292,8 +301,7 @@ export function TournamentSetupForm({
     setEventDisciplineNames((current) => {
       const next = Array.from(
         { length: eventDisciplineCount },
-        (_value, currentIndex) =>
-          current[currentIndex] ?? `Discipline ${currentIndex + 1}`,
+        (_value, currentIndex) => current[currentIndex] ?? "",
       );
 
       next[index] = name;
@@ -394,11 +402,112 @@ export function TournamentSetupForm({
   }
 
   function eventDisciplineEntries(): string[] {
-    return eventDisciplineNames.map((name, index) => {
-      const trimmedName = name.trim();
+    return Array.from({ length: eventDisciplineCount }, (_value, index) => {
+      const trimmedName = (eventDisciplineNames[index] ?? "").trim();
 
-      return trimmedName.length > 0 ? trimmedName : `Discipline ${index + 1}`;
+      return trimmedName.length > 0 ? trimmedName : disciplinePlaceholder(index);
     });
+  }
+
+  // Save-path builders: blank fields fall back to their placeholder label so
+  // the placeholder acts as the default value.
+  function namedTeamEntriesFilled(): SetupTeam[] {
+    return teamNames.map((name, index) => ({
+      name: name.trim() || teamPlaceholder(index),
+      players: [],
+      seed: 0,
+    }));
+  }
+
+  function playerEntryTeamsFilled(): SetupTeam[] {
+    return playerEntries.map((player, index) => {
+      const name = player.displayName.trim() || playerPlaceholder(index);
+
+      return {
+        name,
+        players: [name],
+        ...(player.playerProfileId
+          ? { playerProfileIds: [player.playerProfileId] }
+          : {}),
+        seed: index + 1,
+      };
+    });
+  }
+
+  function eventParticipantTeamsFilled(): SetupTeam[] {
+    return Array.from({ length: eventParticipantCount }, (_value, index) => {
+      const name =
+        (eventParticipantNames[index] ?? "").trim() ||
+        participantPlaceholder(index);
+
+      return {
+        name,
+        players: tournament.inputMode === "players" ? [name] : [],
+        seed: index + 1,
+      };
+    });
+  }
+
+  function draftRosterTeamsFilled(): SetupTeam[] {
+    if (isEventTournament) {
+      return eventParticipantTeamsFilled();
+    }
+
+    if (tournament.inputMode === "teams") {
+      return namedTeamEntriesFilled();
+    }
+
+    if (isIndividualMixer || previewTeams.length === 0) {
+      return playerEntryTeamsFilled();
+    }
+
+    return previewTeamEntries();
+  }
+
+  // Placeholder values that would be applied for blank fields in the current
+  // view (empty when everything has been filled in manually).
+  function placeholderUsage(): string[] {
+    const labels: string[] = [];
+
+    if (isEventTournament) {
+      for (let index = 0; index < eventParticipantCount; index += 1) {
+        if (!(eventParticipantNames[index] ?? "").trim()) {
+          labels.push(participantPlaceholder(index));
+        }
+      }
+
+      for (let index = 0; index < eventDisciplineCount; index += 1) {
+        if (!(eventDisciplineNames[index] ?? "").trim()) {
+          labels.push(disciplinePlaceholder(index));
+        }
+      }
+
+      return labels;
+    }
+
+    if (tournament.inputMode === "teams") {
+      teamNames.forEach((name, index) => {
+        if (!name.trim()) {
+          labels.push(teamPlaceholder(index));
+        }
+      });
+
+      return labels;
+    }
+
+    // Player mode: when teams have been generated the saved roster uses the
+    // (already named) preview teams, so blank player rows are irrelevant.
+    if (!isIndividualMixer && previewTeams.length > 0) {
+      return labels;
+    }
+
+    playerEntries.forEach((player, index) => {
+      if (!player.displayName.trim()) {
+        labels.push(playerPlaceholder(index));
+      }
+    });
+
+    return labels;
   }
 
   function namedTeamEntries(): SetupTeam[] {
@@ -417,22 +526,6 @@ export function TournamentSetupForm({
       ...team,
       name: team.name.trim(),
     }));
-  }
-
-  function draftRosterTeams(): SetupTeam[] {
-    if (isEventTournament) {
-      return eventParticipantTeams();
-    }
-
-    if (tournament.inputMode === "teams") {
-      return namedTeamEntries();
-    }
-
-    if (isIndividualMixer || previewTeams.length === 0) {
-      return playerEntryTeams();
-    }
-
-    return previewTeamEntries();
   }
 
   function startRosterTeams(): SetupTeam[] {
@@ -476,13 +569,13 @@ export function TournamentSetupForm({
     return true;
   }
 
-  async function saveRoster() {
+  async function performSaveRoster() {
     setError(null);
     setStatusMessage(null);
     setIsSavingRoster(true);
 
     try {
-      if (await saveTournamentTeams(draftRosterTeams())) {
+      if (await saveTournamentTeams(draftRosterTeamsFilled())) {
         setStatusMessage(t("rosterSaved"));
         router.refresh();
       }
@@ -491,6 +584,24 @@ export function TournamentSetupForm({
     } finally {
       setIsSavingRoster(false);
     }
+  }
+
+  async function saveRoster() {
+    const usage = placeholderUsage();
+
+    if (usage.length > 0) {
+      setError(null);
+      setStatusMessage(null);
+      setPendingPlaceholders(usage);
+      return;
+    }
+
+    await performSaveRoster();
+  }
+
+  async function confirmSaveWithPlaceholders() {
+    setPendingPlaceholders(null);
+    await performSaveRoster();
   }
 
   async function startTournament() {
@@ -610,6 +721,42 @@ export function TournamentSetupForm({
 
   const isBusy = isSavingRoster || isStarting;
 
+  const placeholderDialog =
+    pendingPlaceholders && pendingPlaceholders.length > 0 ? (
+      <div
+        aria-modal="true"
+        className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/40"
+        role="dialog"
+      >
+        <p className="font-semibold text-amber-900 dark:text-amber-200">
+          {t("useDefaultsTitle")}
+        </p>
+        <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">
+          {formatTranslation(locale, "useDefaultsBody", {
+            values: pendingPlaceholders.join(", "),
+          })}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-60"
+            disabled={isBusy}
+            onClick={confirmSaveWithPlaceholders}
+            type="button"
+          >
+            {t("useDefaultsConfirm")}
+          </button>
+          <button
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-white dark:hover:bg-slate-800"
+            disabled={isBusy}
+            onClick={() => setPendingPlaceholders(null)}
+            type="button"
+          >
+            {t("useDefaultsCancel")}
+          </button>
+        </div>
+      </div>
+    ) : null;
+
   if (isEventTournament) {
     const participantValues = Array.from(
       { length: eventParticipantCount },
@@ -617,8 +764,7 @@ export function TournamentSetupForm({
     );
     const disciplineValues = Array.from(
       { length: eventDisciplineCount },
-      (_value, index) =>
-        eventDisciplineNames[index] ?? `Discipline ${index + 1}`,
+      (_value, index) => eventDisciplineNames[index] ?? "",
     );
 
     return (
@@ -707,6 +853,8 @@ export function TournamentSetupForm({
             {statusMessage}
           </p>
         ) : null}
+
+        {placeholderDialog}
 
         <div className="mt-8 flex flex-wrap gap-3">
           <button
@@ -921,6 +1069,8 @@ export function TournamentSetupForm({
           {statusMessage}
         </p>
       ) : null}
+
+      {placeholderDialog}
 
       <div className="mt-8 flex flex-wrap gap-3">
         <button

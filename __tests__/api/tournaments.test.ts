@@ -294,6 +294,73 @@ describe("/api/tournaments", () => {
     });
   });
 
+  it("accepts a custom team size beyond the standard 2-4 presets", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Big Teams Cup",
+        teamSize: 6,
+        courtsAvailable: 2,
+        inputMode: "teams",
+      }),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(body._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body).toMatchObject({ teamSize: 6 });
+    expect(saved).toMatchObject({ teamSize: 6 });
+  });
+
+  it("accepts winner-only scoring for team round-robin tournaments", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Winner League",
+        format: "team_round_robin",
+        matchResultMode: "winner_only",
+        roundRobinMatchFormat: "bo1",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "teams",
+      }),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(body._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body).toMatchObject({
+      format: "team_round_robin",
+      matchResultMode: "winner_only",
+    });
+    expect(saved).toMatchObject({ matchResultMode: "winner_only" });
+  });
+
+  it("accepts winner-only scoring and best-of-three for individual mixers", async () => {
+    const response = await createTournament(
+      request("http://localhost:3000/api/tournaments", "POST", {
+        name: "Mixer Winner Cup",
+        format: "individual_mixer",
+        matchResultMode: "winner_only",
+        roundRobinMatchFormat: "bo3",
+        teamSize: 2,
+        courtsAvailable: 2,
+        inputMode: "players",
+      }),
+    );
+    const body = await response.json();
+    const saved = await Tournament.findById(body._id).lean();
+
+    expect(response.status).toBe(201);
+    expect(body).toMatchObject({
+      format: "individual_mixer",
+      matchResultMode: "winner_only",
+      roundRobinMatchFormat: "bo3",
+    });
+    expect(saved).toMatchObject({
+      matchResultMode: "winner_only",
+      roundRobinMatchFormat: "bo3",
+    });
+  });
+
   it("creates an event tournament with participant and discipline counts", async () => {
     const response = await createTournament(
       request("http://localhost:3000/api/tournaments", "POST", {
@@ -318,23 +385,14 @@ describe("/api/tournaments", () => {
       courtsAvailable: 1,
       eventParticipantCount: 12,
       eventDisciplineCount: 4,
-      eventDisciplines: [
-        "Discipline 1",
-        "Discipline 2",
-        "Discipline 3",
-        "Discipline 4",
-      ],
+      // Disciplines start unset so the setup form shows placeholders.
+      eventDisciplines: [],
     });
     expect(saved).toMatchObject({
       format: "event",
       eventParticipantCount: 12,
       eventDisciplineCount: 4,
-      eventDisciplines: [
-        "Discipline 1",
-        "Discipline 2",
-        "Discipline 3",
-        "Discipline 4",
-      ],
+      eventDisciplines: [],
     });
   });
 
@@ -482,7 +540,16 @@ describe("/api/tournaments", () => {
   });
 
   it.each([
-    [{ name: "Summer Cup", teamSize: 5, courtsAvailable: 1, inputMode: "teams" }],
+    [{ name: "Summer Cup", teamSize: 1, courtsAvailable: 1, inputMode: "teams" }],
+    [{ name: "Summer Cup", teamSize: 21, courtsAvailable: 1, inputMode: "teams" }],
+    [
+      {
+        name: "Summer Cup",
+        teamSize: 2.5,
+        courtsAvailable: 1,
+        inputMode: "teams",
+      },
+    ],
     [{ name: "Summer Cup", teamSize: 2, courtsAvailable: 0, inputMode: "teams" }],
     [{ name: "", teamSize: 2, courtsAvailable: 1, inputMode: "teams" }],
     [{ name: "Summer Cup", teamSize: 2, courtsAvailable: 1, inputMode: "manual" }],

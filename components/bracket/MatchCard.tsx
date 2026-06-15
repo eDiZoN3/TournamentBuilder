@@ -10,6 +10,11 @@ interface MatchCardProps {
   children?: ReactNode;
   isPinned?: boolean;
   match: IMatch;
+  /**
+   * When provided, the team rows become clickable buttons that pick the winner
+   * directly (used by winner-only tournaments in the bracket tree).
+   */
+  onSelectWinner?: (side: "A" | "B") => void;
   teamAIsCurrentPlayerTeam?: boolean;
   teamAId?: ITeamSlot["teamId"] | null;
   teamAName?: string;
@@ -45,6 +50,8 @@ function MatchRow({
   isCurrentPlayerTeam,
   winnerId,
   completed,
+  onSelect,
+  selectHint,
 }: {
   team: DisplayTeam;
   scores: number[];
@@ -52,17 +59,16 @@ function MatchRow({
   isCurrentPlayerTeam: boolean;
   winnerId: IMatch["winnerId"];
   completed: boolean;
+  onSelect?: () => void;
+  selectHint?: string;
 }) {
-  return (
-    <div
-      className={`flex min-h-8 items-center justify-between gap-3 px-3 py-1.5 ${
-        isCurrentPlayerTeam
-          ? "bg-sky-50 text-sky-900 ring-1 ring-inset ring-sky-200 dark:bg-sky-950 dark:text-sky-100 dark:ring-sky-700"
-          : rowClasses(team.slot, winnerId, completed)
-      }`}
-      data-current-player-team={isCurrentPlayerTeam}
-      data-testid={`team-${side}-row`}
-    >
+  const baseClassName = `flex min-h-8 w-full items-center justify-between gap-3 px-3 py-1.5 text-left ${
+    isCurrentPlayerTeam
+      ? "bg-sky-50 text-sky-900 ring-1 ring-inset ring-sky-200 dark:bg-sky-950 dark:text-sky-100 dark:ring-sky-700"
+      : rowClasses(team.slot, winnerId, completed)
+  }`;
+  const content = (
+    <>
       <span className="flex min-w-0 items-center">
         <TeamCrest editable={false} size={18} teamId={team.id} />
         <span className="truncate">{team.name}</span>
@@ -77,6 +83,31 @@ function MatchRow({
           ))}
         </span>
       ) : null}
+    </>
+  );
+
+  if (onSelect) {
+    return (
+      <button
+        className={`${baseClassName} cursor-pointer transition hover:bg-emerald-50 hover:ring-1 hover:ring-inset hover:ring-emerald-300 dark:hover:bg-emerald-950 dark:hover:ring-emerald-700`}
+        data-current-player-team={isCurrentPlayerTeam}
+        data-testid={`team-${side}-row`}
+        onClick={onSelect}
+        title={selectHint}
+        type="button"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className={baseClassName}
+      data-current-player-team={isCurrentPlayerTeam}
+      data-testid={`team-${side}-row`}
+    >
+      {content}
     </div>
   );
 }
@@ -85,6 +116,7 @@ export function MatchCard({
   children,
   isPinned = false,
   match,
+  onSelectWinner,
   teamAIsCurrentPlayerTeam = false,
   teamAId,
   teamAName,
@@ -94,6 +126,7 @@ export function MatchCard({
 }: MatchCardProps) {
   const { locale, t } = useLocale();
   const fallbackTeamName = t("toBeDetermined");
+  const selectHint = t("selectWinnerHint");
   const isCompleted = match.status === "completed" || match.isBye;
   const isLive = match.status === "in_progress" && !match.isBye;
   const sets =
@@ -156,7 +189,13 @@ export function MatchCard({
         <MatchRow
           completed={isCompleted}
           isCurrentPlayerTeam={teamAIsCurrentPlayerTeam}
+          onSelect={
+            onSelectWinner && teams[0].id
+              ? () => onSelectWinner("A")
+              : undefined
+          }
           scores={sets.map((set) => set.scoreA)}
+          selectHint={selectHint}
           side="a"
           team={teams[0]}
           winnerId={match.winnerId}
@@ -164,7 +203,13 @@ export function MatchCard({
         <MatchRow
           completed={isCompleted}
           isCurrentPlayerTeam={teamBIsCurrentPlayerTeam}
+          onSelect={
+            onSelectWinner && teams[1].id
+              ? () => onSelectWinner("B")
+              : undefined
+          }
           scores={sets.map((set) => set.scoreB)}
+          selectHint={selectHint}
           side="b"
           team={teams[1]}
           winnerId={match.winnerId}

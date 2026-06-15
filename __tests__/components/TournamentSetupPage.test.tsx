@@ -152,6 +152,146 @@ describe("TournamentSetupForm", () => {
     expect(screen.getByText("Roster saved.")).toBeInTheDocument();
   });
 
+  it("warns before saving placeholder team names and saves them on confirm", async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(jsonResponse({}));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Summer Cup",
+          teamSize: 2,
+          inputMode: "teams",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    // Both team inputs left blank.
+    fireEvent.click(screen.getByRole("button", { name: "Save roster" }));
+
+    expect(screen.getByText("Not all fields filled in")).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save with placeholders" }),
+    );
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/tournaments/tournament-id",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          teams: [
+            { name: "Team 1", players: [], seed: 0 },
+            { name: "Team 2", players: [], seed: 0 },
+          ],
+        }),
+      }),
+    );
+  });
+
+  it("cancels the placeholder warning and returns to editing without saving", () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Summer Cup",
+          teamSize: 2,
+          inputMode: "teams",
+          allowSelfJoin: false,
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Save roster" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to editing" }));
+
+    expect(
+      screen.queryByText("Not all fields filled in"),
+    ).not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("shows empty discipline inputs as placeholders for a fresh event", () => {
+    vi.stubGlobal("fetch", vi.fn());
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Event Cup",
+          format: "event",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: false,
+          eventParticipantCount: 3,
+          eventDisciplineCount: 2,
+          eventDisciplines: [],
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    const disciplineInputs = screen.getAllByLabelText(/Discipline \d+ name/);
+    expect(disciplineInputs).toHaveLength(2);
+    disciplineInputs.forEach((input) => expect(input).toHaveValue(""));
+    expect(screen.getByLabelText("Discipline 1 name")).toHaveAttribute(
+      "placeholder",
+      "Discipline 1",
+    );
+  });
+
+  it("warns before saving an event roster with blank disciplines", async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(jsonResponse({}));
+    vi.stubGlobal("fetch", fetch);
+    render(
+      <TournamentSetupForm
+        tournament={{
+          _id: "tournament-id",
+          name: "Event Cup",
+          format: "event",
+          teamSize: 2,
+          inputMode: "players",
+          allowSelfJoin: false,
+          eventParticipantCount: 2,
+          eventDisciplineCount: 1,
+          eventDisciplines: [],
+          joinedPlayers: [],
+          teams: [],
+        }}
+      />,
+    );
+
+    screen.getAllByLabelText(/Participant \d+ name/).forEach((input, index) => {
+      fireEvent.change(input, { target: { value: ["Alice", "Bob"][index] } });
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save roster" }));
+
+    expect(screen.getByText("Not all fields filled in")).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save with placeholders" }),
+    );
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toMatchObject({
+      eventDisciplines: ["Discipline 1"],
+    });
+  });
+
   it("generates editable player-mode team previews and warns about remainders", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.999);
     render(

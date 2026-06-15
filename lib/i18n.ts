@@ -343,6 +343,14 @@ export type TranslationKey =
   | "allowPlayerSelfJoinHint"
   | "courtsAvailableHint"
   | "teamSizeHint"
+  | "matchFormat"
+  | "customTeamSize"
+  | "customTeamSizeLabel"
+  | "selectWinnerHint"
+  | "useDefaultsTitle"
+  | "useDefaultsBody"
+  | "useDefaultsConfirm"
+  | "useDefaultsCancel"
   | "participantsHint"
   | "disciplinesHint"
   | "eventScoringNote"
@@ -746,6 +754,15 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     courtsAvailableHint:
       "Spiele werden auf so viele Felder gleichzeitig verteilt.",
     teamSizeHint: "Anzahl Spieler pro Team.",
+    matchFormat: "Spielformat",
+    customTeamSize: "Eigene Größe",
+    customTeamSizeLabel: "Eigene Teamgröße",
+    selectWinnerHint: "Zum Auswählen des Siegers anklicken",
+    useDefaultsTitle: "Nicht alle Felder ausgefüllt",
+    useDefaultsBody:
+      "Einige Felder sind leer. Für diese werden die Platzhalter als Werte übernommen ({values}). Möchtest du so fortfahren?",
+    useDefaultsConfirm: "Mit Platzhaltern speichern",
+    useDefaultsCancel: "Zurück zur Eingabe",
     participantsHint: "Wie viele Spieler nehmen am Event teil.",
     disciplinesHint: "Anzahl der parallelen Disziplin-Brackets.",
     eventScoringNote:
@@ -1140,6 +1157,15 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     courtsAvailableHint:
       "Matches are scheduled across this many courts at once.",
     teamSizeHint: "Number of players on each team.",
+    matchFormat: "Match format",
+    customTeamSize: "Custom size",
+    customTeamSizeLabel: "Custom team size",
+    selectWinnerHint: "Click to select the winner",
+    useDefaultsTitle: "Not all fields filled in",
+    useDefaultsBody:
+      "Some fields are empty. Their placeholder names will be used as values ({values}). Do you want to continue?",
+    useDefaultsConfirm: "Save with placeholders",
+    useDefaultsCancel: "Back to editing",
     participantsHint: "How many players take part in the event.",
     disciplinesHint: "Number of parallel discipline brackets.",
     eventScoringNote: "Events use winner-only scoring on a single court.",

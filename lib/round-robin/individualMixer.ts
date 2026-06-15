@@ -1,5 +1,9 @@
 import { Types } from "mongoose";
-import type { IMatch, ITeam } from "@/lib/models/Tournament";
+import type {
+  IMatch,
+  ITeam,
+  RoundRobinMatchFormat,
+} from "@/lib/models/Tournament";
 
 interface IndividualMixerSchedule {
   matches: IMatch[];
@@ -82,6 +86,7 @@ function createMatch(
   teamB: ITeam,
   round: number,
   position: number,
+  format: RoundRobinMatchFormat,
 ): IMatch {
   return {
     _id: new Types.ObjectId(),
@@ -90,7 +95,7 @@ function createMatch(
     position,
     label: `Round ${round}`,
     placeRange: "",
-    format: "bo1",
+    format,
     teamA: {
       teamId: teamA._id,
       sets: [],
@@ -117,7 +122,8 @@ function createMatch(
 
 export function generateIndividualMixerSchedule(
   players: Array<string | IndividualMixerPlayer>,
-  teamSize: 2 | 3 | 4,
+  teamSize: number,
+  format: RoundRobinMatchFormat = "bo1",
 ): IndividualMixerSchedule {
   const roster = normalizePlayers(players);
   const playersPerMatch = teamSize * 2;
@@ -166,7 +172,7 @@ export function generateIndividualMixerSchedule(
 
       seed += 2;
       temporaryTeams.push(teamA, teamB);
-      matches.push(createMatch(teamA, teamB, round, position));
+      matches.push(createMatch(teamA, teamB, round, position, format));
     }
   }
 

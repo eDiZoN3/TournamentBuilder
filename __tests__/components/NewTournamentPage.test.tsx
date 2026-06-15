@@ -143,6 +143,7 @@ describe("NewTournamentPage", () => {
             courtsAvailable: 1,
             inputMode: "teams",
             allowSelfJoin: false,
+            matchResultMode: "points",
             roundRobinMatchFormat: "bo1",
           }),
         }),
@@ -262,6 +263,7 @@ describe("NewTournamentPage", () => {
             courtsAvailable: 1,
             inputMode: "players",
             allowSelfJoin: true,
+            matchResultMode: "points",
             roundRobinMatchFormat: "bo1",
           }),
         }),
@@ -299,6 +301,7 @@ describe("NewTournamentPage", () => {
             courtsAvailable: 1,
             inputMode: "teams",
             allowSelfJoin: false,
+            matchResultMode: "points",
             roundRobinMatchFormat: "bo3",
           }),
         }),
@@ -335,9 +338,73 @@ describe("NewTournamentPage", () => {
             courtsAvailable: 1,
             inputMode: "players",
             allowSelfJoin: false,
+            matchResultMode: "points",
+            roundRobinMatchFormat: "bo1",
           }),
         }),
       );
+    });
+  });
+
+  it("submits a custom team size entered through the custom field", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Big Teams" },
+    });
+    fireEvent.click(screen.getByLabelText("Custom size"));
+    fireEvent.change(screen.getByLabelText("Custom team size"), {
+      target: { value: "6" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toMatchObject({
+        name: "Big Teams",
+        teamSize: 6,
+      });
+    });
+  });
+
+  it("submits winner-only scoring and best-of-three for individual mixers", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ _id: "tournament-id" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<NewTournamentPage />);
+
+    fireEvent.change(screen.getByLabelText("Tournament name"), {
+      target: { value: "Mixer Bo3" },
+    });
+    fireEvent.click(screen.getByLabelText("Individual mixer"));
+    // Best-of-three is available for mixers while points scoring is selected.
+    fireEvent.click(screen.getByLabelText("Best of three"));
+    fireEvent.click(screen.getByLabelText("Winner only"));
+    // Switching to winner-only hides the set-format choice entirely.
+    expect(screen.queryByLabelText("Best of three")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Create tournament" }));
+
+    await waitFor(() => {
+      expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toEqual({
+        name: "Mixer Bo3",
+        format: "individual_mixer",
+        teamSize: 2,
+        courtsAvailable: 1,
+        inputMode: "players",
+        allowSelfJoin: false,
+        matchResultMode: "winner_only",
+        roundRobinMatchFormat: "bo3",
+      });
     });
   });
 

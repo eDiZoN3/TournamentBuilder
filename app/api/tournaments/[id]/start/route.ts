@@ -96,7 +96,7 @@ function uniquePlayerRoster(tournament: {
 
 function hasGeneratedEqualTeams(tournament: {
   joinedPlayers: IJoinedPlayer[];
-  teamSize: 2 | 3 | 4;
+  teamSize: number;
   teams: ITeam[];
 }): boolean {
   if (
@@ -138,7 +138,7 @@ function hasGeneratedEqualTeams(tournament: {
 
 function generatedTeamDocuments(
   players: RosterPlayer[],
-  teamSize: 2 | 3 | 4,
+  teamSize: number,
 ): ITeam[] {
   return assignRosterPlayersToEqualTeams(players, teamSize).map((team) => ({
     _id: new Types.ObjectId(),
@@ -264,6 +264,7 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       const schedule = generateIndividualMixerSchedule(
         players,
         tournament.teamSize,
+        roundRobinMatchFormat,
       );
 
       if (schedule.matches.length === 0) {

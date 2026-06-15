@@ -15,8 +15,9 @@ import { RoundRobinView } from "@/components/tournament/RoundRobinView";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { useToast } from "@/components/ui/Toast";
 import { formatTranslation } from "@/lib/i18n";
-import type { ITournament } from "@/lib/models/Tournament";
+import type { IMatch, ITournament } from "@/lib/models/Tournament";
 import { isNonKnockoutFormat } from "@/lib/standings/nonKnockout";
 import { resolveTournamentTheme } from "@/lib/tournamentTheme";
 
@@ -38,6 +39,7 @@ export function TournamentManageView({
   initialTournament,
 }: TournamentManageViewProps) {
   const { locale, t } = useLocale();
+  const { showToast } = useToast();
   const router = useRouter();
   const refreshFailures = useRef(0);
   const [pinnedMatchId, setPinnedMatchId] = useState<string | null>(null);
@@ -65,6 +67,44 @@ export function TournamentManageView({
   const tournament = data ?? initialTournament;
   const showSkeleton = isLoading && !data;
   const activeTheme = resolveTournamentTheme(tournament.theme);
+  const winnerOnly = (tournament.matchResultMode ?? "points") === "winner_only";
+
+  async function selectBracketWinner(match: IMatch, winnerSide: "A" | "B") {
+    try {
+      const response = await fetch(
+        `/api/tournaments/${tournament._id.toString()}/matches/${match._id.toString()}/status`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ status: "completed", winnerSide }),
+        },
+      );
+
+      if (!response.ok) {
+        showToast({
+          message: t("unableToConfirmMatch"),
+          title: t("unableToConfirmMatch"),
+          type: "error",
+        });
+        return;
+      }
+
+      await mutate();
+      showToast({
+        message: formatTranslation(locale, "matchCompleted", {
+          match: match.label,
+        }),
+        title: t("matchConfirmed"),
+        type: "success",
+      });
+    } catch {
+      showToast({
+        message: t("unableToConfirmMatch"),
+        title: t("unableToConfirmMatch"),
+        type: "error",
+      });
+    }
+  }
 
   return (
     <CrestProvider
@@ -156,6 +196,7 @@ export function TournamentManageView({
       ) : (
         <BracketView
           matches={tournament.matches}
+          onSelectWinner={winnerOnly ? selectBracketWinner : undefined}
           pinnedMatchId={pinnedMatchId}
           renderMatchControls={(match, teamAName, teamBName) => (
             <MatchControls

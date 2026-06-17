@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   RegisteredPlayerPicker,
@@ -11,6 +11,7 @@ import {
   assignRosterPlayersToTeams,
 } from "@/lib/bracket/playerAssign";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { useFocusTrap } from "@/components/ui/useFocusTrap";
 import { formatTranslation } from "@/lib/i18n";
 
 export interface SetupTeam {
@@ -128,6 +129,16 @@ export function TournamentSetupForm({
     () => joinedPlayerEntries(joinedPlayers ?? []),
     [joinedPlayers],
   );
+  // Stable row ids keep controlled inputs bound to the right row when a middle
+  // row is removed via filter (using the array index as a key would otherwise
+  // shift the typed value onto the wrong row).
+  const rowIdCounter = useRef(0);
+  const nextRowId = () => {
+    rowIdCounter.current += 1;
+    return `row-${rowIdCounter.current}`;
+  };
+  const makeRowIds = (count: number) =>
+    Array.from({ length: count }, () => nextRowId());
   const [teamNames, setTeamNames] = useState<string[]>(
     tournament.teams.length > 0
       ? tournament.teams.map((team) => team.name)
@@ -139,6 +150,20 @@ export function TournamentSetupForm({
       : joinedEntries.length > 0
         ? joinedEntries
         : blankPlayerEntries(),
+  );
+  const [teamNameIds, setTeamNameIds] = useState<string[]>(() =>
+    makeRowIds(
+      tournament.teams.length > 0 ? tournament.teams.length : 2,
+    ),
+  );
+  const [playerEntryIds, setPlayerEntryIds] = useState<string[]>(() =>
+    makeRowIds(
+      tournament.teams.length > 0
+        ? teamPlayerEntries(tournament.teams).length
+        : joinedEntries.length > 0
+          ? joinedEntries.length
+          : blankPlayerEntries().length,
+    ),
   );
   const [previewTeams, setPreviewTeams] = useState<SetupTeam[]>(
     tournament.inputMode === "players" &&
@@ -187,10 +212,19 @@ export function TournamentSetupForm({
           !currentNames.has(player.displayName.trim().toLowerCase()),
       );
 
-      return newJoinedPlayers.length > 0
-        ? [...current, ...newJoinedPlayers]
-        : current;
+      if (newJoinedPlayers.length === 0) {
+        return current;
+      }
+
+      setPlayerEntryIds((currentIds) => [
+        ...currentIds,
+        ...makeRowIds(newJoinedPlayers.length),
+      ]);
+
+      return [...current, ...newJoinedPlayers];
     });
+    // makeRowIds is a stable closure over a ref and intentionally omitted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [joinedEntries, joinedPlayerNames.length, tournament.inputMode]);
 
   useEffect(() => {
@@ -322,6 +356,8 @@ export function TournamentSetupForm({
       ) {
         return current;
       }
+
+      setPlayerEntryIds((currentIds) => [...currentIds, nextRowId()]);
 
       return [
         ...current,
@@ -721,12 +757,23 @@ export function TournamentSetupForm({
 
   const isBusy = isSavingRoster || isStarting;
 
+  const placeholderDialogRef = useRef<HTMLDivElement | null>(null);
+  const isPlaceholderDialogOpen = Boolean(
+    pendingPlaceholders && pendingPlaceholders.length > 0,
+  );
+
+  useFocusTrap(placeholderDialogRef, isPlaceholderDialogOpen, () =>
+    setPendingPlaceholders(null),
+  );
+
   const placeholderDialog =
     pendingPlaceholders && pendingPlaceholders.length > 0 ? (
       <div
         aria-modal="true"
         className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/40"
+        ref={placeholderDialogRef}
         role="dialog"
+        tabIndex={-1}
       >
         <p className="font-semibold text-amber-900 dark:text-amber-200">
           {t("useDefaultsTitle")}
@@ -890,7 +937,7 @@ export function TournamentSetupForm({
       {tournament.inputMode === "teams" ? (
         <div className="mt-8 space-y-3">
           {teamNames.map((teamName, index) => (
-            <div className="flex gap-2" key={index}>
+            <div className="flex gap-2" key={teamNameIds[index] ?? index}>
               <label className="flex-1">
                 <span className="sr-only">
                   {formatTranslation(locale, "teamNameField", { n: index + 1 })}
@@ -914,6 +961,9 @@ export function TournamentSetupForm({
                   setTeamNames((current) =>
                     current.filter((_, currentIndex) => currentIndex !== index),
                   );
+                  setTeamNameIds((current) =>
+                    current.filter((_, currentIndex) => currentIndex !== index),
+                  );
                 }}
                 type="button"
               >
@@ -926,6 +976,7 @@ export function TournamentSetupForm({
             onClick={() => {
               setStatusMessage(null);
               setTeamNames((current) => [...current, ""]);
+              setTeamNameIds((current) => [...current, nextRowId()]);
             }}
             type="button"
           >
@@ -955,7 +1006,7 @@ export function TournamentSetupForm({
           </div>
           <div className="space-y-3">
             {playerEntries.map((player, index) => (
-              <div className="flex gap-2" key={index}>
+              <div className="flex gap-2" key={playerEntryIds[index] ?? index}>
                 <label className="flex-1">
                   <span className="sr-only">
                     {formatTranslation(locale, "playerNameField", {
@@ -984,6 +1035,11 @@ export function TournamentSetupForm({
                         (_, currentIndex) => currentIndex !== index,
                       ),
                     );
+                    setPlayerEntryIds((current) =>
+                      current.filter(
+                        (_, currentIndex) => currentIndex !== index,
+                      ),
+                    );
                   }}
                   type="button"
                 >
@@ -998,6 +1054,7 @@ export function TournamentSetupForm({
               onClick={() => {
                 setStatusMessage(null);
                 setPlayerEntries((current) => [...current, { displayName: "" }]);
+                setPlayerEntryIds((current) => [...current, nextRowId()]);
               }}
               type="button"
             >
@@ -1035,7 +1092,7 @@ export function TournamentSetupForm({
               {previewTeams.map((team, index) => (
                 <div
                   className="rounded-md border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900"
-                  key={index}
+                  key={`${team.seed}-${team.players.join("|")}`}
                 >
                   <input
                     aria-label={formatTranslation(locale, "teamPreviewNameField", {

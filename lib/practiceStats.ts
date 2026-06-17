@@ -180,6 +180,9 @@ export function aggregatePracticeStats(
   practiceMatches: PracticeMatchLike[],
   resetRules: StatsResetRule[] = [],
 ): PracticeStatsRow[] {
+  // Practice matches have no tournament or season foreign key, so only "all"
+  // and "player" reset scopes apply here. "season"/"tournament" rules are
+  // intentionally ignored — unlike tournament stats in lib/stats.ts.
   if (resetRules.some((rule) => rule.scope === "all")) {
     return [];
   }

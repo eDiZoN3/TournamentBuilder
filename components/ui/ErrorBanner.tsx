@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale } from "@/components/ui/LocaleProvider";
 
 interface ErrorBannerProps {
@@ -11,6 +11,12 @@ interface ErrorBannerProps {
 export function ErrorBanner({ message, onDismiss }: ErrorBannerProps) {
   const { t } = useLocale();
   const [isVisible, setIsVisible] = useState(true);
+
+  // Re-show the banner whenever a new error message arrives so a second
+  // error after a dismissal is not silently swallowed by a stale latch.
+  useEffect(() => {
+    setIsVisible(true);
+  }, [message]);
 
   if (!isVisible) {
     return null;

@@ -48,38 +48,41 @@ export function RegisteredPlayerPicker({
     setIsLoading(true);
     setError(null);
 
-    fetch(`/api/player-profiles?q=${encodeURIComponent(trimmedQuery)}`, {
-      method: "GET",
-    })
-      .then(async (response) => {
-        const body = await response.json();
-
-        if (!isCurrent) {
-          return;
-        }
-
-        if (!response.ok) {
-          setError(body.error ?? t("unableToRefresh"));
-          setPlayers([]);
-          return;
-        }
-
-        setPlayers((body.players ?? []) as RegisteredPlayerOption[]);
+    const timer = setTimeout(() => {
+      fetch(`/api/player-profiles?q=${encodeURIComponent(trimmedQuery)}`, {
+        method: "GET",
       })
-      .catch(() => {
-        if (isCurrent) {
-          setError(t("unableToRefresh"));
-          setPlayers([]);
-        }
-      })
-      .finally(() => {
-        if (isCurrent) {
-          setIsLoading(false);
-        }
-      });
+        .then(async (response) => {
+          const body = await response.json();
+
+          if (!isCurrent) {
+            return;
+          }
+
+          if (!response.ok) {
+            setError(body.error ?? t("unableToRefresh"));
+            setPlayers([]);
+            return;
+          }
+
+          setPlayers((body.players ?? []) as RegisteredPlayerOption[]);
+        })
+        .catch(() => {
+          if (isCurrent) {
+            setError(t("unableToRefresh"));
+            setPlayers([]);
+          }
+        })
+        .finally(() => {
+          if (isCurrent) {
+            setIsLoading(false);
+          }
+        });
+    }, 300);
 
     return () => {
       isCurrent = false;
+      clearTimeout(timer);
     };
   }, [query, t]);
 

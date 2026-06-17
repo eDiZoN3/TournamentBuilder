@@ -4,6 +4,12 @@ import { jsonError } from "@/lib/api";
 import { connectDB } from "@/lib/db";
 import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { User } from "@/lib/models/User";
+import { clientIpFromRequest, rateLimit } from "@/lib/rateLimit";
+
+// bcryptjs silently truncates passwords at 72 bytes, so reject anything longer
+// to avoid accepting a password that is effectively different from what is
+// stored.
+const MAX_PASSWORD_LENGTH = 72;
 
 interface SignupBody {
   email: string;
@@ -51,6 +57,7 @@ function parseSignupBody(body: unknown): SignupBody | null {
     firstName.trim().length === 0 ||
     firstName.trim().length > 50 ||
     password.length < 8 ||
+    password.length > MAX_PASSWORD_LENGTH ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase()) ||
     (surname !== undefined &&
       (typeof surname !== "string" || surname.trim().length > 50))
@@ -69,6 +76,12 @@ function parseSignupBody(body: unknown): SignupBody | null {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = clientIpFromRequest(request);
+
+  if (!rateLimit(`signup:${ip}`, { limit: 5, windowMs: 15 * 60 * 1000 }).allowed) {
+    return jsonError("Too many requests", "RATE_LIMITED", 429);
+  }
+
   let body: unknown;
 
   try {

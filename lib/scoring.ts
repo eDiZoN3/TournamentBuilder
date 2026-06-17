@@ -88,6 +88,12 @@ export function determineMatchWinner(
       : null;
   }
 
+  // A best-of-three is decided over at most three sets; more than that means
+  // corrupted data, so refuse to guess a winner rather than miscount wins.
+  if (sets.length > 3) {
+    return null;
+  }
+
   const winsA = sets.filter((set) => set.scoreA > set.scoreB).length;
   const winsB = sets.filter((set) => set.scoreB > set.scoreA).length;
 

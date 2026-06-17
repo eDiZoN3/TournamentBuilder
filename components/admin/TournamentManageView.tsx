@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { MatchControls } from "@/components/admin/MatchControls";
@@ -65,6 +65,9 @@ export function TournamentManageView({
     },
   );
   const tournament = data ?? initialTournament;
+  const handleCrestUpdated = useCallback(async () => {
+    await mutate();
+  }, [mutate]);
   const showSkeleton = isLoading && !data;
   const activeTheme = resolveTournamentTheme(tournament.theme);
   const winnerOnly = (tournament.matchResultMode ?? "points") === "winner_only";
@@ -110,9 +113,7 @@ export function TournamentManageView({
     <CrestProvider
       active={activeTheme === "knight"}
       editable
-      onCrestUpdated={async () => {
-        await mutate();
-      }}
+      onCrestUpdated={handleCrestUpdated}
       teams={tournament.teams}
       tournamentId={tournament._id.toString()}
     >

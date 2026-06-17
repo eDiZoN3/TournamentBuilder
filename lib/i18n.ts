@@ -176,6 +176,7 @@ export type TranslationKey =
   | "playerNameField"
   | "playerRemainderWarning"
   | "players"
+  | "selectAsWinner"
   | "playerSignUp"
   | "playerStats"
   | "playerSurname"
@@ -492,6 +493,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     playerJoined: "{n} Spieler sind beigetreten",
     playerName: "Name des Spielers",
     players: "Spieler",
+    selectAsWinner: "{name} als Sieger auswählen",
     playerSignUp: "Spielerregistrierung",
     playerStats: "Spielerstatistiken",
     playerSurname: "Nachname des Spielers",
@@ -901,6 +903,7 @@ const translations: Record<Locale, Record<TranslationKey, string>> = {
     playerJoined: "{n} player{s} joined",
     playerName: "Player name",
     players: "players",
+    selectAsWinner: "Select {name} as winner",
     playerSignUp: "Player sign up",
     playerStats: "Player stats",
     playerSurname: "Player surname",

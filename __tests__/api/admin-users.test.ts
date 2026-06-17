@@ -3,14 +3,18 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { User } from "@/lib/models/User";
 
-const { requireAdmin, requireAdminSession } = vi.hoisted(() => ({
-  requireAdmin: vi.fn(),
-  requireAdminSession: vi.fn(),
-}));
+const { requireAdmin, requireAdminSession, requireStrictAdmin } = vi.hoisted(
+  () => ({
+    requireAdmin: vi.fn(),
+    requireAdminSession: vi.fn(),
+    requireStrictAdmin: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/adminAuth", () => ({
   requireAdmin,
   requireAdminSession,
+  requireStrictAdmin,
 }));
 
 import { GET as listAdmins, POST as createAdmin } from "@/app/api/admin/users/route";
@@ -56,6 +60,8 @@ describe("/api/admin/users", () => {
         role: "admin",
       },
     });
+    requireStrictAdmin.mockReset();
+    requireStrictAdmin.mockResolvedValue(true);
   });
 
   it("lists admin and tournament lead accounts without password hashes", async () => {

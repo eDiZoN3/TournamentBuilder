@@ -134,7 +134,7 @@ export function normalizeCrest(value: unknown): TeamCrest | null {
 function channelLuminance(channel: number): number {
   const c = channel / 255;
 
-  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
 }
 
 /** WCAG relative luminance of a `#rrggbb` colour, in [0, 1]. */

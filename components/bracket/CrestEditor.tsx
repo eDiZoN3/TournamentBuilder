@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CrestShield } from "@/components/bracket/CrestShield";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { useFocusTrap } from "@/components/ui/useFocusTrap";
 import { useToast } from "@/components/ui/Toast";
 import { formatTranslation } from "@/lib/i18n";
 import {
@@ -69,6 +70,9 @@ export function CrestEditor({
   const { showToast } = useToast();
   const [crest, setCrest] = useState<TeamCrest>(initialCrest);
   const [isSaving, setIsSaving] = useState(false);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
+  useFocusTrap(dialogRef, true, onClose);
 
   function update(patch: Partial<TeamCrest>) {
     setCrest((current) => ({ ...current, ...patch }));
@@ -129,6 +133,8 @@ export function CrestEditor({
       <div
         className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
         onClick={(event) => event.stopPropagation()}
+        ref={dialogRef}
+        tabIndex={-1}
       >
         <div className="flex items-start justify-between gap-3">
           <div>

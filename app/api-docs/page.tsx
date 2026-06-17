@@ -11,7 +11,10 @@ const swaggerUiVersion = "5.17.14";
 export default function ApiDocsPage() {
   return (
     <main className="min-h-screen bg-white text-slate-950">
+      {/* Loaded from a pinned CDN version. TODO: add an SRI `integrity` hash
+          (sha384 of the pinned asset) once generated, for tamper protection. */}
       <link
+        crossOrigin="anonymous"
         href={`https://unpkg.com/swagger-ui-dist@${swaggerUiVersion}/swagger-ui.css`}
         rel="stylesheet"
       />
@@ -41,6 +44,7 @@ export default function ApiDocsPage() {
       </noscript>
       <script
         async
+        crossOrigin="anonymous"
         src={`https://unpkg.com/swagger-ui-dist@${swaggerUiVersion}/swagger-ui-bundle.js`}
       />
       <script

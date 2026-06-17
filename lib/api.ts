@@ -7,6 +7,7 @@ export type ApiErrorCode =
   | "VALIDATION_ERROR"
   | "CONFLICT"
   | "STALE_TOURNAMENT"
+  | "RATE_LIMITED"
   | "INTERNAL_ERROR";
 
 export function jsonError(

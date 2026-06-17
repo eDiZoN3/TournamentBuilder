@@ -21,6 +21,7 @@ describe("credentials authentication", () => {
       email: "admin@example.com",
       mustChangePassword: true,
       passwordHash,
+      role: "admin",
     });
 
     const authenticatedUser = await getAuthorize()(

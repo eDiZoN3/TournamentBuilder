@@ -47,7 +47,10 @@ export async function getAdminDashboardMetrics(): Promise<AdminDashboardMetrics>
   };
 
   for (const tournament of tournaments) {
-    metrics.tournamentsByStatus[tournament.status as TournamentStatus] += 1;
+    const status = tournament.status as TournamentStatus;
+    if (status in metrics.tournamentsByStatus) {
+      metrics.tournamentsByStatus[status] += 1;
+    }
     metrics.playedMatches += tournament.matches.filter(
       (match) => match.status === "completed" && !match.isBye,
     ).length;

@@ -63,6 +63,7 @@ describe("/api/admin/change-password", () => {
       email: "admin@example.com",
       mustChangePassword: true,
       passwordHash: await bcrypt.hash("temporary1", 4),
+      role: "admin",
     });
     requireAuthenticatedSession.mockResolvedValue({
       user: { id: admin._id.toString(), role: "admin" },
@@ -84,6 +85,7 @@ describe("/api/admin/change-password", () => {
       email: "admin@example.com",
       mustChangePassword: true,
       passwordHash: await bcrypt.hash("temporary1", 4),
+      role: "admin",
     });
     requireAuthenticatedSession.mockResolvedValue({
       user: { id: admin._id.toString(), role: "admin" },

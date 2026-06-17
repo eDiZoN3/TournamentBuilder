@@ -3,7 +3,6 @@ import type {
   InputHTMLAttributes,
   LabelHTMLAttributes,
   ReactNode,
-  SelectHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/cn";
 
@@ -17,14 +16,6 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
   ),
 );
 Input.displayName = "Input";
-
-export const Select = forwardRef<
-  HTMLSelectElement,
-  SelectHTMLAttributes<HTMLSelectElement>
->(({ className, ...props }, ref) => (
-  <select className={cn(controlClasses, className)} ref={ref} {...props} />
-));
-Select.displayName = "Select";
 
 export function Label({
   className,

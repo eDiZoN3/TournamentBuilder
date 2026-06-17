@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { useFocusTrap } from "@/components/ui/useFocusTrap";
 import { useToast } from "@/components/ui/Toast";
 import { formatTranslation } from "@/lib/i18n";
 import type { IMatch, ISetScore } from "@/lib/models/Tournament";
@@ -90,6 +91,9 @@ export function ScoreEntry({
   const [isConfirming, setIsConfirming] = useState(false);
   const [requiresOverrideConfirmation, setRequiresOverrideConfirmation] =
     useState(false);
+  const dialogRef = useRef<HTMLElement | null>(null);
+
+  useFocusTrap(dialogRef, true, onClose);
   const correctedWinnerId =
     matchWinner === "A"
       ? match.teamA?.teamId.toString()
@@ -317,7 +321,11 @@ export function ScoreEntry({
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 dark:bg-black/60"
       role="dialog"
     >
-      <section className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl dark:bg-slate-900">
+      <section
+        className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl dark:bg-slate-900"
+        ref={dialogRef}
+        tabIndex={-1}
+      >
         <header className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold" id="score-entry-title">
@@ -352,7 +360,7 @@ export function ScoreEntry({
                   <label className="text-sm">
                     <span className="mb-1 block text-slate-600 dark:text-slate-300">{teamAName}</span>
                     <input
-                      aria-label={`${t("set")} ${index + 1} ${t("team")} A`}
+                      aria-label={`${t("set")} ${index + 1} – ${teamAName}`}
                       className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                       disabled={isLocked}
                       min="0"
@@ -366,7 +374,7 @@ export function ScoreEntry({
                   <label className="text-sm">
                     <span className="mb-1 block text-slate-600 dark:text-slate-300">{teamBName}</span>
                     <input
-                      aria-label={`${t("set")} ${index + 1} ${t("team")} B`}
+                      aria-label={`${t("set")} ${index + 1} – ${teamBName}`}
                       className="w-full rounded-md border border-slate-300 px-3 py-2 dark:border-slate-600"
                       disabled={isLocked}
                       min="0"

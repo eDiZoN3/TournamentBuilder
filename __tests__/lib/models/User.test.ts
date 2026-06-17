@@ -1,14 +1,14 @@
 import { User } from "@/lib/models/User";
 
 describe("User model", () => {
-  it("normalizes email addresses and defaults the role to admin", async () => {
+  it("normalizes email addresses and defaults the role to player", async () => {
     const user = await User.create({
       email: "  ADMIN@Example.COM ",
       passwordHash: "hashed-password",
     });
 
     expect(user.email).toBe("admin@example.com");
-    expect(user.role).toBe("admin");
+    expect(user.role).toBe("player");
   });
 
   it("rejects duplicate email addresses", async () => {

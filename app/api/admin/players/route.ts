@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { NextResponse, type NextRequest } from "next/server";
-import { requireAdmin } from "@/lib/adminAuth";
+import { requireAdmin, requireStrictAdmin } from "@/lib/adminAuth";
 import { displayName, getPlayerUserSummaries, playerSummary } from "@/lib/admin/playerAccounts";
 import { generateTemporaryPassword } from "@/lib/admin/tempPassword";
 import { jsonError } from "@/lib/api";
@@ -43,7 +43,7 @@ function parseCreateBody(body: unknown): CreatePlayerBody | null {
 }
 
 export async function GET() {
-  if (!(await requireAdmin())) {
+  if (!(await requireStrictAdmin())) {
     return jsonError("Authentication required", "UNAUTHORIZED", 401);
   }
 

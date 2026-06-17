@@ -117,12 +117,14 @@ export function AdminDashboard({
         <div aria-label={t("dashboardSections")} className="flex flex-wrap gap-2" role="tablist">
           {tabs.map((tab) => (
             <button
+              aria-controls={`dashboard-panel-${tab.id}`}
               aria-selected={activeTab === tab.id}
               className={`rounded-t-md px-4 py-2 text-sm font-semibold ${
                 activeTab === tab.id
                   ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950"
                   : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
               }`}
+              id={`dashboard-tab-${tab.id}`}
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               role="tab"
@@ -134,7 +136,13 @@ export function AdminDashboard({
         </div>
       </div>
       {activeTab === "accounts" ? (
-        <div className="mt-8 grid gap-6 xl:grid-cols-2">
+        <div
+          aria-labelledby="dashboard-tab-accounts"
+          className="mt-8 grid gap-6 xl:grid-cols-2"
+          id="dashboard-panel-accounts"
+          role="tabpanel"
+          tabIndex={0}
+        >
           <AdminUsersPanel
             canManageTournamentLeads={canManageTournamentLeads}
             initialAdmins={initialAdmins}
@@ -143,7 +151,13 @@ export function AdminDashboard({
         </div>
       ) : null}
       {activeTab === "stats-reset" ? (
-        <div className="mt-8">
+        <div
+          aria-labelledby="dashboard-tab-stats-reset"
+          className="mt-8"
+          id="dashboard-panel-stats-reset"
+          role="tabpanel"
+          tabIndex={0}
+        >
           <StatsResetPanel
             currentUserRole={resetRole}
             players={initialPlayers}
@@ -154,7 +168,13 @@ export function AdminDashboard({
       ) : null}
       {activeTab === "tournaments" ? (
         tournaments.length === 0 ? (
-          <div className="mt-8">
+          <div
+            aria-labelledby="dashboard-tab-tournaments"
+            className="mt-8"
+            id="dashboard-panel-tournaments"
+            role="tabpanel"
+            tabIndex={0}
+          >
             <EmptyState
               action={
                 <Link
@@ -169,7 +189,13 @@ export function AdminDashboard({
             />
           </div>
         ) : (
-          <div className="mt-8 grid gap-4">
+          <div
+            aria-labelledby="dashboard-tab-tournaments"
+            className="mt-8 grid gap-4"
+            id="dashboard-panel-tournaments"
+            role="tabpanel"
+            tabIndex={0}
+          >
             {tournaments.map((tournament) => (
               <article
                 className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"

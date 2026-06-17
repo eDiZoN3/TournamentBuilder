@@ -40,10 +40,10 @@ function completedMatch(overrides: Parameters<typeof makeMatch>[0] = {}) {
 }
 
 function enterSet(setNumber: number, scoreA: string, scoreB: string) {
-  fireEvent.change(screen.getByLabelText(`Set ${setNumber} Team A`), {
+  fireEvent.change(screen.getByLabelText(`Set ${setNumber} – Alpha`), {
     target: { value: scoreA },
   });
-  fireEvent.change(screen.getByLabelText(`Set ${setNumber} Team B`), {
+  fireEvent.change(screen.getByLabelText(`Set ${setNumber} – Beta`), {
     target: { value: scoreB },
   });
 }
@@ -140,16 +140,16 @@ describe("ScoreEntry", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Set 2 Team A")).toBeDisabled();
-    expect(screen.getByLabelText("Set 3 Team A")).toBeDisabled();
+    expect(screen.getByLabelText("Set 2 – Alpha")).toBeDisabled();
+    expect(screen.getByLabelText("Set 3 – Alpha")).toBeDisabled();
 
     enterSet(1, "11", "9");
     fireEvent.click(screen.getByRole("button", { name: "Save set 1" }));
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Set 2 Team A")).toBeEnabled();
+      expect(screen.getByLabelText("Set 2 – Alpha")).toBeEnabled();
     });
-    expect(screen.getByLabelText("Set 3 Team A")).toBeDisabled();
+    expect(screen.getByLabelText("Set 3 – Alpha")).toBeDisabled();
     expect(
       screen.queryByRole("button", { name: "Confirm match" }),
     ).not.toBeInTheDocument();
@@ -186,13 +186,13 @@ describe("ScoreEntry", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Set 2 Team A")).toHaveValue(11);
+    expect(screen.getByLabelText("Set 2 – Alpha")).toHaveValue(11);
 
     enterSet(1, "9", "11");
     fireEvent.click(screen.getByRole("button", { name: "Save set 1" }));
 
     await waitFor(() => {
-      expect(screen.getByLabelText("Set 2 Team A")).toHaveValue(null);
+      expect(screen.getByLabelText("Set 2 – Alpha")).toHaveValue(null);
     });
   });
 

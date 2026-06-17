@@ -6,6 +6,7 @@ import { resolveTeamName } from "@/components/bracket/utils";
 import { TournamentStats } from "@/components/stats/TournamentStats";
 import { ErrorBanner } from "@/components/ui/ErrorBanner";
 import { useLocale } from "@/components/ui/LocaleProvider";
+import { formatTranslation } from "@/lib/i18n";
 import { planEventSlots } from "@/lib/eventTournament";
 import type { IMatch, ITeam, ITournament } from "@/lib/models/Tournament";
 
@@ -95,7 +96,7 @@ export function EventTournamentView({
   onUpdated,
   tournament,
 }: EventTournamentViewProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [busyMatchId, setBusyMatchId] = useState<string | null>(null);
   const [activeDiscipline, setActiveDiscipline] = useState(0);
   const [highlightedMatchId, setHighlightedMatchId] = useState<string | null>(
@@ -286,7 +287,9 @@ export function EventTournamentView({
 
     return (
       <button
-        aria-label={`Select ${teamName} as winner`}
+        aria-label={formatTranslation(locale, "selectAsWinner", {
+          name: teamName,
+        })}
         className={className}
         disabled={disabled}
         onClick={(event) => {
@@ -411,7 +414,9 @@ export function EventTournamentView({
     if (canPick) {
       return (
         <button
-          aria-label={`Select ${teamName} as winner`}
+          aria-label={formatTranslation(locale, "selectAsWinner", {
+          name: teamName,
+        })}
           className={`${className} text-left`}
           disabled={busyMatchId === match._id.toString()}
           onClick={() => {
@@ -693,12 +698,14 @@ export function EventTournamentView({
 
                   return (
                     <button
+                      aria-controls={`event-discipline-panel-${group.index}`}
                       aria-selected={isActive}
                       className={`flex items-center gap-2 rounded-t-md px-4 py-2 text-sm font-semibold ${
                         isActive
                           ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950"
                           : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                       }`}
+                      id={`event-discipline-tab-${group.index}`}
                       key={group.index}
                       onClick={() => setActiveDiscipline(index)}
                       role="tab"
@@ -715,7 +722,13 @@ export function EventTournamentView({
                 })}
               </div>
               {selectedGroup ? (
-                <div className="mt-4" role="tabpanel">
+                <div
+                  aria-labelledby={`event-discipline-tab-${selectedGroup.index}`}
+                  className="mt-4"
+                  id={`event-discipline-panel-${selectedGroup.index}`}
+                  role="tabpanel"
+                  tabIndex={0}
+                >
                   {renderBracketTree(selectedGroup)}
                 </div>
               ) : null}

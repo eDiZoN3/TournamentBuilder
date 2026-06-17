@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -39,11 +40,10 @@ const toastStyles: Record<ToastType, string> = {
     "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-100",
 };
 
-let nextToastId = 1;
-
 export function ToastProvider({ children }: { children: ReactNode }) {
   const { t } = useLocale();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const nextToastId = useRef(1);
 
   const dismiss = useCallback((id: number) => {
     setToasts((current) => current.filter((toast) => toast.id !== id));
@@ -51,7 +51,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showToast = useCallback(
     (toast: ToastInput) => {
-      const id = nextToastId++;
+      const id = nextToastId.current++;
 
       setToasts((current) => [...current, { ...toast, id }]);
       window.setTimeout(() => dismiss(id), 5000);

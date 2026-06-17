@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { PracticeMatchForm } from "@/components/player/PracticeMatchForm";
 import { PracticeMatchList } from "@/components/player/PracticeMatchList";
@@ -89,13 +89,9 @@ export function PlayerAccountView({
 }: PlayerAccountViewProps) {
   const { t } = useLocale();
   const [practiceMatchRows, setPracticeMatchRows] =
-    useState(practiceMatches);
+    useState(() => practiceMatches);
   const [editingMatch, setEditingMatch] =
     useState<SerializedPracticeMatch | null>(null);
-
-  useEffect(() => {
-    setPracticeMatchRows(practiceMatches);
-  }, [practiceMatches]);
 
   function savePracticeMatch(match: SerializedPracticeMatch) {
     setPracticeMatchRows((currentMatches) => {

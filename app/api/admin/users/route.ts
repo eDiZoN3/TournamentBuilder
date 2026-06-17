@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { randomInt } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { jsonError } from "@/lib/api";
-import { requireAdmin, requireAdminSession } from "@/lib/adminAuth";
+import { requireAdminSession, requireStrictAdmin } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models/User";
 
@@ -69,7 +69,7 @@ function parseCreateBody(body: unknown): CreateAdminBody | null {
 }
 
 export async function GET() {
-  if (!(await requireAdmin())) {
+  if (!(await requireStrictAdmin())) {
     return jsonError("Authentication required", "UNAUTHORIZED", 401);
   }
 

@@ -4,6 +4,10 @@ import { jsonError } from "@/lib/api";
 import { requireAuthenticatedSession } from "@/lib/adminAuth";
 import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models/User";
+import { clientIpFromRequest, rateLimit } from "@/lib/rateLimit";
+
+// bcryptjs silently truncates passwords at 72 bytes; reject longer ones.
+const MAX_PASSWORD_LENGTH = 72;
 
 interface ChangePasswordBody {
   confirmPassword: string;
@@ -27,6 +31,7 @@ function parseChangePasswordBody(body: unknown): ChangePasswordBody | null {
     typeof confirmPassword !== "string" ||
     currentPassword.length === 0 ||
     newPassword.length < 8 ||
+    newPassword.length > MAX_PASSWORD_LENGTH ||
     newPassword !== confirmPassword
   ) {
     return null;
@@ -40,6 +45,21 @@ function parseChangePasswordBody(body: unknown): ChangePasswordBody | null {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = clientIpFromRequest(request);
+
+  if (
+    !rateLimit(`change-password:${ip}`, {
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    }).allowed
+  ) {
+    return jsonError("Too many requests", "RATE_LIMITED", 429);
+  }
+
+  // NOTE: this route reads the session directly via
+  // requireAuthenticatedSession (NOT requireAdminSession), so it stays callable
+  // while mustChangePassword is true — otherwise a forced-reset user could
+  // never recover their account.
   const session = await requireAuthenticatedSession();
 
   if (!session) {

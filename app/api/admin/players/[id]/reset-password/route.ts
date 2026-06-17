@@ -8,6 +8,7 @@ import { jsonError } from "@/lib/api";
 import { connectDB } from "@/lib/db";
 import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { User } from "@/lib/models/User";
+import { clientIpFromRequest, rateLimit } from "@/lib/rateLimit";
 
 interface RouteContext {
   params: Promise<{
@@ -15,7 +16,18 @@ interface RouteContext {
   }>;
 }
 
-export async function POST(_request: NextRequest, context: RouteContext) {
+export async function POST(request: NextRequest, context: RouteContext) {
+  const ip = clientIpFromRequest(request);
+
+  if (
+    !rateLimit(`reset-password:${ip}`, {
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    }).allowed
+  ) {
+    return jsonError("Too many requests", "RATE_LIMITED", 429);
+  }
+
   if (!(await requireAdmin())) {
     return jsonError("Authentication required", "UNAUTHORIZED", 401);
   }

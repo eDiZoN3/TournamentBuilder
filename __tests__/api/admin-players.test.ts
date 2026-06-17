@@ -5,12 +5,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlayerProfile } from "@/lib/models/PlayerProfile";
 import { User } from "@/lib/models/User";
 
-const { requireAdmin } = vi.hoisted(() => ({
+const { requireAdmin, requireStrictAdmin } = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
+  requireStrictAdmin: vi.fn(),
 }));
 
 vi.mock("@/lib/adminAuth", () => ({
   requireAdmin,
+  requireStrictAdmin,
 }));
 
 import {
@@ -53,6 +55,8 @@ describe("/api/admin/players", () => {
   beforeEach(() => {
     requireAdmin.mockReset();
     requireAdmin.mockResolvedValue(true);
+    requireStrictAdmin.mockReset();
+    requireStrictAdmin.mockResolvedValue(true);
   });
 
   it("lists player accounts without password hashes", async () => {
@@ -144,6 +148,8 @@ describe("/api/admin/players/[id]/reset-password", () => {
   beforeEach(() => {
     requireAdmin.mockReset();
     requireAdmin.mockResolvedValue(true);
+    requireStrictAdmin.mockReset();
+    requireStrictAdmin.mockResolvedValue(true);
   });
 
   it("resets a player password and forces a password change", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale } from "@/components/ui/LocaleProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formatTranslation } from "@/lib/i18n";
@@ -42,6 +42,10 @@ export function CourtOverrideControls({
   const { showToast } = useToast();
   const [courtNumber, setCourtNumber] = useState(match.courtNumber ?? 1);
   const [isAssigning, setIsAssigning] = useState(false);
+
+  useEffect(() => {
+    setCourtNumber(match.courtNumber ?? 1);
+  }, [match._id, match.courtNumber]);
 
   if (
     courtsAvailable <= 1 ||
